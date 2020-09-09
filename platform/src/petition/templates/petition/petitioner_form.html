@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Petitioner Info{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'petition:petitioner_form' %}">
+{% csrf_token %}
+{{ form.as_p }}
+<button type="submit">Submit</button>
+</form>
+{% endblock %}

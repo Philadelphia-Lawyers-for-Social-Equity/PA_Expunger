@@ -1,0 +1,53 @@
+profile
+    - organization
+        - name
+        - address
+            - street1
+            - street2
+            - city
+            - state
+            - zip
+        - phone number
+    - attorney name
+    - attorney bar #
+
+
+petitioner
+    - name
+    - aliases
+    - date of birth
+    - ssn
+    - address
+        - street1
+        - street2
+        - city
+        - state
+        - zip
+
+docket
+    - court
+    - county
+    - case type
+    - number
+    - year
+
+petition
+    - date
+    - petition_type
+    - OTN#
+    - DC#
+    - arrest date
+    - arrest_officer
+    - disposition
+    - judge
+
+restitition
+    - total
+    - paid
+
+charges
+    - code_section,
+    - statute
+    - grade
+    - disposition_date
+    - disposition

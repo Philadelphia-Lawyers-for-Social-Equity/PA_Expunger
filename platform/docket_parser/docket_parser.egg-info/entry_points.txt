@@ -1,0 +1,3 @@
+[console_scripts]
+docket_parser = docket_parser.__main__:main
+

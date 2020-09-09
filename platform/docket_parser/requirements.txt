@@ -1,0 +1,2 @@
+parsimonious >= 0.8.1
+pdftotext >= 2.1.4
