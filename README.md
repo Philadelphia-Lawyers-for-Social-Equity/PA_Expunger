@@ -16,7 +16,7 @@ The *fastest* route to a local install should be:
 
 1. Clone and enter this repository directory.
 2. Run `docker-compose build` to set up the images.
-3. Run `docker-composu up` to run the suite.
+3. Run `docker-compose up` to run the suite.
 
 Once the system is up and running, you should be able to access the front end
 via `http://localhost:3000` and the back end at
@@ -41,3 +41,13 @@ Settings are controlled via environmental variables, and can be reviewed in the
 - `FRONTEND_HOST` sets the hostname and port for the React frontend. Default is
   `http://localhost:3000`. On production it will need to be changed to gave the
    server url.
+
+
+## Testing
+
+The backend includes some tests, and is expected to follow TDD practices going
+forward.  In order to run the tests:
+
+1. Spin up a build per the Dev Setup.
+2. While it is running, execute `docker-compose exec expunger python3
+   ./manage.py test`
