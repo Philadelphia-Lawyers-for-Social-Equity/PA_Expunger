@@ -1,59 +1,59 @@
 version: "3.2"
 services:
-    postgres:
-        image: postgres:12-alpine
-        environment:
-            POSTGRES_USER: plse
-            POSTGRES_PASSWORD: ${EXPUNGER_PASS:-defaultTestPassword}
-            POSTGRES_DB: expunger_db
-        ports:
-            - 5432:5432
-        restart: on-failure
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      POSTGRES_USER: plse
+      POSTGRES_PASSWORD: ${EXPUNGER_PASS:-defaultTestPassword}
+      POSTGRES_DB: expunger_db
+    ports:
+      - 5432:5432
+    restart: on-failure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-    expunger:
-        build:
-            context: ./platform
-            dockerfile: Dockerfile
-            args:
-                EXPUNGER_USER: plse
-                EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
-                EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
-                DJANGO_SETTINGS_MODULE: config.settings.docker
-        depends_on:
-            - postgres
-        image: expunger:platform
-        environment:
-            DJANGO_SETTINGS_MODULE: config.settings.docker
-            EXPUNGER_USER: plse
-            EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
-            EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
-            EXPUNGER_DB: expunger_db
-            EXPUNGER_DB_HOST: postgres
-            HOSTNAME: ${BACKEND_HOST:-localhost}
-            FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
-            BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-            DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
-        ports:
-            - 8000:8000
-        restart: on-failure
+  expunger:
+    build:
+      context: ./
+      dockerfile: ./platform/Dockerfile
+      args:
+        EXPUNGER_USER: plse
+        EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
+        EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
+        DJANGO_SETTINGS_MODULE: config.settings.docker
+    depends_on:
+      - postgres
+    image: expunger:platform
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.docker
+      EXPUNGER_USER: plse
+      EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
+      EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
+      EXPUNGER_DB: expunger_db
+      EXPUNGER_DB_HOST: postgres
+      HOSTNAME: ${BACKEND_HOST:-localhost}
+      FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
+      BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
+      DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
+    ports:
+      - 8000:8000
+    restart: on-failure
 
-    frontend:
-        build:
-            context: ./frontend
-            dockerfile: Dockerfile
-            args:
-                REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-        depends_on:
-            - expunger
-        environment:
-            NODE_ENV: production
-            PORT: 3000
-            REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-            CI: "true"
-        ports:
-            - 3000:3000
-        restart: on-failure
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
+    depends_on:
+      - expunger
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
+      CI: "true"
+    ports:
+      - 3000:3000
+    restart: on-failure
 volumes:
-    postgres_data:
+  postgres_data:

@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls import url
+from .views import staticbundle
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -30,5 +32,6 @@ urlpatterns = [
     path('api/v0.2.0/expunger/', include('expunger.urls',
          namespace='expunger')),
     path('api/v0.2.0/petition/', include('petition.urls',
-         namespace='petition'))
+         namespace='petition')),
+    url(r'^(?:.*)/?$', staticbundle),
 ]

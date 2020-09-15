@@ -65,22 +65,27 @@ USER ${EXPUNGER_USER}
 
 # Library install
 WORKDIR ${INSTALL_DIR}
-COPY docket_parser/requirements.txt .
+COPY platform/docket_parser/requirements.txt .
 RUN pip3 install -r requirements.txt
 
-COPY src/requirements.txt .
+COPY platform/src/requirements.txt .
 RUN pip3 install -r requirements.txt
 RUN pip3 install --user mod_wsgi
 
 # Docket parser install
 WORKDIR ${INSTALL_DIR}/docket_parser
-COPY docket_parser/ .
+COPY platform/docket_parser/ .
 RUN pip3 install ./
+
+# Frontend install
+WORKDIR ${APPDIR}/frontend/src
+COPY frontend/src/ .
+CMD yarn build
 
 # App install
 WORKDIR ${APPDIR}
 
-COPY src/ .
+COPY platform/src/ .
 ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
 RUN python3 ./manage.py collectstatic --noinput
 
