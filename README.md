@@ -51,3 +51,10 @@ forward.  In order to run the tests:
 1. Spin up a build per the Dev Setup.
 2. While it is running, execute `docker-compose exec expunger python3
    ./manage.py test`
+
+## Production
+
+The Dockerfile for the `expunger` project also can be run as a production app
+as-is. Access the production app at `http://localhost:8000` after executing
+`docker-compose run --build`. Note that the production app is an optimized React
+build and will not have development features like hot-reloading.

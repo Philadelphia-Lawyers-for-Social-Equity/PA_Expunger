@@ -80,6 +80,7 @@ RUN pip3 install ./
 # Frontend install
 WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
+CMD yarn install
 CMD yarn build
 
 # App install
