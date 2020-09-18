@@ -152,7 +152,7 @@ def include_charge(disp):
 
 def date_string(d):
     try:
-        return "%04d-%02d-%02d" % (d.year, d.month, d.day)
+        return "%02d-%02d-%04d" % (d.month, d.day, d.year)
     except AttributeError:
         logger.warn("Invalid date object: %s" % (str(d)))
         return ""
