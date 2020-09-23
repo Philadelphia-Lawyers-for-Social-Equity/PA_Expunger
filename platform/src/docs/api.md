@@ -7,18 +7,18 @@ framework simple
 jwt](https://github.com/davesque/django-rest-framework-simplejwt).  Endpoints
 are:
 
-- **api/v0.1.0/auth/token/**
+- **api/v0.2.0/auth/token/**
     - POST accepts: `{"username": "xxx", "password": "yyy"}`
     - returns: `{"access": "...", "refresh": "..."}`
     - The access token is used in the `Authorization: Bearer ...`
       when making later requests to private endpoints
     - The refresh token can be used to retrieve a fresh access token when the
       access token expires.
-- **api/v0.1.0/refresh/token**
+- **api/v0.2.0/refresh/token**
     - POST accepts: `{"refresh": "..."}`
     - returns: `{"access": "..."}`
 
-- **api/v0.1.0/expunger/attorney/<pk>**
+- **api/v0.2.0/expunger/attorney/<pk>**
     - Requires access token
     - GET returns attorney json, including:
         - url (api link for this attorney)
@@ -26,11 +26,18 @@ are:
         - bar (attorney's bar identifier, string)
         - name (annorney's full name
 
-- **api/v0.1.0/expunger/attorneys/**
+## Expunger
+
+The expunger section of the API is intended to handle profile & system
+information that affects the user rather than the petition.  For example,
+allowing the user to select their default attorney or update their email
+address.
+
+- **api/v0.2.0/expunger/attorneys/**
     - Requires access token header
     - GET produces list of available attorneys, each formatted as above
 
-- **api/v0.1.0/expunger/organization/<pk>**
+- **api/v0.2.0/expunger/organization/<pk>**
     - Requires access token header
     - GET returns organization json, including:
         - url (api link for this organization)
@@ -44,11 +51,11 @@ are:
             - state
             - zipcode
 
-- **api/v0.1.0/expunger/organizations**
+- **api/v0.2.0/expunger/organizations**
     - Requires access token header
     - GET produces a list of available organizatiens, each formatted as above
 
-- **api/v0.1.0/expunger/my-profile/**
+- **api/v0.2.0/expunger/my-profile/**
     - Requires access token header
     - GET produces the authenticated users profile, or 404, including
         - attorney (see the attorney endpoint for all details)
@@ -65,7 +72,12 @@ are:
         - accepts `{"attorney": attorney pk, "organization": organization pk}`
         - attorney and organization are optional
 
-- **api/v0.1.0/petition/generate/**
+## Petition
+
+The petition section handles the preparation of petition paperwork and docket
+parsing. This is where the real work gets done.
+
+- **api/v0.2.0/petition/generate/**
     - Requires access token header
     - POST with valid data produces a microsoft .docx petition
     - Expects JSON of
@@ -110,7 +122,10 @@ are:
                 - arrest_officer: string, arresting officer's full name
                 - arrest_agency: string, arresting agency
                 - judge: string, full name of the judge
-        - docket: String of a docket id, such as "MC-51-CR-1234567-1995"
+        - docket:
+            - primary: String of a docket id, such as "MC-51-CR-1234567-1995"
+            - originating: (optional) String of a docket id
+
     - charges (list of):
         - statute: string
         - description: string
