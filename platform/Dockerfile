@@ -36,6 +36,11 @@ RUN apt-get update -y -qq && \
     && apt-get purge -y \
     && apt-get clean -y
 
+# Install Yarn for production frontend build later
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y -qq nodejs
+RUN npm install -g yarn
+
 # timezone-related fixes
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
@@ -80,8 +85,10 @@ RUN pip3 install ./
 # Frontend install
 WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
-CMD yarn install
-CMD yarn build
+USER root
+RUN yarn install --non-interactive --silent --production
+RUN yarn build
+USER ${EXPUNGER_USER}
 
 # App install
 WORKDIR ${APPDIR}
