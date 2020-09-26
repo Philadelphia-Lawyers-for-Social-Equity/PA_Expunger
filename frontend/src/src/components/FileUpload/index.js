@@ -3,7 +3,6 @@ import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
 import { Button, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
-// thead, tbody, tr, td, th
 // import { useAuth } from '../../context/auth';
 
 
@@ -291,6 +290,9 @@ export default function FileUpload() {
                             </Form.Group>
 
                             <Form.Group as={Row}></Form.Group>
+                            <Form.Group as={Row}></Form.Group>
+
+                            <p>The fields below were pulled from the docket. Please review and only make corrections if necessary. </p>
 
                             <Form.Group as={Row}>
                                 <Col sm={3}>
@@ -338,7 +340,7 @@ export default function FileUpload() {
                                 </Form.Label>
                                 </Col>
                                 <Col md={{ span: 3 }}>
-                                    <Form.Control placeholder="yyyy-mm-dd" value={dob} onChange={e => {
+                                    <Form.Control placeholder="mm-dd-yyyy" value={dob} onChange={e => {
                                         setDOB(e.target.value);
                                     }} />
                                 </Col>
@@ -378,7 +380,7 @@ export default function FileUpload() {
                                 </Form.Label>
                                 </Col>
                                 <Col md={{ span: 8 }}>
-                                    <Form.Control placeholder="yyyy-mm-dd" value={arrestDate} onChange={e => {
+                                    <Form.Control placeholder="mm-dd-yyyy" value={arrestDate} onChange={e => {
                                         setArrestDate(e.target.value);
                                     }} />
                                 </Col>
