@@ -27,7 +27,7 @@ urlpatterns = [
          TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v0.2.0/auth/refresh/',
          TokenRefreshView.as_view(), name='token_refresh'),
-    path('admin/', admin.site.urls),
+    url(r'admin\/?', admin.site.urls),
     path('account/', include('django.contrib.auth.urls')),
     path('api/v0.2.0/expunger/', include('expunger.urls',
          namespace='expunger')),

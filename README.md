@@ -20,7 +20,7 @@ The *fastest* route to a local install should be:
 
 Once the system is up and running, you should be able to access the front end
 via `http://localhost:3000` and the back end at
-`http://localhost:8000/admin/login`.
+`http://localhost:8000/admin`.
 
 ## Settings
 
