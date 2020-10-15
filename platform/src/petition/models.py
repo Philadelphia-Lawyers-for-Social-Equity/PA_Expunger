@@ -184,7 +184,10 @@ class Petition:
         self.dc = dc
         self.arrest_agency = arrest_agency
         self.arrest_date = arrest_date
-        self.arrest_officer = arrest_officer
+        if arrest_officer == "Affiant":
+            self.arrest_officer = arrest_agency
+        else:
+            self.arrest_officer = arrest_officer
         self.judge = judge
 
     @staticmethod
