@@ -161,9 +161,14 @@ def date_string(d):
 def case_information_to_petition(case_info):
     """Convert the case information to the petition portion of the api."""
 
+    if case_info.get("arrest_officer") == "Affiant":
+        officer = case_info.get("arrest_agency")
+    else:
+        officer = case_info.get("arrest_officer")
+
     return {
         "otn": case_info.get("otn"),
-        "arrest_officer": case_info.get("arrest_officer"),
+        "arrest_officer": officer,
         "arrest_agency": case_info.get("arrest_agency"),
         "judge": case_info.get("judge")
         }
