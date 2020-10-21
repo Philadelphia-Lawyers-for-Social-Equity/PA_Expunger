@@ -36,6 +36,11 @@ RUN apt-get update -y -qq && \
     && apt-get purge -y \
     && apt-get clean -y
 
+# Install Yarn for production frontend build later
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y -qq nodejs
+RUN npm install -g yarn
+
 # timezone-related fixes
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
@@ -65,22 +70,30 @@ USER ${EXPUNGER_USER}
 
 # Library install
 WORKDIR ${INSTALL_DIR}
-COPY docket_parser/requirements.txt .
+COPY platform/docket_parser/requirements.txt .
 RUN pip3 install -r requirements.txt
 
-COPY src/requirements.txt .
+COPY platform/src/requirements.txt .
 RUN pip3 install -r requirements.txt
 RUN pip3 install --user mod_wsgi
 
 # Docket parser install
 WORKDIR ${INSTALL_DIR}/docket_parser
-COPY docket_parser/ .
+COPY platform/docket_parser/ .
 RUN pip3 install ./
+
+# Frontend install
+WORKDIR ${APPDIR}/frontend/src
+COPY frontend/src/ .
+USER root
+RUN yarn install --non-interactive --silent --production
+RUN yarn build
+USER ${EXPUNGER_USER}
 
 # App install
 WORKDIR ${APPDIR}
 
-COPY src/ .
+COPY platform/src/ .
 ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
 RUN python3 ./manage.py collectstatic --noinput
 

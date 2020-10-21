@@ -14,8 +14,8 @@ services:
 
     expunger:
         build:
-            context: ./platform
-            dockerfile: Dockerfile
+            context: ./
+            dockerfile: ./platform/Dockerfile
             args:
                 EXPUNGER_USER: plse
                 EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
