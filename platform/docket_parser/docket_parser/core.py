@@ -101,7 +101,7 @@ docket_decoder = Grammar(r"""
                   offense_disposition space+ (grade space+)? statute next_line
                   (space+ charge_description "\n")?
                   (space+ name+ space* date next_line)?
-    charge_description = name+
+    charge_description = ((alphanum / punct) space?)+
     offense_disposition = name+
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)

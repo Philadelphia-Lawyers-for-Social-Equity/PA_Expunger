@@ -89,54 +89,123 @@ class DocketParserAPIView(APIView):
             return Response({"error": msg})
 
         content = {
-            "petitioner": {},
-            "petition": {},
-            "docket": None,
-            "charges": []
+            "petitioner": petitioner_from_parser(parsed),
+            "petition": petition_from_parser(parsed),
+            "dockets": dockets_from_parser(parsed),
+            "charges": charges_from_parser(parsed),
+            "restitution": restitution_from_parser(parsed)
         }
-
-        if "section_docket" in parsed:
-            content["docket"] = parsed["section_docket"].get("docket", None)
-            content["petitioner"]["name"] = parsed["section_docket"].get("defendant", None)
-
-        if "section_defendant_information" in parsed:
-            content["petitioner"]["aliases"] = \
-                parsed["section_defendant_information"].get("aliases")
-
-            dob = parsed["section_defendant_information"].get("dob", None)
-
-            if dob is not None:
-                content["petitioner"]["dob"] = dob.isoformat()
-
-        if "section_case_information" in parsed:
-            content["petition"] = case_information_to_petition(
-                parsed["section_case_information"])
-
-        if "section_status_information" in parsed:
-            arrest_date = parsed["section_status_information"].get(
-                "arrest_date", None)
-
-            if arrest_date is not None:
-                arrest_date = arrest_date.isoformat()
-                content["petition"]["arrest_date"] = arrest_date
-
-        if "section_disposition" in parsed:
-            for disp in parsed["section_disposition"]:
-                if include_charge(disp):
-                    content["charges"].append(disposition_to_charge(disp))
-
-        if "section_financial_information" in parsed:
-            content["restitution"] = {
-                "total": parsed["section_financial_information"]["total"],
-                "paid":
-                    abs(parsed["section_financial_information"]["payments"])
-            }
 
         logger.info("Parsed: %s", content)
         return Response(content)
 
 
 # Helpers
+
+def petitioner_from_parser(parsed):
+    """
+    Produce the petioner data based on the docket parser output.
+    """
+    petitioner = {}
+
+    if "section_docket" in parsed:
+        petitioner["name"] = parsed["section_docket"].get("defendant", None)
+
+    if "section_defendant_information" in parsed:
+        petitioner["aliases"] = parsed["section_defendant_information"].get(
+            "aliases", [])
+
+        dob = parsed["section_defendant_information"].get("dob", None)
+
+        if dob is not None:
+            petitioner["dob"] = dob.isoformat()
+
+    return petitioner
+
+
+def petition_from_parser(parsed):
+    """
+    Produce the petition data based on the docket parser output.
+    """
+    if "section_case_information" not in parsed:
+        return {}
+
+    case_info = parsed["section_case_information"]
+    officer = case_info.get("arrest_officer", None)
+
+    if officer is None or officer == "Affiant":
+        officer = case_info.get("arrest_agency")
+
+    if "section_status_information" in parsed:
+        arrest_date = parsed["section_status_information"].get(
+            "arrest_date", None)
+    else:
+        arrest_date = None
+
+    return {
+        "otn": case_info.get("otn"),
+        "arrest_officer": officer,
+        "arrest_agency": case_info.get("arrest_agency"),
+        "judge": case_info.get("judge"),
+        "arrest_date": arrest_date
+        }
+
+
+def dockets_from_parser(parsed):
+    """
+    Produce the docket numbers based on the docket parser output.
+    """
+    dockets = []
+
+    if "section_docket" in parsed:
+        primary = parsed["section_docket"].get("docket", None)
+
+        if primary is not None:
+            dockets.append(primary)
+
+    if "section_case_information" in parsed:
+        originating = \
+            parsed["section_case_information"].get("originating_docket", None)
+
+        if originating is not None:
+            dockets.append(originating)
+
+    return dockets
+
+
+def charges_from_parser(parsed):
+    """
+    Produces the charges based on the docket parser output.
+    """
+    charges = []
+
+    if "section_disposition" in parsed:
+
+        for disp in parsed["section_disposition"]:
+            if include_charge(disp):
+                charges.append(disposition_to_charge(disp))
+
+    return charges
+
+
+def restitution_from_parser(parsed):
+    """Produce restitution data based on the docket parser output."""
+
+    if "section_financial_information" not in parsed:
+        return {}
+
+    data = parsed["section_financial_information"]
+    total = data.get("total", None)
+    paid = data.get("payments", None)
+
+    if paid is not None:
+        paid = abs(paid)
+
+    return {
+        "total": total,
+        "paid": paid
+    }
+
 
 def include_charge(disp):
     """
@@ -156,22 +225,6 @@ def date_string(d):
     except AttributeError:
         logger.warn("Invalid date object: %s" % (str(d)))
         return ""
-
-
-def case_information_to_petition(case_info):
-    """Convert the case information to the petition portion of the api."""
-
-    if case_info.get("arrest_officer") == "Affiant":
-        officer = case_info.get("arrest_agency")
-    else:
-        officer = case_info.get("arrest_officer")
-
-    return {
-        "otn": case_info.get("otn"),
-        "arrest_officer": officer,
-        "arrest_agency": case_info.get("arrest_agency"),
-        "judge": case_info.get("judge")
-        }
 
 
 def disposition_to_charge(disp):
