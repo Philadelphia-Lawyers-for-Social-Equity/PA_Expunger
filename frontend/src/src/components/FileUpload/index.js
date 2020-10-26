@@ -33,7 +33,7 @@ export default function FileUpload() {
     const [arrestDate, setArrestDate] = useState("");
     const [arrestOfficer, setArrestOfficer] = useState("");
     const [judge, setJudge] = useState("");
-    const [docket, setDocket] = useState("");
+    const [dockets, setDockets] = useState("");
     const [restitutionTotal, setRestitutionTotal] = useState(0.0);
     const [restitutionPaid, setRestitutionPaid] = useState(0.0);
 
@@ -75,7 +75,7 @@ export default function FileUpload() {
                     if (res.status === 200) {
 
                         console.log(res.data);
-                        setDocket(res.data.docket);
+                        setDockets(res.data.dockets);
                         setFullName(res.data.petitioner.name);
                         setCharges(res.data.charges);
                         setAliases(res.data.petitioner.aliases);
@@ -158,7 +158,7 @@ export default function FileUpload() {
         "judge": judge
       },
       "charges" : newCharges,
-      "docket": docket,
+      "dockets": dockets,
       "restitution": {
         "total": parseFloat(restitutionTotal),
         "paid": parseFloat(restitutionPaid)
@@ -294,18 +294,11 @@ export default function FileUpload() {
 
                             <p>The fields below were pulled from the docket. Please review and only make corrections if necessary. </p>
 
-                            <Form.Group as={Row}>
-                                <Col sm={3}>
-                                    <Form.Label>
-                                        Docket Number
-                                </Form.Label>
-                                </Col>
-                                <Col md={{ span: 8 }}>
-                                    <Form.Control placeholder="Docket Number" value={docket} onChange={e => {
-                                        setDocket(e.target.value);
-                                    }} />
-                                </Col>
-                            </Form.Group>
+                            <EditableListText
+                                label="Dockets"
+                                items={dockets}
+                                handleUpdate={setDockets}
+                            />
 
                             <Form.Group as={Row}>
                                 <Col sm={3}>
@@ -491,4 +484,139 @@ export default function FileUpload() {
 
         </div >
     );
+}
+
+
+/* Produce an editable list of text items.
+
+    props requires:
+    * label - name / title of the list
+    * items - array of strings
+    * handleUpdate - function should take a new list of strings,   update parent
+      state
+*/
+
+function EditableListText(props) {
+
+    function addItem() {
+        let arr = props.items.slice();
+        arr.push("");
+        props.handleUpdate(arr);
+    }
+
+    function updateItem(idx, newItem) {
+        let arr = props.items.slice();
+
+        if (isBlank(newItem)) {
+            arr.splice(idx, 1);
+        } else {
+            arr.splice(idx, 1, newItem);
+        }
+
+        props.handleUpdate(arr);
+    }
+
+    function dropItem(idx) {
+        let arr = props.items.slice();
+        arr.splice(idx, 1);
+        props.handleUpdate(arr);
+    }
+
+    function AddButton() {
+        return(
+            <Button
+                variant="primary"
+                onClick={() => {addItem()}}
+            >Add { props.label }</Button>
+        );
+    }
+
+    return(
+        <Form.Group>
+            { props.items.map((val, idx) => {
+                    return(
+                        <EditableListTextItem
+                            label={ idx === 0 ? props.label : null }
+                            key={val}
+                            val={val}
+                            handleUpdate={(txt) => {updateItem(idx, txt);}}
+                            handleRemove={() => { dropItem(idx);}}
+                />)})}
+            { props.items.length > 0 && isBlank(props.items.slice(-1)[0])
+                ? <></>
+                : <Row>
+                    <Col sm={3}/>
+                    <Col className="text-left" md={{span: 8}}>
+                        <AddButton />
+                    </Col>
+                  </Row>
+            }
+        </Form.Group>
+    );
+}
+
+/* Produce an individually editable text item
+    props expects
+    * label - label text
+    * val - initial text value
+    * handleUpdate - function should take a replacement text value, update
+      parent stat
+    * handleRemove - function should remove the item from the parent state
+*/
+
+function EditableListTextItem(props) {
+    const [text, setText] = useState(props.val);
+    const [editing, setEditing] = useState(false);
+    const [hovering, setHovering] = useState(false);
+
+    function save() {
+        setEditing(false);
+        props.handleUpdate(text);
+    }
+
+    function handleEnterKey(press) {
+        if (editing && press.key == "Enter") {
+            save();
+        }
+    }
+
+    function RemoveButton() {
+        return(
+            <Button
+                variant="danger"
+                onClick={ props.handleRemove }
+            >X</Button>
+        );
+    }
+
+    return(
+        <Row
+            onMouseOver={() => setHovering(true)}
+            onMouseOut={() => setHovering(false)}
+        >
+            <Col sm={3}>
+                <Form.Label>
+                    { props.label }
+                </Form.Label>
+            </Col>
+            <Col md={{span: 8}}>
+            <Form.Control
+                onChange={e => { setText(e.target.value)}}
+                onFocus={() => setEditing(true)}
+                onBlur={() => save()}
+                onKeyDown={(e) => {handleEnterKey(e)}}
+                value={text}
+                readOnly={ !editing }
+            />
+            </Col>
+            <Col md={{span: 1}}>
+            { hovering ? <RemoveButton /> : <></> }
+            </Col>
+        </Row>
+    );
+}
+
+
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
 }
