@@ -9,6 +9,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 
 import docket_parser
 
@@ -37,8 +38,8 @@ class PetitionAPIView(APIView):
                     models.Petitioner.from_dict(request.data["petitioner"]),
                 "petition":
                     models.Petition.from_dict(request.data["petition"]),
-                "docket":
-                    models.DocketId.from_dict(request.data["docket"]),
+                "dockets": [models.DocketId.from_dict(d) for d in
+                            request.data.get("dockets", [])],
                 "restitution":
                     models.Restitution.from_dict(request.data["restitution"]),
                 "charges": [models.Charge.from_dict(c) for c in
@@ -47,7 +48,7 @@ class PetitionAPIView(APIView):
         except KeyError as err:
             msg = "Missing field: %s" % str(err)
             logger.warn(msg)
-            return Response({"error": msg})
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         logger.debug("Petition POSTed with context: %s" % context)
 
@@ -79,7 +80,7 @@ class DocketParserAPIView(APIView):
         except MultiValueDictKeyError:
             msg = "No docket_file, got %s" % request.FILES.keys()
             logger.warn(msg)
-            return Response({"error": msg})
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             parsed = docket_parser.parse_pdf(df)
