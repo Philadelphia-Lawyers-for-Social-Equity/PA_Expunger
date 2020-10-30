@@ -8,6 +8,8 @@ ARG EXPUNGER_PASS
 ARG EXPUNGER_KEY
 ARG DJANGO_SETTINGS_MODULE
 
+ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
+
 # System initialization
 
 WORKDIR $INSTALL_DIR
@@ -65,7 +67,6 @@ RUN echo ${EXPUNGER_USER}:${EXPUNGER_PASS} | chpasswd
 
 RUN mkdir -p ${APPDIR}/static
 RUN chown --changes --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
-
 USER ${EXPUNGER_USER}
 
 # Library install
@@ -77,24 +78,28 @@ COPY platform/src/requirements.txt .
 RUN pip3 install -r requirements.txt
 RUN pip3 install --user mod_wsgi
 
+# -- DEV BUILD --
 # Docket parser install
+
 WORKDIR ${INSTALL_DIR}/docket_parser
 COPY platform/docket_parser/ .
 RUN pip3 install ./
 
+# App install
+WORKDIR ${APPDIR}
+COPY platform/src/ .
+
+# -- PROD BUILD --
 # Frontend install
+
 WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
 USER root
 RUN yarn install --non-interactive --silent --production
 RUN yarn build
 USER ${EXPUNGER_USER}
-
-# App install
 WORKDIR ${APPDIR}
-
-COPY platform/src/ .
-ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
 RUN python3 ./manage.py collectstatic --noinput
 
+## -- FINAL BUILD --
 ENTRYPOINT python3 ./manage.py makemigrations && python3 ./manage.py migrate && python3 ./manage.py runmodwsgi --log-to-terminal

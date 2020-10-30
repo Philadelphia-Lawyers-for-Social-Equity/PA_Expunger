@@ -1,4 +1,4 @@
-docxtpl >= 0.6.3
+docxtpl >= 0.6.3, <0.10.1
 django >= 2.2.5
 django-filter >= 1.0.1
 djangorestframework >= 3.10.3

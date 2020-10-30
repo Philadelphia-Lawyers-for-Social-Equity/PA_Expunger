@@ -1,6 +1,0 @@
-[
-  "tests/test_docket_parser.py::TestParsing::test_parser_01",
-  "tests/test_docket_parser.py::TestHelpers::test_flatten_already_flat",
-  "tests/test_docket_parser.py::TestHelpers::test_flatten_single_nest",
-  "tests/test_docket_parser.py::TestHelpers::test_flatten_multiple_nests"
-]

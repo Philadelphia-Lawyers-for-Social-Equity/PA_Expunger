@@ -49,6 +49,8 @@ docket_decoder = Grammar(r"""
         / date_filed
         / arrest_agency
         / arrest_officer
+        / originating_docket
+        / district_control_number
         / (!section_head junk)
         )+
 
@@ -65,6 +67,10 @@ docket_decoder = Grammar(r"""
 
     arrest_officer = "Arresting Officer" colon arrest_officer_name
     arrest_officer_name = name+
+
+    originating_docket = "Originating Docket No" colon space* docket_id
+    district_control_number = "District Control Number" (space*) dcn
+    dcn = alphanum+
 
     section_status_information =
         "STATUS INFORMATION"
@@ -95,7 +101,7 @@ docket_decoder = Grammar(r"""
                   offense_disposition space+ (grade space+)? statute next_line
                   (space+ charge_description "\n")?
                   (space+ name+ space* date next_line)?
-    charge_description = name+
+    charge_description = ((alphanum / punct) space?)+
     offense_disposition = name+
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)
@@ -245,6 +251,16 @@ class DocketExtractor(NodeVisitor):
 
     def visit_arrest_officer_name(self, node, visited_children):
         return ("arrest_officer_name", node.text.strip())
+
+    def visit_originating_docket(self, node, visited_children):
+        result = val_named("docket_id", visited_children)
+        return ("originating_docket", val_named("docket_id", visited_children))
+
+    def visit_district_control_number(self, node, visited_children):
+        return ("district_control_number", tval(visited_children[2]))
+
+    def visit_dcn(self, node, visited_children):
+        return ("dcn", node.text.strip())
 
     def visit_section_status_information(self, node, visited_children):
         result = {
