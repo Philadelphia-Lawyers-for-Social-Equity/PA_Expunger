@@ -19,7 +19,7 @@ export default function FileUpload() {
     const [checkedItems, setCheckedItems] = useState({});
 
     const [fullName, setFullName] = useState("");
-    const [aliases, setAliases] = useState("");
+    const [aliases, setAliases] = useState([]);
     const [dob, setDOB] = useState("");
     const [street1, setStreet1] = useState("");
     const [street2, setStreet2] = useState("");
@@ -33,7 +33,7 @@ export default function FileUpload() {
     const [arrestDate, setArrestDate] = useState("");
     const [arrestOfficer, setArrestOfficer] = useState("");
     const [judge, setJudge] = useState("");
-    const [dockets, setDockets] = useState("");
+    const [dockets, setDockets] = useState([]);
     const [restitutionTotal, setRestitutionTotal] = useState(0.0);
     const [restitutionPaid, setRestitutionPaid] = useState(0.0);
 
@@ -296,8 +296,8 @@ export default function FileUpload() {
 
                             <EditableListText
                                 label="Dockets"
-                                items={dockets}
-                                handleUpdate={setDockets}
+                                items={ dockets ? dockets : [] }
+                                handleUpdate={ setDockets }
                             />
 
                             <Form.Group as={Row}>
@@ -313,18 +313,11 @@ export default function FileUpload() {
                                 </Col>
                             </Form.Group>
 
-                            <Form.Group as={Row}>
-                                <Col sm={3}>
-                                    <Form.Label>
-                                        Aliases
-                                </Form.Label>
-                                </Col>
-                                <Col md={{ span: 8 }}>
-                                    <Form.Control placeholder="Aliases (comma-separated)" value={aliases} onChange={e => {
-                                        setAliases(e.target.value);
-                                    }} />
-                                </Col>
-                            </Form.Group>
+                            <EditableListText
+                                label="Aliases"
+                                items={ aliases ? aliases : [] }
+                                handleUpdate={ setAliases }
+                            />
 
                             <Form.Group as={Row}>
                                 <Col sm={3}>
