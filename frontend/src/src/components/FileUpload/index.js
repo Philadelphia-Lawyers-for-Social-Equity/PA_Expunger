@@ -83,6 +83,7 @@ export default function FileUpload() {
                         setRestitutionTotal(res.data.restitution.total.toFixed(2));
                         setRestitutionPaid(res.data.restitution.paid.toFixed(2));
                         //missing DC number (pending update from Pablo)
+                        // setDC(res.data.petition.dc);
 
                         setFilePassed(true);
                     }
@@ -406,12 +407,12 @@ export default function FileUpload() {
                                 </Form.Label>
                                 </Col>
                                 <Col sm={4}>
-                                    Total: <Form.Control placeholder="Total" id="totalRestitution" value={restitutionTotal} onChange={e => {
+                                    Total <Form.Control placeholder="Total" id="totalRestitution" value={restitutionTotal} onChange={e => {
                                         setRestitutionTotal(e.target.value);
                                     }} />
                                 </Col>
                                 <Col sm={4}>
-                                    Paid: <Form.Control placeholder="Paid" id="paidRestitution" value={restitutionPaid} onChange={e => {
+                                    Paid <Form.Control placeholder="Paid" id="paidRestitution" value={restitutionPaid} onChange={e => {
                                         setRestitutionPaid(e.target.value);
                                     }} />
                                 </Col>
