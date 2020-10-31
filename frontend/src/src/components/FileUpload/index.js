@@ -38,7 +38,7 @@ export default function FileUpload() {
     const [restitutionPaid, setRestitutionPaid] = useState(0.0);
 
     // On click for the cancel button
-    function returnLogin() {
+    function returnToLogin() {
         history.push("/login");
     }
 
@@ -47,10 +47,8 @@ export default function FileUpload() {
         setFileName(files[0]);
     }
 
-    // On click to store the attorney information to local storage
+    // POST to send PDF file
     function choseFile() {
-
-        console.log(fileName);
 
         // Need to check if a file is chosen
         if (fileName === undefined) {
@@ -71,10 +69,7 @@ export default function FileUpload() {
 
             axios.post(url, pdfdata, config)
                 .then(res => {
-                    
                     if (res.status === 200) {
-
-                        console.log(res.data);
                         setDockets(res.data.dockets);
                         setFullName(res.data.petitioner.name);
                         setCharges(res.data.charges);
@@ -85,8 +80,9 @@ export default function FileUpload() {
                         setArrestDate(res.data.petition.arrest_date);
                         setArrestOfficer(res.data.petition.arrest_officer);
                         setJudge(res.data.petition.judge);
-
-                        //missing DC number, restitution amounts (pending Pablo)
+                        setRestitutionTotal(res.data.restitution.total.toFixed(2));
+                        setRestitutionPaid(res.data.restitution.paid.toFixed(2));
+                        //missing DC number (pending update from Pablo)
 
                         setFilePassed(true);
                     }
@@ -102,19 +98,18 @@ export default function FileUpload() {
         setCheckedItems({...checkedItems, [target.name] : target.checked});
     }
 
-     // On click to check that the manual entry fields are entered before POST
+     // On click to check that the manual entry fields are filled
     function checkInfo() {
 
     if (street1 === "" || city === "" || twoLetterState === "" || zipcode === "" || ssn === "") {
       setIsError2(true);
     }
     else {
-      // Make the Post call
-      getDocFile();
+      postToGeneratePetition();
     }
   }
 
-  function getDocFile() {
+  function postToGeneratePetition() {
 
     var newCharges = [];
 
@@ -124,9 +119,6 @@ export default function FileUpload() {
         };
     }
 
-    console.log(newCharges);
-
-    // Current date
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -165,9 +157,7 @@ export default function FileUpload() {
       }
     }
 
-    console.log(realData);
-
-    // Make an axios POST call to api/v0.2.0/petition/generate/
+    // Header for POST call
     const bearer = "Bearer ";
     const token = bearer.concat(localStorage.getItem("access_token"));
     var config = {
@@ -181,8 +171,6 @@ export default function FileUpload() {
       .then(
         res => {
           if (res.status === 200) {
-            // return data
-            // console.log("Posted");
             let blob = new Blob([res.data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }),
               downloadUrl = window.URL.createObjectURL(blob),
               filename = "petition.docx",
@@ -200,7 +188,7 @@ export default function FileUpload() {
           } //close res status 200
         } //close res
       ); //close then
-  } //close getDocFile function
+  } //close post call function
 
     return (
         <div className="text-center">
@@ -216,7 +204,7 @@ export default function FileUpload() {
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="returnToLoginButton" onClick={returnLogin}>Cancel</Button>
+                    <Button id="returnToLoginButton" onClick={returnToLogin}>Cancel</Button>
                     <Button id="fileButton" onClick={choseFile}>Submit</Button>
                     {isError && <div>Please select a file</div>}
                 </Modal.Footer>
@@ -353,7 +341,7 @@ export default function FileUpload() {
                                 </Form.Label>
                                 </Col>
                                 <Col md={{ span: 8 }}>
-                                    <Form.Control placeholder="########" onChange={e => {
+                                    <Form.Control placeholder="########" value={dc} onChange={e => {
                                         setDC(e.target.value);
                                     }} />
                                 </Col>
@@ -418,12 +406,12 @@ export default function FileUpload() {
                                 </Form.Label>
                                 </Col>
                                 <Col sm={4}>
-                                    <Form.Control placeholder="Total" id="totalRestitution" onChange={e => {
+                                    Total: <Form.Control placeholder="Total" id="totalRestitution" value={restitutionTotal} onChange={e => {
                                         setRestitutionTotal(e.target.value);
                                     }} />
                                 </Col>
                                 <Col sm={4}>
-                                    <Form.Control placeholder="Paid" id="paidRestitution" onChange={e => {
+                                    Paid: <Form.Control placeholder="Paid" id="paidRestitution" value={restitutionPaid} onChange={e => {
                                         setRestitutionPaid(e.target.value);
                                     }} />
                                 </Col>
