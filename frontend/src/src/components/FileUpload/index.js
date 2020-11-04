@@ -80,8 +80,10 @@ export default function FileUpload() {
                         setArrestDate(res.data.petition.arrest_date);
                         setArrestOfficer(res.data.petition.arrest_officer);
                         setJudge(res.data.petition.judge);
-                        setRestitutionTotal(res.data.restitution.total.toFixed(2));
-                        setRestitutionPaid(res.data.restitution.paid.toFixed(2));
+                        if (JSON.stringify(res.data.restitution)!=JSON.stringify({})) {
+                            setRestitutionTotal(res.data.restitution.total.toFixed(2));
+                            setRestitutionPaid(res.data.restitution.paid.toFixed(2));
+                        }
                         //missing DC number (pending update from Pablo)
                         // setDC(res.data.petition.dc);
 
