@@ -196,11 +196,8 @@ def restitution_from_parser(parsed):
         return {}
 
     data = parsed["section_financial_information"]
-    total = data.get("total", None)
-    paid = data.get("payments", None)
-
-    if paid is not None:
-        paid = abs(paid)
+    total = data.get("assessment", 0)
+    paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
 
     return {
         "total": total,
