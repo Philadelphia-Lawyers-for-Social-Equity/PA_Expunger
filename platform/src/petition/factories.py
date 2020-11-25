@@ -3,7 +3,7 @@ from datetime import date
 import factory
 import factory.fuzzy
 from .models import Address, Petitioner, Court, CaseType, DocketId, \
-    PetitionType, Petition, Restitution
+    PetitionRatio, Petition, Restitution
 
 
 class AddressFactory(factory.Factory):
@@ -42,7 +42,7 @@ class PetitionFactory(factory.Factory):
         model = Petition
 
     date = date.today()
-    petition_type = factory.fuzzy.FuzzyChoice(PetitionType)
+    ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
     dc = factory.fuzzy.FuzzyInteger(1000000000, 9999999999)
     arrest_agency = "Philadelphia Pd"
