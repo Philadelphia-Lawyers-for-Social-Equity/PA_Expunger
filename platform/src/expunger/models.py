@@ -62,3 +62,14 @@ class ExpungerProfile(models.Model):
     def __repr__(self):
         return "ExpungerProfile(user=%s, attorney=%s, organization=%s)" % (
             self.user, self.attorney, self.organization)
+
+class DocketMetadata(models.Model):
+    external_mysql_id = models.TextField(unique=True)
+    county_name = models.TextField()
+    docket_number = models.TextField(unique=True)
+    filed_date = models.TextField()
+    last_name = models.TextField()
+    first_name = models.TextField()
+
+    def __str__(self):
+        return "%s: %s %s" % (self.docket_number, self.first_name, self.last_name)
