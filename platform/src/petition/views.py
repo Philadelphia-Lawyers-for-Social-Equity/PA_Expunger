@@ -180,6 +180,16 @@ def charges_from_parser(parsed):
     """
     Produces the ratio, charges based on the docket parser output.
     """
+    def include_charge(disp):
+        """Return True if the charge should be included."""
+        if "offense_disposition" not in disp:
+            raise ValueError(
+                "Charge must include a disposition, got: %s" % disp)
+
+        return disp["is_final"] and disp["offense_disposition"] in [
+            "Nolle Prossed", "ARD - County", "Not Guilty", "Dismissed",
+            "Withdrawn"]
+
     ratio = models.PetitionRatio.full
     charges = []
 
@@ -188,8 +198,7 @@ def charges_from_parser(parsed):
         for disp in parsed["section_disposition"]:
             if include_charge(disp):
                 charges.append(disposition_to_charge(disp))
-            else:
-                logger.warn("Excluded charge: %s" % disp)
+            elif disp["is_final"]:
                 ratio = models.PetitionRatio.partial
 
     return (ratio, charges)
@@ -209,18 +218,6 @@ def restitution_from_parser(parsed):
         "total": total,
         "paid": paid
     }
-
-
-def include_charge(disp):
-    """
-    Produce true if a charge qualifies for expungement.
-    """
-    if "offense_disposition" not in disp:
-        raise ValueError("Charge must include a disposition, got: %s" % disp)
-
-    return disp["offense_disposition"] in [
-        "Nolle Prossed", "ARD - County", "Not Guilty", "Dismissed",
-        "Withdrawn"]
 
 
 def date_string(d):
