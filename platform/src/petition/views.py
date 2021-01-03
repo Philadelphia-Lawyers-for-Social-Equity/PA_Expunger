@@ -89,11 +89,12 @@ class DocketParserAPIView(APIView):
             logger.warn(msg)
             return Response({"error": msg})
 
+        ratio, charges = charges_from_parser(parsed)
         content = {
             "petitioner": petitioner_from_parser(parsed),
-            "petition": petition_from_parser(parsed),
+            "petition": petition_from_parser(parsed, ratio),
             "dockets": dockets_from_parser(parsed),
-            "charges": charges_from_parser(parsed),
+            "charges": charges,
             "restitution": restitution_from_parser(parsed)
         }
 
@@ -124,7 +125,7 @@ def petitioner_from_parser(parsed):
     return petitioner
 
 
-def petition_from_parser(parsed):
+def petition_from_parser(parsed, ratio):
     """
     Produce the petition data based on the docket parser output.
     """
@@ -148,7 +149,8 @@ def petition_from_parser(parsed):
         "arrest_officer": officer,
         "arrest_agency": case_info.get("arrest_agency"),
         "judge": case_info.get("judge"),
-        "arrest_date": arrest_date
+        "arrest_date": arrest_date,
+        "ratio": ratio.name
         }
 
 
@@ -176,8 +178,19 @@ def dockets_from_parser(parsed):
 
 def charges_from_parser(parsed):
     """
-    Produces the charges based on the docket parser output.
+    Produces the ratio, charges based on the docket parser output.
     """
+    def include_charge(disp):
+        """Return True if the charge should be included."""
+        if "offense_disposition" not in disp:
+            raise ValueError(
+                "Charge must include a disposition, got: %s" % disp)
+
+        return disp["is_final"] and disp["offense_disposition"] in [
+            "Nolle Prossed", "ARD - County", "Not Guilty", "Dismissed",
+            "Withdrawn"]
+
+    ratio = models.PetitionRatio.full
     charges = []
 
     if "section_disposition" in parsed:
@@ -185,8 +198,10 @@ def charges_from_parser(parsed):
         for disp in parsed["section_disposition"]:
             if include_charge(disp):
                 charges.append(disposition_to_charge(disp))
+            elif disp["is_final"]:
+                ratio = models.PetitionRatio.partial
 
-    return charges
+    return (ratio, charges)
 
 
 def restitution_from_parser(parsed):
@@ -203,18 +218,6 @@ def restitution_from_parser(parsed):
         "total": total,
         "paid": paid
     }
-
-
-def include_charge(disp):
-    """
-    Produce true if a charge qualifies for expungement.
-    """
-    if "offense_disposition" not in disp:
-        raise ValueError("Charge must include a disposition, got: %s" % disp)
-
-    return disp["offense_disposition"] in [
-        "Nolle Prossed", "ARD - County", "Not Guilty", "Dismissed",
-        "Withdrawn"]
 
 
 def date_string(d):

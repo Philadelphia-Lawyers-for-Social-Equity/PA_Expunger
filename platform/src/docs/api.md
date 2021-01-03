@@ -95,7 +95,8 @@ parsing. This is where the real work gets done.
                 - zipcode: string formatted zip code
         - petition
             - date: iso formatted date, such as "2019-10-17"
-            - petition_type: string, currently "expungement"
+            - ratio: string, must be "full" if every charge is to be
+                     expunged, or "partial" if some charges are excluded.
             - otn: string
             - dc: string
             - arrest_date: iso formatted date, such as "2019-10-17"
@@ -122,6 +123,9 @@ parsing. This is where the real work gets done.
                 - arrest_officer: string, arresting officer's full name
                 - arrest_agency: string, arresting agency
                 - judge: string, full name of the judge
+                - ratio: string, may be "full" if every charge could be
+                         expunged, or "partial" if some charges have been
+                         excluded.
         - dockets: List of docket ids, such as "MC-51-CR-1234567-1995"
 
         - charges (list of):

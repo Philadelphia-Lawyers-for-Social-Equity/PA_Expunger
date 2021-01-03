@@ -93,9 +93,13 @@ docket_decoder = Grammar(r"""
 
     section_disposition =
         "DISPOSITION SENTENCING/PENALTIES"
-        ( disposition
+        ( disposition_state
+        / disposition
         / (!section_head junk)
         )+
+
+    disposition_state = (word+) space+ date space+ disposition_state_value
+    disposition_state_value = "Final Disposition" / "Not Final"
 
     disposition = space* integer space "/" space charge_description space+
                   offense_disposition space+ (grade space+)? statute next_line
@@ -253,7 +257,6 @@ class DocketExtractor(NodeVisitor):
         return ("arrest_officer_name", node.text.strip())
 
     def visit_originating_docket(self, node, visited_children):
-        result = val_named("docket_id", visited_children)
         return ("originating_docket", val_named("docket_id", visited_children))
 
     def visit_district_control_number(self, node, visited_children):
@@ -270,18 +273,6 @@ class DocketExtractor(NodeVisitor):
 
     def visit_arrest_date(self, node, visited_children):
         return ("arrest_date", tval(visited_children[-1]))
-
-    def visit_section_disposition(self, node, visited_children):
-        flat = flatten(visited_children[1])
-        dispositions = [tval(x) for x in flat if tname(x) == "disposition"]
-
-        logger.debug("section_disposition found %d dispositions",
-                     len(dispositions))
-
-        if len(dispositions) == 0:
-            return
-
-        return ("section_disposition", dispositions)
 
     def visit_section_defendant_information(self, node, visited_children):
         result = {
@@ -300,6 +291,38 @@ class DocketExtractor(NodeVisitor):
 
     def visit_alias(self, node, visited_children):
         return ("alias", node.text.strip())
+
+    def visit_section_disposition(self, node, visited_children):
+        sequence = [x for x in flatten(visited_children[1])
+                    if tname(x) in {"disposition", "disposition_state"}]
+
+        is_final = True
+        dispositions = []
+
+        for s in sequence:
+            if tname(s) == "disposition_state":
+                logger.debug("Disposition sequence state: %s" % tval(s))
+                is_final = tval(s) == "Final Disposition"
+            elif tname(s) == "disposition":
+                d = tval(s)
+                logger.debug("Disposition sequence item #%d" % d["sequence"])
+                d["is_final"] = is_final
+                dispositions.append(d)
+
+        logger.debug("section_disposition found %d dispositions",
+                     len(dispositions))
+
+        if len(dispositions) == 0:
+            return
+
+        return ("section_disposition", dispositions)
+
+    def visit_disposition_state(self, node, visited_children):
+        val = val_named("disposition_state_value", visited_children)
+        return ("disposition_state", val)
+
+    def visit_disposition_state_value(self, node, visited_children):
+        return ("disposition_state_value", node.text)
 
     def visit_disposition(self, node, visited_children):
         result = {

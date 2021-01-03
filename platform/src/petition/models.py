@@ -166,20 +166,21 @@ class DocketId:
         return docket
 
 
-class PetitionType(enum.Enum):
-    expungement = "Expungement"
+class PetitionRatio(enum.Enum):
+    full = "Expungement"
+    partial = "Partial Expungement"
 
 
 class Petition:
     """The petition data"""
-    def __init__(self, date, petition_type, otn, dc, arrest_agency, arrest_date,
+    def __init__(self, date, ratio, otn, dc, arrest_agency, arrest_date,
                  arrest_officer, judge):
 
-        if not isinstance(petition_type, PetitionType):
-            raise ValueError("Invalid PetitionType")
+        if not isinstance(ratio, PetitionRatio):
+            raise ValueError("Invalid PetitionRatio")
 
         self.date = date
-        self.petition_type = petition_type
+        self.ratio = ratio
         self.otn = otn
         self.dc = dc
         self.arrest_agency = arrest_agency
@@ -192,7 +193,7 @@ class Petition:
         """Produce a petition from it's dict representation"""
         return Petition(
             dateparser.parse(data["date"]),
-            PetitionType[data["petition_type"]],
+            PetitionRatio[data["ratio"]],
             data["otn"], data["dc"], data["arrest_agency"],
             dateparser.parse(data["arrest_date"]),
             data["arrest_officer"], data["judge"]
@@ -200,7 +201,7 @@ class Petition:
 
     def __repr__(self):
         return "Petition(%s, %s, '%s', '%s', %s, '%s', '%s', '%s')" % (
-            repr(self.date), self.petition_type, self.otn, self.dc,
+            repr(self.date), self.ratio, self.otn, self.dc,
             self.arrest_agency, repr(self.arrest_date), self.arrest_officer,
             self.judge)
 

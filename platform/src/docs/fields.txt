@@ -33,7 +33,7 @@ docket
 
 petition
     - date
-    - petition_type
+    - ratio
     - OTN#
     - DC#
     - arrest date
