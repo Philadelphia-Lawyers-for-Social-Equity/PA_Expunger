@@ -39,9 +39,10 @@ RUN apt-get update -y -qq && \
     && apt-get clean -y
 
 # Install Yarn for production frontend build later
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y -qq nodejs
-RUN npm install -g yarn
+# TODO: see below about adding this to production build only
+# RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+# RUN apt-get install -y -qq nodejs
+# RUN npm install -g yarn
 
 # timezone-related fixes
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
@@ -92,6 +93,8 @@ COPY platform/src/ .
 # -- PROD BUILD --
 # Frontend install
 
+# TODO: make this only happen in production
+
 # WORKDIR ${APPDIR}/frontend/src
 # COPY frontend/src/ .
 # USER root
@@ -100,10 +103,6 @@ COPY platform/src/ .
 # USER ${EXPUNGER_USER}
 # WORKDIR ${APPDIR}
 # RUN python3 ./manage.py collectstatic --noinput
-
-# -- MYSQL CA CERT --
-WORKDIR ${APPDIR}
-COPY mysql_ca_cert/ ./mysql_ca_cert
 
 ## -- FINAL BUILD --
 ENTRYPOINT python3 ./manage.py makemigrations && python3 ./manage.py migrate && python3 ./manage.py runmodwsgi --log-to-terminal

@@ -29,7 +29,7 @@ if SECRET_KEY is None or SECRET_KEY.strip() == "":
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [os.environ.get("HOSTNAME")]
+ALLOWED_HOSTS = [os.environ.get("HOSTNAME"), "localhost"]
 
 
 # Application definition

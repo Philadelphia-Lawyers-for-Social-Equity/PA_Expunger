@@ -60,6 +60,21 @@ class AttorneysView(APIView):
 
         return Response(serializer.data)
 
+class DocketsView(APIView):
+    """Search view for docket metadata"""
+
+    def get(self, request, *args, **kwargs):
+        """Make docket search from query"""
+        first_name = request.query_params.get("firstName")
+        last_name = request.query_params.get("lastName")
+        if first_name is None or last_name is None:
+            return Response(
+                {"detail": "Must supply firstName and lastName in query parameters to search"},
+                status=409)
+        
+        records = models.DocketMetadata.objects.filter(first_name=first_name, last_name=last_name)
+        serializer = serializers.DocketSerializer(records, many=True)
+        return Response(serializer.data)
 
 class AttorneyView(APIView):
     """View of an individual attorney"""
