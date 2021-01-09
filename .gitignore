@@ -2,3 +2,4 @@
 __pycache__
 *pyc
 /mysql_ca_cert
+docket_parser/build/*
