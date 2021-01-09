@@ -1,26 +1,76 @@
 from django.core.management.base import BaseCommand, CommandError
-import mysql.connector, os
-# from expunger.models import DocketMetadata
+from django.db.utils import IntegrityError
+import mysql.connector, os, datetime
+import expunger.models
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        print("hello world")
-
-        # (figure out where we were)
 
         # establish connection with MySQL
-        user = os.environ.get("MYSQL_USER")
-        pwd = os.environ.get("MYSQL_PWD")
-        cnx = mysql.connector.connect(user=user, password=pwd,
-                              host='psle-db-mysql-nyc1-87996-do-user-5085894-0.a.db.ondigitalocean.com',
-                              port='25060',
-                              database='defaultdb',
-                              ssl_ca='/Users/apple/.ssh/plse',
-                              ssl_verify_cert=True)
-        cnx.close()
+        try: 
+            user = os.environ.get("MYSQL_USER")
+            pwd = os.environ.get("MYSQL_PWD")
+            cnx = mysql.connector.connect(user=user, password=pwd,
+                host='psle-db-mysql-nyc1-87996-do-user-5085894-0.a.db.ondigitalocean.com',
+                port='25060',
+                database='defaultdb',
+                ssl_ca='/Users/tomasgear/Desktop/Nov-Plse/ca-certificate.crt',
+                ssl_verify_cert=True)
+            cursor = cnx.cursor()
+            
+        except mysql.connector.Error as err:
+            print("Something went wrong: {}".format(err))
 
-        # fetch chunk of data from MySQL
+        batch_size = 5000
+        query = "SELECT * FROM case_data ORDER BY id"
+        cursor.execute(query)
+        input_batch = cursor.fetchmany(size=batch_size)
+        count = 0
 
-        # transform data into django model structure
+        while len(input_batch) > 0 and count < 2:
 
-        # save to django database
+            for result in input_batch:
+                try:
+                    expunger.models.DocketMetadata.objects.create(external_mysql_id=result[0],
+                        county_name=result[1],
+                        docket_number=result[2],
+                        filed_date=result[3],
+                        last_name=result[4],
+                        first_name=result[5],
+                        middle_name=result[6],
+                        city=result[7],
+                        state=result[8],
+                        zipcode=result[9],
+                        offense_tracking_number=result[10],
+                        gender_code=result[11],
+                        race_code=result[12],
+                        birthdate=result[13],
+                        originating_offense_sequence=result[14],
+                        statute_type=result[15],
+                        statute_title=result[16],
+                        statute_section=result[17],
+                        statute_subsection=result[18],
+                        inchoate_statute_title=result[19],
+                        inchoate_statute_section=result[20],
+                        inchoate_statute_subsection=result[21],
+                        offense_disposition=result[22],
+                        offense_date=result[23],
+                        offense_disposition_date=result[24],
+                        offense_description=result[25],
+                        case_disposition=result[26], 
+                        case_disposition_date=result[27],
+                        offense_grade=result[28],
+                        disposing_judge=result[29]
+                        )
+                except IntegrityError as e:
+                    print("already had %d, skipping" % result[0])
+                    print("IntegrityError: ", e)
+                except Exception as e:
+                    print("ERROR! Failed to create object in postgres: ", e)
+
+            input_batch = cursor.fetchmany(size=batch_size)
+            count = count + 1
+
+        cursor.fetchall()
+        cursor.close()
+        cnx.close() 

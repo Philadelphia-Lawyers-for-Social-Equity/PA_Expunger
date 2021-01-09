@@ -92,14 +92,18 @@ COPY platform/src/ .
 # -- PROD BUILD --
 # Frontend install
 
-WORKDIR ${APPDIR}/frontend/src
-COPY frontend/src/ .
-USER root
-RUN yarn install --non-interactive --silent --production
-RUN yarn build
-USER ${EXPUNGER_USER}
+# WORKDIR ${APPDIR}/frontend/src
+# COPY frontend/src/ .
+# USER root
+# RUN yarn install --non-interactive --silent --production
+# RUN yarn build
+# USER ${EXPUNGER_USER}
+# WORKDIR ${APPDIR}
+# RUN python3 ./manage.py collectstatic --noinput
+
+# -- MYSQL CA CERT --
 WORKDIR ${APPDIR}
-RUN python3 ./manage.py collectstatic --noinput
+COPY mysql_ca_cert/ ./mysql_ca_cert
 
 ## -- FINAL BUILD --
 ENTRYPOINT python3 ./manage.py makemigrations && python3 ./manage.py migrate && python3 ./manage.py runmodwsgi --log-to-terminal
