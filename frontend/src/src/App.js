@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route } from "react-router-dom"; // removed Sw
 import { AuthContext } from "./context/auth";
 //import AdminPage from "../src/components/AdminPage";
 import LoginForm from "../src/components/LoginForm";
+import SearchPage from "../src/components/SearchPage";
 import LandingPage from "../src/components/LandingPage";
 import FileUpload from "../src/components/FileUpload";
 // import InputForm from "../src/components/InputForm";
@@ -40,6 +41,10 @@ function App(props) {
 
         <BodyBackgroundColor backgroundColor="#d9ecf9">
           <Route path="/signup" component={SignUp} />
+        </BodyBackgroundColor>
+
+        <BodyBackgroundColor backgroundColor="#d9ecf9">
+          <Route path="/search" component={SearchPage} />
         </BodyBackgroundColor>
 
         <BodyBackgroundColor backgroundColor="gray">
