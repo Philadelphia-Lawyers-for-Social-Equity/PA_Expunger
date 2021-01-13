@@ -15,9 +15,7 @@ export default function FileUpload() {
     const [isError2, setIsError2] = useState(false);
     const [filePassed, setFilePassed] = useState(false);
 
-    const [charges, setCharges] = useState({});
-    const [checkedItems, setCheckedItems] = useState({});
-
+    /* Petitioner */
     const [fullName, setFullName] = useState("");
     const [aliases, setAliases] = useState([]);
     const [dob, setDOB] = useState("");
@@ -27,6 +25,8 @@ export default function FileUpload() {
     const [twoLetterState, setTwoLetterState] = useState("");
     const [zipcode, setZipcode] = useState("");
     const [ssn, setSSN] = useState("");
+
+    /* Petition */
     const [otn, setOTN] = useState("");
     const [dc, setDC] = useState("");
     const [arrestAgency, setArrestAgency] = useState("");
@@ -36,6 +36,12 @@ export default function FileUpload() {
     const [dockets, setDockets] = useState([]);
     const [restitutionTotal, setRestitutionTotal] = useState(0.0);
     const [restitutionPaid, setRestitutionPaid] = useState(0.0);
+    const [ratio, setChargeRatio] = useState("full"); // may only be "full" or "partial"
+
+    /* Charges */
+    const [charges, setCharges] = useState({});
+    const [checkedItems, setCheckedItems] = useState({});
+
 
     // On click for the cancel button
     function returnToLogin() {
@@ -80,7 +86,8 @@ export default function FileUpload() {
                         setArrestDate(res.data.petition.arrest_date);
                         setArrestOfficer(res.data.petition.arrest_officer);
                         setJudge(res.data.petition.judge);
-                        if (JSON.stringify(res.data.restitution)!=JSON.stringify({})) {
+                        setChargeRatio(res.data.petition.ratio);
+                        if (JSON.stringify(res.data.restitution) != JSON.stringify({})) {
                             setRestitutionTotal(res.data.restitution.total.toFixed(2));
                             setRestitutionPaid(res.data.restitution.paid.toFixed(2));
                         }
@@ -145,6 +152,7 @@ export default function FileUpload() {
       "petition": {
         "date": today,
         "petition_type": "expungement",
+        "ratio": ratio,
         "otn": otn,
         "dc": dc,
         "arrest_agency": arrestAgency,
@@ -323,7 +331,7 @@ export default function FileUpload() {
                                 </Col>
                             </Form.Group>
 
-                            
+
                             <Form.Group as={Row}>
                                 <Col sm={3}>
                                     <Form.Label>
@@ -406,7 +414,7 @@ export default function FileUpload() {
                                 <Col sm={3}>
                                     <Form.Label>
                                         Restitution Amount
-                                </Form.Label>
+                                    </Form.Label>
                                 </Col>
                                 <Col sm={4}>
                                     Total <Form.Control placeholder="Total" id="totalRestitution" value={restitutionTotal} onChange={e => {
@@ -419,6 +427,14 @@ export default function FileUpload() {
                                     }} />
                                 </Col>
                             </Form.Group>
+
+                            <Radio
+                                label="Is this a full or partial expungement?"
+                                name="chargeRatio"
+                                handleChange={ setChargeRatio }
+                                items={ [ ["full", "Full Expungement"], ["partial", "Partial Expungement"] ]}
+                                selected={ratio}
+                            />
 
                             <Row>
                                 <Col>
@@ -446,7 +462,6 @@ export default function FileUpload() {
                                     </Table>
                                 </Col>
                             </Row>
-
 
                         <Row>
                             <Col sm={3}>
@@ -559,7 +574,7 @@ function EditableListTextItem(props) {
     }
 
     function handleEnterKey(press) {
-        if (editing && press.key == "Enter") {
+        if (editing && press.key === "Enter") {
             save();
         }
     }
@@ -597,6 +612,67 @@ function EditableListTextItem(props) {
             { hovering ? <RemoveButton /> : <></> }
             </Col>
         </Row>
+    );
+}
+
+function Radio(props) {
+    /* Build a radio selection
+
+    props expects:
+    * label - string title of the entire selection set
+    * name - string name for the entire selection set
+    * handleChange - function to set the new value
+    * items - array of [value, string] combinations, that will build each
+    * selected - value of checked item
+    */
+
+    function RadioOption(props) {
+        /* Build a radio option
+
+        * label - string for the option label
+        * name - string for the entire selection set
+        * value - value of the radio option
+        * handleChange - function to set the new value
+        * checked - boolean
+        */
+
+        let itemId = props.name + props.value;
+
+        return (
+            <div>
+                <div className="radioContainer">
+                    <input type="radio" name={props.name} id={itemId}
+                           value={props.value} className="form-check-input"
+                           defaultChecked={props.checked}
+                           onChange={() => {
+                                console.debug("selected " +  props.value);
+                                props.handleChange(props.value); }
+                           }
+                    />
+                    <label htmlFor={ itemId } className="form-check-label">{props.label}</label>
+                </div>
+            </div>
+        );
+    }
+
+    return(
+        <div className="container text-left">
+            <div className="row">
+                <div className="col">{ props.label }</div>
+            </div>
+
+        { props.items.map((item, idx) => (
+            <RadioOption
+                key={item[0]}
+                label={item[1]}
+                name={props.name}
+                value={item[0]}
+                handleChange={props.handleChange}
+                checked={item[0] === props.selected}
+            />
+        ))}
+
+        </div>
     );
 }
 
