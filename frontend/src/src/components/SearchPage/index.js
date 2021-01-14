@@ -87,7 +87,7 @@ export default function SearchPage() {
             console.log("fullname is " + searchFirstName + " " + searchLastName);
 
             // get database
-            const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/dockets/?firstName=" + searchFirstName + '&lastName=' + searchLastName;
+            const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.1/pa_court_archive/search/?firstName=" + searchFirstName + "&lastName=" + searchLastName;
             console.log("url is " + url);
             const bearer = "Bearer ";
             const token = bearer.concat(localStorage.getItem("access_token"));
