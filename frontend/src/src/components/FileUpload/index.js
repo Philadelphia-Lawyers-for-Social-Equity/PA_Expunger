@@ -428,13 +428,7 @@ export default function FileUpload() {
                                 </Col>
                             </Form.Group>
 
-                            <Radio
-                                label="Is this a full or partial expungement?"
-                                name="chargeRatio"
-                                handleChange={ setChargeRatio }
-                                items={ [ ["full", "Full Expungement"], ["partial", "Partial Expungement"] ]}
-                                selected={ratio}
-                            />
+
 
                             <Row>
                                 <Col>
@@ -463,23 +457,41 @@ export default function FileUpload() {
                                 </Col>
                             </Row>
 
-                        <Row>
-                            <Col sm={3}>
-                            </Col>
-                            <Col sm={6}>
-                                <Button id="ExpungeButton" onClick={checkInfo}>Expunge</Button>
-                                {isError2 && <div>Please enter client address and social security number</div>}
-                            </Col>
-                            <Col sm={3}>
-                            </Col>
-                        </Row>
-                    </Form>
+                            <Form.Group as={Row}></Form.Group>
+
+                            <Row>
+                                <Col sm={3}>
+                                </Col>
+                                <Col sm={6}>
+                                    <Radio
+                                        label="Is this a full or partial expungement?"
+                                        name="chargeRatio"
+                                        handleChange={setChargeRatio}
+                                        items={[["full", "Full Expungement"], ["partial", "Partial Expungement"]]}
+                                        selected={ratio}
+                                    />
+                                </Col>
+                                <Col sm={3}>
+                                </Col>
+                            </Row>
+
+                            <Row>
+                                <Col sm={3}>
+                                </Col>
+                                <Col sm={6}>
+                                    <Button id="ExpungeButton" onClick={checkInfo}>Expunge</Button>
+                                    {isError2 && <div>Please enter client address and social security number</div>}
+                                </Col>
+                                <Col sm={3}>
+                                </Col>
+                            </Row>
+                        </Form>
 
                     </Col>
 
                 </Row>
 
-                </div>}
+            </div>}
 
         </div >
     );
