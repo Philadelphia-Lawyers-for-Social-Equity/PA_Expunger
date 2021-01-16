@@ -96,7 +96,7 @@ export default function SearchPage() {
             };
 
             // Enter mock data until api endpoint is ready
-            var mockData = [{"docket_number" : 12345}, {"docket_number" : 67890}];
+            var mockData = [{"docket_number" : "MC-51-CR-1234567-2000"}, {"docket_number" : "MC-51-CR-7654321-1998"}];
             setArchiveData(mockData);
 
             //Uncomment when api endpoint is ready:
@@ -180,7 +180,6 @@ export default function SearchPage() {
 
             <Row style={{ margin: `80px` }}>
                 <Col md={{ span: 8, offset: 2 }}>
-                    returned data here
                     <ButtonGroup vertical >
                     {archiveData.map(docket => (<Button id="archiveinfo" key={docket.docket_number} >{docket.docket_number}</Button>))}
                     </ButtonGroup>
