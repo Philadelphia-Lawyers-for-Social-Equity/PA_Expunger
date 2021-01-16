@@ -68,7 +68,7 @@ export default function LoginForm() {
   }
 
   if (hasProfile) {
-    return <Redirect to="/upload" />;
+    return <Redirect to="/action" />;
   }
 
   if (is404) {

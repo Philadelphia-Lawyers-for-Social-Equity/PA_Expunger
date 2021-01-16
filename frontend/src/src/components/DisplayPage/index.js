@@ -6,7 +6,7 @@ import { Button, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootst
 // import { useAuth } from '../../context/auth';
 
 
-export default function FileUpload() {
+export default function DisplayPage() {
 
     const history = useHistory();
 

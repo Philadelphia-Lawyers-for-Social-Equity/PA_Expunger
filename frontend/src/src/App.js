@@ -6,10 +6,12 @@ import { BrowserRouter as Router, Route } from "react-router-dom"; // removed Sw
 import { AuthContext } from "./context/auth";
 //import AdminPage from "../src/components/AdminPage";
 import LoginForm from "../src/components/LoginForm";
+import ChooseAction from "../src/components/ChooseAction";
 import SearchPage from "../src/components/SearchPage";
 import LandingPage from "../src/components/LandingPage";
 import FileUpload from "../src/components/FileUpload";
 // import InputForm from "../src/components/InputForm";
+import DisplayPage from "../src/components/DisplayPage";
 import ProfilePage from "../src/components/ProfilePage";
 import BodyBackgroundColor from "react-body-backgroundcolor";
 
@@ -43,16 +45,24 @@ function App(props) {
           <Route path="/signup" component={SignUp} />
         </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <Route path="/search" component={SearchPage} />
-        </BodyBackgroundColor>
-
         <BodyBackgroundColor backgroundColor="gray">
           <Route path="/landing" component={LandingPage} />
         </BodyBackgroundColor>
 
         <BodyBackgroundColor backgroundColor="gray">
+          <Route path="/action" component={ChooseAction} />
+        </BodyBackgroundColor>
+
+        <BodyBackgroundColor backgroundColor="#d9ecf9">
+          <Route path="/search" component={SearchPage} />
+        </BodyBackgroundColor>
+
+        <BodyBackgroundColor backgroundColor="gray">
           <Route path="/upload" component={FileUpload} />
+        </BodyBackgroundColor>
+
+        <BodyBackgroundColor backgroundColor="#d9ecf9">
+          <Route path="/display" component={DisplayPage} />
         </BodyBackgroundColor>
 
         {/* <BodyBackgroundColor backgroundColor="#d9ecf9">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
-import { Button, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
+import { Button, ButtonGroup, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
 // import { useAuth } from '../../context/auth';
 
 
@@ -16,12 +16,12 @@ export default function SearchPage() {
 
     const [isError, setIsError] = useState(false);
 
-    const [docketData, setDocketData] = useState([]);
+    const [archiveData, setArchiveData] = useState([]);
 
     // const [docketDataDisplay, setDocketDataDisplay] = useState(false);
 
     // const [CountyName, setCountyName] = useState("");
-    // const [DocketNumber, setDocketNumber] = useState("");
+    // const [DocketNumber, setDocketNumber] = useState(""); 
     // const [FiledDate, setFiledDate] = useState("");
     // const [LastName, setLastName] = useState("");
     // const [FirstName, setFirstName] = useState("");
@@ -76,7 +76,7 @@ export default function SearchPage() {
     }
 
     // GET for docket info from database
-    function getData() {
+    function getArchiveData() {
 
         // Need to check if inputs are available
         if (searchFirstName === "" || searchLastName === "") {
@@ -95,12 +95,17 @@ export default function SearchPage() {
                 'headers': { 'Authorization': token }
             };
 
-            axios.get(url, config)
-                .then(res => {
-                    if (res.status === 200) {
-                        console.log(res.data);
+            // Enter mock data until api endpoint is ready
+            var mockData = [{"docket_number" : 12345}, {"docket_number" : 67890}];
+            setArchiveData(mockData);
 
-                        setDocketData(res.data);
+            //Uncomment when api endpoint is ready:
+            // axios.get(url, config)
+            //     .then(res => {
+            //         if (res.status === 200) {
+            //             console.log(res.data);
+
+                        //setArchiveData(res.data);
 
                         // setCountyName(res.data.county_name);
                         // setDocketNumber(res.data.docket_number);
@@ -138,11 +143,13 @@ export default function SearchPage() {
                         // }
 
                         //setDocketDataDisplay(true);
-                    }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
+                //     }
+                // })
+                // .catch(err => {
+                //     console.log(err);
+                // });
+
+
         }
     }
 
@@ -165,7 +172,7 @@ export default function SearchPage() {
 
                 <Modal.Footer>
                     <Button id="returnToLoginButton" onClick={returnToLogin}>Cancel</Button>
-                    <Button id="submitNameButton" onClick={getData}> Submit</Button>
+                    <Button id="submitNameButton" onClick={getArchiveData}> Submit</Button>
                     {isError && <div>Please fill in search terms</div>}
                 </Modal.Footer>
             </Modal.Dialog>
@@ -174,9 +181,9 @@ export default function SearchPage() {
             <Row style={{ margin: `80px` }}>
                 <Col md={{ span: 8, offset: 2 }}>
                     returned data here
-                    {docketData.map(docket => (<Button id="attorneyNames" key={docket.docket_number} onClick={e => {
-
-                    }}>{docket.docket_number}</Button>))}
+                    <ButtonGroup vertical >
+                    {archiveData.map(docket => (<Button id="archiveinfo" key={docket.docket_number} >{docket.docket_number}</Button>))}
+                    </ButtonGroup>
                 </Col>
             </Row>
 
