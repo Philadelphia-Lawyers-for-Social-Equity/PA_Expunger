@@ -114,7 +114,9 @@ class TestRest(Authenticated, TestCase):
         self.assertNotEqual(new_org, self.authenticated_profile.organization)
 
         res = self.authenticated_client.put(
-            url, {"attorney": new_attorney.pk}, content_type="application/json")
+            url,
+            {"attorney": new_attorney.pk},
+            content_type="application/json")
         jsr = res.json()
 
         self.authenticated_profile.refresh_from_db()

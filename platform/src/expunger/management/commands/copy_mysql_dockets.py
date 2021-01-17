@@ -1,25 +1,38 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
-import mysql.connector, os, datetime
+import mysql.connector
+import os
 import expunger.models
+import logging
+
+
+host = 'psle-db-mysql-nyc1-87996-do-user-5085894-0.a.db.ondigitalocean.com'
+port = '25060'
+database = 'defaultdb'
+ssl_ca = '/path/to/ca-certificate.crt'  # put this secret somewhere
+
+logger = logging.Logger(__name__)
+logger.addHandler = logging.StreamHandler()
+logger.setLevel(os.environ.get("LOGLEVEL", "WARNING"))
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-
         # establish connection with MySQL
-        try: 
+        try:
             user = os.environ.get("MYSQL_USER")
             pwd = os.environ.get("MYSQL_PWD")
-            cnx = mysql.connector.connect(user=user, password=pwd,
-                host='psle-db-mysql-nyc1-87996-do-user-5085894-0.a.db.ondigitalocean.com',
-                port='25060',
-                database='defaultdb',
-                ssl_ca='/Users/tomasgear/Desktop/Nov-Plse/ca-certificate.crt',
+            cnx = mysql.connector.connect(
+                user=user,
+                password=pwd,
+                host=host,
+                port=port,
+                database=database,
+                ssl_ca=ssl_ca,
                 ssl_verify_cert=True)
             cursor = cnx.cursor()
-            
         except mysql.connector.Error as err:
-            print("Something went wrong: {}".format(err))
+            logger.error("Failed to connect to %s, %s", host, str(err))
 
         batch_size = 5000
         query = "SELECT * FROM case_data ORDER BY id"
@@ -28,10 +41,10 @@ class Command(BaseCommand):
         count = 0
 
         while len(input_batch) > 0 and count < 2:
-
             for result in input_batch:
                 try:
-                    expunger.models.DocketMetadata.objects.create(external_mysql_id=result[0],
+                    expunger.models.DocketMetadata.objects.create(
+                        external_mysql_id=result[0],
                         county_name=result[1],
                         docket_number=result[2],
                         filed_date=result[3],
@@ -57,7 +70,7 @@ class Command(BaseCommand):
                         offense_date=result[23],
                         offense_disposition_date=result[24],
                         offense_description=result[25],
-                        case_disposition=result[26], 
+                        case_disposition=result[26],
                         case_disposition_date=result[27],
                         offense_grade=result[28],
                         disposing_judge=result[29]
@@ -73,4 +86,4 @@ class Command(BaseCommand):
 
         cursor.fetchall()
         cursor.close()
-        cnx.close() 
+        cnx.close()
