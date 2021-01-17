@@ -1,3 +1,34 @@
+# Glossary (resusable data structure definitions)
+
+**Petition Fields** is a data structure (typically JSON or python dict)
+containing:
+    - petitioner
+            - name: string, full name
+            - aliases: list of strings, aliases of petitioner
+            - dob: petitioners date of birth, iso formatted, such as
+                   "2019-10-17"
+    - petition
+            - otn: string
+            - arrest_date: iso formatted date, such as "2019-10-17"
+            - arrest_officer: string, arresting officer's full name
+            - arrest_agency: string, arresting agency
+            - judge: string, full name of the judge
+            - ratio: string, may be "full" if every charge could be
+                     expunged, or "partial" if some charges have been
+                     excluded.
+    - dockets: List of docket ids, such as "MC-51-CR-1234567-1995"
+    
+    - charges (list of):
+        - statute: string
+        - description: string
+        - grade: string (usually 2-3 chars)
+        - date: date, formatted such as “2020-10-11”
+        - disposition: string
+    
+    - restitution:
+            - total: decimal number
+            - paid: decimal number
+
 # API
 
 ## Authentication
@@ -120,24 +151,13 @@ parsing. This is where the real work gets done.
       - paid: decimal number
 
 - **api/v0.2.0/petition/parse_docket/**
+    - Requires access token header
+    - POST of docket file produces JSON of Petition Fields
 
-  - Requires access token header
-  - POST of docket file produces JSON of (any field may be missing on parse
-    failure):
-
-    - petitioner - name: string, full name - aliases: list of strings, aliases of petitioner - dob: petitioners date of birth, iso formatted, such as
-      "2019-10-17"
-    - petition - otn: string - arrest_date: iso formatted date, such as "2019-10-17" - arrest_officer: string, arresting officer's full name - arrest_agency: string, arresting agency - judge: string, full name of the judge - ratio: string, may be "full" if every charge could be
-      expunged, or "partial" if some charges have been
-      excluded.
-    - dockets: List of docket ids, such as "MC-51-CR-1234567-1995"
-
-    - charges (list of):
-
-      - statute: string
-      - description: string
-      - grade: string (usually 2-3 chars)
-      - date: date, formatted such as “2020-10-11”
-      - disposition: string
-
-    - restitution: - total: decimal number - paid: decimal number
+- **api/v0.2.1/pa_court_archive/search**
+    - Requires access token header
+    -  GET request allows searching, with:
+        - required fields:
+            - first_name: string, first name of client to search
+            - last_name: string, last name of client to search
+        - returns list of Petition Fields, may be an empty list
