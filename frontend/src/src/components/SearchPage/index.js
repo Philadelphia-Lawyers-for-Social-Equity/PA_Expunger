@@ -16,7 +16,10 @@ export default function SearchPage() {
 
     const [isError, setIsError] = useState(false);
 
+    const [searchPassed, setSearchPassed] = useState(false);
+
     const [archiveData, setArchiveData] = useState([]);
+    const [checkedItems, setCheckedItems] = useState({});
 
     // const [docketDataDisplay, setDocketDataDisplay] = useState(false);
 
@@ -96,9 +99,12 @@ export default function SearchPage() {
             };
 
             // Enter mock data until api endpoint is ready
-            var mockData = [{"docket_number" : "MC-51-CR-1234567-2000"}, {"docket_number" : "MC-51-CR-7654321-1998"}];
+            var mockData = [
+                {"docket_number" : "MC-51-CR-1234567-2000", "first_name" : "John", "middle_name" : "", "last_name" : "Smith", "birth_date" : "1580-01-06", "filed_date" : "2000-10-23"}, 
+                {"docket_number" : "MC-51-CR-7654321-1998", "first_name" : "John", "middle_name" : "Richard", "last_name" : "Smith", "birth_date" : "1980-02-02", "filed_date" : "1998-11-23"}];
             setArchiveData(mockData);
 
+            setSearchPassed(true);
             //Uncomment when api endpoint is ready:
             // axios.get(url, config)
             //     .then(res => {
@@ -153,6 +159,11 @@ export default function SearchPage() {
         }
     }
 
+    // checkboxes onchange for charges table
+    function handleCheckbox(target) {
+        setCheckedItems({ ...checkedItems, [target.name]: target.checked });
+    }
+
 
     return (
         <div className="text-center">
@@ -172,19 +183,41 @@ export default function SearchPage() {
 
                 <Modal.Footer>
                     <Button id="returnToLoginButton" onClick={returnToLogin}>Cancel</Button>
-                    <Button id="submitNameButton" onClick={getArchiveData}> Submit</Button>
+                    <Button id="submitNameButton" onClick={getArchiveData}>Search</Button>
                     {isError && <div>Please fill in search terms</div>}
                 </Modal.Footer>
             </Modal.Dialog>
 
-
-            <Row style={{ margin: `80px` }}>
-                <Col md={{ span: 8, offset: 2 }}>
-                    <ButtonGroup vertical >
-                    {archiveData.map(docket => (<Button id="archiveinfo" key={docket.docket_number} >{docket.docket_number}</Button>))}
-                    </ButtonGroup>
-                </Col>
-            </Row>
+            {searchPassed && <div>
+                <Row>
+                    <Col>
+                        <Table>
+                            <thead>
+                                <tr>
+                                    <th>First</th>
+                                    <th>Middle</th>
+                                    <th>Last</th>
+                                    <th>DOB</th>
+                                    <th>Docket Number</th>
+                                    <th>Filed Date</th>
+                                    <th>Select Docket to generate Petition</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {archiveData.map((archivecharge, index) => (<tr key={index}>
+                                    <td className="first_name">{archivecharge.first_name}</td>
+                                    <td className="middle_name">{archivecharge.middle_name}</td>
+                                    <td className="last_name">{archivecharge.last_name}</td>
+                                    <td className="birth_date">{archivecharge.birth_date}</td>
+                                    <td className="docket_number">{archivecharge.docket_number}</td>
+                                    <td className="filed_date">{archivecharge.filed_date}</td>
+                                    <td><ToggleButton type="checkbox" variant="dark" id={index} value={index} name={index} checked={checkedItems[index]} onChange={e => { handleCheckbox(e.target); }} /></td>
+                                </tr>))}
+                            </tbody>
+                        </Table>
+                    </Col>
+                </Row>
+            </div> }
 
         </div >
     );
