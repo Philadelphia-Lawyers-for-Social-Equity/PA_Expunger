@@ -45,8 +45,3 @@ class ExpungerProfileSerializer(serializers.HyperlinkedModelSerializer):
     attorney = AttorneySerializer()
     organization = OrganizationSerializer()
     user = UserSerializer()
-
-
-class DocketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.DocketMetadata

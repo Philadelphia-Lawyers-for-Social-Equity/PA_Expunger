@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'expunger',
-    'petition'
+    'petition',
+    'pa_court_archive'
 ]
 
 MIDDLEWARE = [
