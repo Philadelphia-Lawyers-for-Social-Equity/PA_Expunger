@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+from copy import copy
+
 from django.test import TestCase
 from pa_court_archive import factories
 from pa_court_archive import serializers
@@ -40,7 +43,16 @@ class TestPaCourtArchive(TestCase):
     def test_make_petition_fields(self):
         """Test convesion of PaRecord to petitition_fields."""
         parecord = factories.PaRecordFactory()
-        serializer = serializers.PaRecordToPetitionFieldsSerializer(parecord)
+        uglified = copy(parecord)
+
+        uglified.dob = parecord.birthdate + " 00:00:00.000"
+        uglified.zip = parecord.zipcode + ".0"
+        uglified.filed_date = parecord.filed_date + " 16:15:00.000"
+        uglified.offense_date = parecord.offense_date + " 00:00:00.000"
+        uglified.case_disposition_date = parecord.case_disposition_date + \
+            " 00:00:00.000"
+
+        serializer = serializers.PaRecordToPetitionFieldsSerializer(uglified)
 
         self.assertEqual(
             serializer.data["petitioner"],
