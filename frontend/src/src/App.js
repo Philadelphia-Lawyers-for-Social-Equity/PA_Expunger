@@ -11,7 +11,7 @@ import SearchPage from "../src/components/SearchPage";
 import LandingPage from "../src/components/LandingPage";
 import FileUpload from "../src/components/FileUpload";
 // import InputForm from "../src/components/InputForm";
-import DisplayPage from "../src/components/DisplayPage";
+import GeneratePage from "./components/GeneratePage";
 import ProfilePage from "../src/components/ProfilePage";
 import BodyBackgroundColor from "react-body-backgroundcolor";
 
@@ -62,12 +62,8 @@ function App(props) {
         </BodyBackgroundColor>
 
         <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <Route path="/display" component={DisplayPage} />
+          <Route path="/generate" component={GeneratePage} />
         </BodyBackgroundColor>
-
-        {/* <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <Route path="/inputform" component={InputForm} />
-        </BodyBackgroundColor> */}
 
         <BodyBackgroundColor backgroundColor="#d9ecf9">
           <Route path="/profile" component={ProfilePage} />

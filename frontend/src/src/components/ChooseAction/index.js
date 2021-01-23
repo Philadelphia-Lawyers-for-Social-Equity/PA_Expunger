@@ -1,5 +1,5 @@
 import React from "react";
-import { Redirect } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import "./style.css";
 //import axios from 'axios';
 import { Button, Modal, Row, Col } from 'react-bootstrap';
@@ -8,16 +8,16 @@ import { Button, Modal, Row, Col } from 'react-bootstrap';
 
 export default function ChooseAction() {
 
+    const history = useHistory();
+
     // On click to search module
     function redirectToSearch() {
-        console.log("clicked search button");
-        return <Redirect to="/search" />;
+        history.push("/search");
     }
 
     // On click to upload pdf module
     function redirectToUpload() {
-        console.log("clicked upload button");
-        return <Redirect to="/upload" />;
+        history.push("/upload");
     }
 
     return (

@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
-import { Button, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
+import { Button, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
 // import { useAuth } from '../../context/auth';
 
 
-export default function DisplayPage() {
+export default function GeneratePage() {
 
     const history = useHistory();
-
-    const [fileName, setFileName] = useState(undefined);
-    const [isError, setIsError] = useState(false);
     const [isError2, setIsError2] = useState(false);
-    const [filePassed, setFilePassed] = useState(false);
+    const [dataReady, setDataReady] = useState(false);
 
     /* Petitioner */
     const [fullName, setFullName] = useState("");
@@ -43,65 +40,35 @@ export default function DisplayPage() {
     const [checkedItems, setCheckedItems] = useState({});
 
 
+    // useEffect is the React Hook equivalent to ComponentDidMount
+    useEffect(() => {
+        const localdocketdata = JSON.parse(localStorage.getItem("docketdata"));
+        setDockets(localdocketdata.dockets);
+        setFullName(localdocketdata.petitioner.name);
+        setCharges(localdocketdata.charges);
+        setAliases(localdocketdata.petitioner.aliases);
+        setDOB(localdocketdata.petitioner.dob);
+        setOTN(localdocketdata.petition.otn);
+        setArrestAgency(localdocketdata.petition.arrest_agency);
+        setArrestDate(localdocketdata.petition.arrest_date);
+        setArrestOfficer(localdocketdata.petition.arrest_officer);
+        setJudge(localdocketdata.petition.judge);
+        setChargeRatio(localdocketdata.petition.ratio);
+        if (JSON.stringify(localdocketdata.restitution) !== JSON.stringify({})) {
+            setRestitutionTotal(localdocketdata.restitution.total.toFixed(2));
+            setRestitutionPaid(localdocketdata.restitution.paid.toFixed(2));
+        }
+        //missing DC number (pending update from Pablo)
+        // setDC(res.data.petition.dc);
+
+        setDataReady(true);
+
+    }, []); // empty array as the second argument will limit to one get call
+
     // On click for the cancel button
-    function returnToLogin() {
-        history.push("/login");
-    }
-
-    // On change for getting file
-    function getFile(files) {
-        setFileName(files[0]);
-    }
-
-    // POST to send PDF file
-    function choseFile() {
-
-        // Need to check if a file is chosen
-        if (fileName === undefined) {
-            setIsError(true);
-        }
-        else {
-            let pdfdata = new FormData();
-            pdfdata.append('name', 'docket_file');
-            pdfdata.append('docket_file', fileName);
-
-            // post to generate profile
-            const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/parse-docket/";
-            const bearer = "Bearer ";
-            const token = bearer.concat(localStorage.getItem("access_token"));
-            var config = {
-                'headers': { 'Authorization': token }
-            };
-
-            axios.post(url, pdfdata, config)
-                .then(res => {
-                    if (res.status === 200) {
-                        setDockets(res.data.dockets);
-                        setFullName(res.data.petitioner.name);
-                        setCharges(res.data.charges);
-                        setAliases(res.data.petitioner.aliases);
-                        setDOB(res.data.petitioner.dob);
-                        setOTN(res.data.petition.otn);
-                        setArrestAgency(res.data.petition.arrest_agency);
-                        setArrestDate(res.data.petition.arrest_date);
-                        setArrestOfficer(res.data.petition.arrest_officer);
-                        setJudge(res.data.petition.judge);
-                        setChargeRatio(res.data.petition.ratio);
-                        if (JSON.stringify(res.data.restitution) !== JSON.stringify({})) {
-                            setRestitutionTotal(res.data.restitution.total.toFixed(2));
-                            setRestitutionPaid(res.data.restitution.paid.toFixed(2));
-                        }
-                        //missing DC number (pending update from Pablo)
-                        // setDC(res.data.petition.dc);
-
-                        setFilePassed(true);
-                    }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-        }
-    }
+    function returnToChooseAction() {
+        history.push("/action");
+    }                
 
     // checkboxes onchange for charges table
     function handleCheckbox(target) {
@@ -203,26 +170,7 @@ export default function DisplayPage() {
 
     return (
         <div className="text-center">
-            <Modal.Dialog>
-                <Modal.Header>
-                    <Modal.Title>Upload File</Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    <Col>
-                        <input type="file" name="docket_file" onChange={e => { getFile(e.target.files); }} />
-                    </Col>
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <Button id="returnToLoginButton" onClick={returnToLogin}>Cancel</Button>
-                    <Button id="fileButton" onClick={choseFile}>Submit</Button>
-                    {isError && <div>Please select a file</div>}
-                </Modal.Footer>
-            </Modal.Dialog>
-
-
-            {filePassed && <div>
+            {dataReady && <div>
 
                 <Row style={{ margin: `80px` }}>
 
@@ -479,10 +427,16 @@ export default function DisplayPage() {
                                 <Col sm={3}>
                                 </Col>
                                 <Col sm={6}>
+                                    
                                     <Button id="ExpungeButton" onClick={checkInfo}>Expunge</Button>
                                     {isError2 && <div>Please enter client address and social security number</div>}
                                 </Col>
                                 <Col sm={3}>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                <Button id="cancelButton" onClick={returnToChooseAction}>Cancel</Button>
                                 </Col>
                             </Row>
                         </Form>

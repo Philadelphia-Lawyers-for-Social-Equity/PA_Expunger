@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import "./style.css";
-import axios from 'axios';
-import { Button, ButtonGroup, Modal, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
+//import axios from 'axios';
+import { Button, Modal, Col, Row, Table, ToggleButton } from 'react-bootstrap';
 // import { useAuth } from '../../context/auth';
 
 
@@ -74,8 +74,8 @@ export default function SearchPage() {
 
 
     // On click for the cancel button
-    function returnToLogin() {
-        history.push("/login");
+    function returnToChooseAction() {
+        history.push("/action");
     }
 
     // GET for docket info from database
@@ -182,7 +182,7 @@ export default function SearchPage() {
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="returnToLoginButton" onClick={returnToLogin}>Cancel</Button>
+                    <Button id="returnToChooseAction" onClick={returnToChooseAction}>Cancel</Button>
                     <Button id="submitNameButton" onClick={getArchiveData}>Search</Button>
                     {isError && <div>Please fill in search terms</div>}
                 </Modal.Footer>
