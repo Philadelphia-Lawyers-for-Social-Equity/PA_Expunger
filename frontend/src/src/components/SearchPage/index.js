@@ -72,11 +72,16 @@ export default function SearchPage() {
     // const [restitutionTotal, setRestitutionTotal] = useState(0.0);
     // const [restitutionPaid, setRestitutionPaid] = useState(0.0);
 
-
     // On click for the cancel button
     function returnToChooseAction() {
         history.push("/action");
     }
+
+    function onKeyUp(e) {
+        if (e.key === 'Enter') {
+            getArchiveData();
+        }
+      }
 
     // GET for docket info from database
     function getArchiveData() {
@@ -164,6 +169,19 @@ export default function SearchPage() {
         setCheckedItems({ ...checkedItems, [target.name]: target.checked });
     }
 
+    function storeArchiveData() {
+
+        var newPARecord = [];
+    
+        for (var i = 0; i < archiveData.length; i++) {
+            if(!document.getElementById(i.toString()).children[0].checked) {
+                newPARecord.push(archiveData[i]);
+            };
+        }
+
+        console.log(newPARecord);
+    }
+
 
     return (
         <div className="text-center">
@@ -177,7 +195,7 @@ export default function SearchPage() {
                         First Name: <input name="search_first_name" onChange={e => { setSearchFirstName(e.target.value); }} />
                     </Col>
                     <Col>
-                        Last Name: <input name="search_last_name" onChange={e => { setSearchLastName(e.target.value); }} />
+                        Last Name: <input name="search_last_name" onKeyDown={e => {onKeyUp(e)}} onChange={e => { setSearchLastName(e.target.value); }} />
                     </Col>
                 </Modal.Body>
 
@@ -200,21 +218,31 @@ export default function SearchPage() {
                                     <th>DOB</th>
                                     <th>Docket Number</th>
                                     <th>Filed Date</th>
-                                    <th>Select Docket to generate Petition</th>
+                                    <th>Select to generate Petition</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {archiveData.map((archivecharge, index) => (<tr key={index}>
-                                    <td className="first_name">{archivecharge.first_name}</td>
-                                    <td className="middle_name">{archivecharge.middle_name}</td>
-                                    <td className="last_name">{archivecharge.last_name}</td>
-                                    <td className="birth_date">{archivecharge.birth_date}</td>
-                                    <td className="docket_number">{archivecharge.docket_number}</td>
-                                    <td className="filed_date">{archivecharge.filed_date}</td>
+                                {archiveData.map((parecord, index) => (<tr key={index}>
+                                    <td className="first_name">{parecord.first_name}</td>
+                                    <td className="middle_name">{parecord.middle_name}</td>
+                                    <td className="last_name">{parecord.last_name}</td>
+                                    <td className="birth_date">{parecord.birth_date}</td>
+                                    <td className="docket_number">{parecord.docket_number}</td>
+                                    <td className="filed_date">{parecord.filed_date}</td>
                                     <td><ToggleButton type="checkbox" variant="dark" id={index} value={index} name={index} checked={checkedItems[index]} onChange={e => { handleCheckbox(e.target); }} /></td>
                                 </tr>))}
                             </tbody>
                         </Table>
+                    </Col>
+                </Row>
+
+                <Row>
+                    <Col sm={3}>
+                    </Col>
+                    <Col sm={6}>
+                        <Button id="DetailsButton" onClick={storeArchiveData}>Show Details</Button>
+                    </Col>
+                    <Col sm={3}>
                     </Col>
                 </Row>
             </div> }
