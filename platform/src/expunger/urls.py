@@ -13,7 +13,5 @@ urlpatterns = [
     path("organizations/", views.OrganizationsView.as_view(),
          name="organizations"),
     path("organization/<int:pk>", views.OrganizationView.as_view(),
-         name="organization-detail"),
-    path("dockets/", views.DocketsView.as_view(),
-         name="dockets")
+         name="organization-detail")
 ]

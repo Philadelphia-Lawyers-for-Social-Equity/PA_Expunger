@@ -31,5 +31,7 @@ urlpatterns = [
     path('api/v0.2.0/expunger/', include('expunger.urls',
          namespace='expunger')),
     path('api/v0.2.0/petition/', include('petition.urls',
-         namespace='petition'))
+         namespace='petition')),
+    path('api/0.2.0/pa_court_archive/', include('pa_court_archive.urls',
+         namespace='pa_court_archive'))
 ]

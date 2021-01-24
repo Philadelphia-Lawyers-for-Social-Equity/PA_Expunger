@@ -1,6 +1,5 @@
+import re
 from rest_framework import serializers
-
-from . import models
 
 
 class PaRecordToPetitionFieldsSerializer(serializers.Serializer):
@@ -15,7 +14,7 @@ class PaRecordToPetitionFieldsSerializer(serializers.Serializer):
         return {
             "name": merge_name(obj.first_name, obj.last_name, obj.middle_name),
             "aliases": None,
-            "dob": obj.birthdate}
+            "dob": clean_date_string(obj.birthdate)}
 
     def get_petition(self, obj):
         return {
@@ -36,7 +35,7 @@ class PaRecordToPetitionFieldsSerializer(serializers.Serializer):
                     obj.inchoate_statute_subsection),
                  "description": obj.offense_description,
                  "grade": obj.offense_grade,
-                 "date": obj.offense_date,
+                 "date": clean_date_string(obj.offense_date),
                  "disposition": obj.offense_disposition}]
 
 
@@ -61,3 +60,14 @@ def merge_statute(title, section, subsection):
 
     return "%s § %s §§ %s" % (
         str(title).strip(), str(section).strip(), str(subsection).strip())
+
+
+def clean_date_string(ds):
+    """Clean up a date string, or reject it."""
+    ds = ds[:10]
+    match = re.match(r"\d{4}-\d{2}-\d{2}", ds)
+
+    if match is None:
+        return
+
+    return ds

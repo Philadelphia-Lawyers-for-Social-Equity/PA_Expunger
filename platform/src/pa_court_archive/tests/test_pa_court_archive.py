@@ -3,8 +3,12 @@
 from copy import copy
 
 from django.test import TestCase
+from django.urls import reverse
+
 from pa_court_archive import factories
 from pa_court_archive import serializers
+
+from expunger.tests.test_rest import Authenticated
 
 
 class TestPaCourtArchive(TestCase):
@@ -85,3 +89,16 @@ class TestPaCourtArchive(TestCase):
               "grade": parecord.offense_grade,
               "date": parecord.offense_date,
               "disposition": parecord.offense_disposition}])
+
+
+class TestApi(Authenticated, TestCase):
+    """Make sure the REST interface works."""
+
+    def test_api_is_available(self):
+        """Make sure the api is running."""
+
+        data = {"first_name": "Harry", "last_name": "Potter"}
+        url = reverse("pa_court_archive:search")
+        res = self.authenticated_client.get(url, data, content_type="application/json")
+        self.assertEqual(res.status_code, 200, msg="bad response: %s" %
+                         res.content)

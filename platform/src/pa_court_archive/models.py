@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from django.conf import settings
 
 """
 Provide an interface for the PA Court Data that PLSE purchased.
 """
+
 
 class PaRecord(models.Model):
     external_mysql_id = models.TextField(unique=True)
