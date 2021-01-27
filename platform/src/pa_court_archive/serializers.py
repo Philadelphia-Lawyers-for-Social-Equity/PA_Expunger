@@ -64,6 +64,10 @@ def merge_statute(title, section, subsection):
 
 def clean_date_string(ds):
     """Clean up a date string, or reject it."""
+
+    if ds is None:
+        return
+
     ds = ds[:10]
     match = re.match(r"\d{4}-\d{2}-\d{2}", ds)
 
