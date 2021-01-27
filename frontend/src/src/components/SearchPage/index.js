@@ -124,7 +124,7 @@ function SearchResults(props) {
                 <td>{props.petitionFields.petitioner.dob}</td>
                 <td>{props.petitionFields.petition.otn}</td>
                 <td>{props.petitionFields.petition.arrest_date}</td>
-                <td><Link to={{"pathname": "/generate", "state": props.PetitionFields}}>Create Petition</Link></td>
+                <td><Link to={{"pathname": "/generate", "state": props.petitionFields }}>Create Petition</Link></td>
             </tr>
         );
     }
