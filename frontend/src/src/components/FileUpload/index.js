@@ -46,18 +46,15 @@ export default function FileUpload() {
             axios.post(url, pdfdata, config)
                 .then(res => {
                     if (res.status === 200) {
-                        localStorage.setItem("docketdata", JSON.stringify(res.data));
-                        setDocketDataReady(true);
+                        console.log("Ready to generate ..!");
+                        console.info(res.data);
+                        history.push("/generate", {"petitionFields": res.data});
                     }
                 })
                 .catch(err => {
-                    console.log(err);
+                    console.error(err);
                 });
         }
-    }
-
-    if (docketDataReady) {
-        return <Redirect to="/generate" />;
     }
 
 

@@ -7,6 +7,14 @@ containing:
             - aliases: list of strings, aliases of petitioner
             - dob: petitioners date of birth, iso formatted, such as
                    "2019-10-17"
+
+            - ssn: social security number. Only used as input on generator.
+            - address: # Only used as input on generator.
+                - street1: string, address line 1
+                - street2: string, address line 2
+                - city: string
+                - state: string, two letter US state code
+                - zipcode: string of numbers
     - petition
             - otn: string
             - arrest_date: iso formatted date, such as "2019-10-17"
