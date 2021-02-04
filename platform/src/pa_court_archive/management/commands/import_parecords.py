@@ -1,13 +1,14 @@
+from datetime import date
 import logging
 import os
 import pymysql
+import re
 import sys
 
+from django.db import connection as django_connection
+
 from django.core.management.base import BaseCommand
-from django.db.utils import IntegrityError
-
-
-import pa_court_archive.models
+import pa_court_archive.models as m
 
 host = 'psle-db-mysql-nyc1-87996-do-user-5085894-0.a.db.ondigitalocean.com'
 port = 25060
@@ -20,21 +21,295 @@ ssl_ca = os.path.join(os.environ.get('APPDIR'), 'mysql_cert.pem')
 
 logger = logging.getLogger("django")
 logger.addHandler = logging.StreamHandler()
-logger.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+logger.setLevel(os.environ.get("DJANGO_LOG_LEVEL", "INFO"))
+
+
+reverse_race_code = {x.label: x.name for x in m.RaceCode}
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
 
         cnx = get_connection()
-        cursor = cnx.cursor()
+        cursor = cnx.cursor(pymysql.cursors.DictCursor)
 
-        for row in retrieve_all_rows(cursor):
-            make_parecord(row)
+        with ArchiveQueue(batch_size) as aq:
 
+            for row in retrieve_all_rows(cursor):
+                aq.handle_row(row)
+
+        # Clear the connection
         cursor.fetchall()
         cursor.close()
         cnx.close()
+
+
+class ArchiveQueue:
+    """Provide queueing / batching on django inserts."""
+
+    def __init__(self, batch_size):
+        self.total = 0
+        self.batch_size = batch_size
+        self._initialize_queues()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.clear_queues()
+
+    def _initialize_queues(self):
+        self.batch_count = 0
+
+        self.arrestee_inserts = []
+        self.arrestee_params = []
+
+        self.case_inserts = []
+        self.case_params = []
+
+        self.arrestee_case_inserts = []
+        self.arrestee_case_params = []
+
+        self.docket_params = dict()
+
+        self.offense_inserts = []
+        self.offense_params = []
+
+    def queue_arrestee(self, row):
+        """Queue SQL values for an Arrestee based on originating db row."""
+
+        if row["LastName"] is None:
+            return
+
+        if row["GenderCode"] is None:
+            gender_code = None
+        else:
+            try:
+                gender_code = m.GenderCode(row["GenderCode"][0])
+            except ValueError:
+                logger.warning("Invalid gender code: %s", row["GenderCode"])
+                gender_code = None
+
+        if row["RaceCode"] is None:
+            race_code = None
+        else:
+            try:
+                race_code = reverse_race_code[row["RaceCode"]]
+            except ValueError:
+                logger.warning("Invalid race code: %s", row["RowCode"])
+                race_code = None
+
+        self.arrestee_inserts.append("(%s, %s, %s, %s, %s, %s)")
+        self.arrestee_params += [
+            row["FirstName"], row["MiddleName"], row["LastName"],
+            gender_code, race_code, parse_date_string(row["BirthDate"])]
+
+    def queue_case(self, row):
+        """Queue SQL values for a Case based on originating db row."""
+
+        if row["OffenseTrackingNumber"] is None:
+            return
+
+        self.case_inserts.append("(%s, %s, %s, %s, %s, %s, %s, %s, %s)")
+        self.case_params += [
+            row["OffenseTrackingNumber"],
+            parse_date_string(row["FiledDate"]),
+            row["City"],
+            row["CountyName"],
+            row["State"],
+            fix_zip_code(row["ZipCode"]),
+            row["CaseDisposition"],
+            parse_date_string(row["CaseDispositionDate"]),
+            row["DisposingJudge"]
+        ]
+
+    def queue_arrestee_case(self, row):
+        """
+        Queue SQL values to link Arrestee, Case based on originating db row.
+        """
+        if row["LastName"] is None:
+            return
+
+        if row["OffenseTrackingNumber"] is None:
+            return
+
+        birth_date = parse_date_string(row["BirthDate"])
+
+        arrestee_select = \
+            "(SELECT id FROM pa_court_archive_arrestee WHERE %s AND %s AND %s AND %s)" % (
+                self.value_selector("first_name", row["FirstName"]),
+                self.value_selector("middle_name", row["MiddleName"]),
+                self.value_selector("last_name", row["LastName"]),
+                self.value_selector("birth_date", birth_date))
+
+        case_select = "(SELECT id FROM pa_court_archive_case WHERE otn = %s)"
+
+        self.arrestee_case_inserts.append(
+            "(%s, %s)" % (arrestee_select, case_select))
+
+        for param in [row["FirstName"], row["MiddleName"], row["LastName"], birth_date]:
+            if param is not None:
+                self.arrestee_case_params.append(param)
+
+        self.arrestee_case_params.append(row["OffenseTrackingNumber"])
+
+    def queue_docket(self, row):
+        """Queue a docket from the row."""
+        if row["DocketNumber"] is None:
+            return
+
+        docket_number = row["DocketNumber"]
+        otn = row["OffenseTrackingNumber"]
+
+        if docket_number not in self.docket_params:
+            self.docket_params[docket_number] = otn
+
+        elif self.docket_params[docket_number] is None:
+            self.docket_params[docket_number] = otn
+
+    def queue_offense(self, row):
+        """Queue the offense from the source database row."""
+
+        if row["OffenseDescription"] is None:
+            return
+
+        if row["DocketNumber"] is None:
+            return
+
+        self.offense_inserts.append(
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
+            "(SELECT id FROM pa_court_archive_docket WHERE docket_number = %s))"
+        )
+
+        for x in [
+            row["OffenseDisposition"],
+            parse_date_string(row["OffenseDate"]),
+            parse_date_string(row["OffenseDispositionDate"]),
+            row["OffenseDescription"],
+            row["OriginatingOffenseSequence"],
+            row["StatuteTitle"],
+            row["StatuteSection"],
+            row["StatuteSubSection"],
+            row["InchoateStatuteTitle"],
+            row["InchoateStatuteSection"],
+            row["InchoateStatuteSubSection"],
+            row["OffenseGrade"],
+            row["DocketNumber"]
+        ]:
+            self.offense_params.append(x)
+
+    def clear_queues(self):
+        """Clear queued items."""
+
+        self.clear_arrestee_queue()
+        self.clear_case_queue()
+        self.clear_arrestee_case_queue()
+        self.clear_docket_queue()
+        self.clear_offense_queue()
+
+        logger.debug("Queue cleared, total %d rows so far.", self.total)
+        self._initialize_queues()
+
+    def clear_arrestee_queue(self):
+        if len(self.arrestee_inserts) < 1:
+            return
+
+        query = """INSERT INTO pa_court_archive_arrestee
+            (first_name, middle_name, last_name, gender_code, race_code, birth_date)
+            VALUES %s
+            ON CONFLICT DO NOTHING""" % (",".join(self.arrestee_inserts))
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, self.arrestee_params)
+
+    def clear_case_queue(self):
+        if len(self.case_inserts) < 1:
+            return
+
+        query = """INSERT INTO pa_court_archive_case
+            (otn, filed_date, city, county, state, zip, disposition, disposition_date, disposing_judge)
+            VALUES %s
+            ON CONFLICT DO NOTHING""" % (",".join(self.case_inserts))
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, self.case_params)
+
+    def clear_arrestee_case_queue(self):
+        if len(self.arrestee_case_inserts) < 1:
+            return
+
+        query = """INSERT INTO pa_court_archive_case_arrestees
+            (arrestee_id, case_id)
+            VALUES %s
+            ON CONFLICT DO NOTHING""" % (",".join(self.arrestee_case_inserts))
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, self.arrestee_case_params)
+
+    def clear_docket_queue(self):
+        if len(self.docket_params) < 1:
+            return
+
+        inserts = []
+        params = []
+
+        for docket_number, otn in self.docket_params.items():
+
+            if otn is None:
+                inserts.append("(%s, NULL)")
+                params.append(docket_number)
+            else:
+                inserts.append("(%s, (SELECT id FROM pa_court_archive_case WHERE otn = %s))")
+                params.append(docket_number)
+                params.append(otn)
+
+        query = """INSERT INTO pa_court_archive_docket
+            (docket_number, case_id)
+            VALUES %s
+            ON CONFLICT DO NOTHING
+            """ % (",".join(inserts))
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, params)
+
+    def clear_offense_queue(self):
+        if len(self.offense_inserts) < 1:
+            return
+
+        query = """INSERT INTO pa_court_archive_offense
+        (disposition, date, disposition_date, description,
+         originating_sequence, statute_title, statute_section,
+         statute_subsection, inchoate_statute_title, inchoate_statute_section,
+         inchoate_statute_subsection, grade, docket_id)
+        VALUES %s
+        ON CONFLICT DO NOTHING
+        """ % (",".join(self.offense_inserts))
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, self.offense_params)
+
+    def handle_row(self, row):
+        """Bring in a new row from the originating database."""
+        self.total += 1
+        self.batch_count += 1
+
+        self.queue_arrestee(row)
+        self.queue_case(row)
+        self.queue_arrestee_case(row)
+        self.queue_docket(row)
+        self.queue_offense(row)
+
+        if self.batch_count >= self.batch_size:
+            self.clear_queues()
+
+    @staticmethod
+    def value_selector(name, val):
+        """Produce "name = %s" or "name IS NULL" string for a sql selector."""
+
+        if val is None:
+            return "%s IS NULL" % name
+
+        return f"{name} = %s"
 
 
 def get_connection():
@@ -61,50 +336,52 @@ def get_connection():
     return cnx
 
 
-def make_parecord(row):
-    """Produce the PaRecord from the source database row."""
-    try:
-        pa_court_archive.models.PaRecord.objects.create(
-            external_mysql_id=row[0],
-            county_name=row[1],
-            docket_number=row[2],
-            filed_date=row[3],
-            last_name=row[4],
-            first_name=row[5],
-            middle_name=row[6],
-            city=row[7],
-            state=row[8],
-            zipcode=row[9],
-            offense_tracking_number=row[10],
-            gender_code=row[11],
-            race_code=row[12],
-            birthdate=row[13],
-            originating_offense_sequence=row[14],
-            statute_type=row[15],
-            statute_title=row[16],
-            statute_section=row[17],
-            statute_subsection=row[18],
-            inchoate_statute_title=row[19],
-            inchoate_statute_section=row[20],
-            inchoate_statute_subsection=row[21],
-            offense_disposition=row[22],
-            offense_date=row[23],
-            offense_disposition_date=row[24],
-            offense_description=row[25],
-            case_disposition=row[26],
-            case_disposition_date=row[27],
-            offense_grade=row[28],
-            disposing_judge=row[29]
-            )
-    except IntegrityError:
-        logger.warn("already had %d, skipping" % row[0])
+def parse_date_string(ds):
+    """Clean up a date string, or reject it."""
+
+    if ds is None:
+        return
+
+    ds = ds[:10]
+    match = re.match(r"\d{4}-\d{2}-\d{2}", ds)
+
+    if match is None:
+        return
+
+    year, month, day = [int(x) for x in ds.split("-")]
+    return date(year, month, day)
+
+
+def fix_zip_code(zc):
+    """Clean up a zip code, or reject it."""
+
+    if zc is None:
+        return
+
+    if type(zc) is float or type(zc) is int:
+        zc = str(int(zc))
+
+    if len(zc) < 4 or len(zc) > 10:
+        logger.warn("Invalid zipcode %s", zc)
+        return
+
+    if len(zc) == 4:
+        return "0%s" % zc
+
+    if len(zc) == 5:
+        return zc
+
+    if "-" in zc:
+        return zc
+
+    return "%s-%s" % (zc[:5], zc[5:])
 
 
 def retrieve_all_rows(cursor):
     """Generate all rows from the MySQL database cursor."""
     query = "SELECT count(*) FROM case_data"
     cursor.execute(query)
-    total = cursor.fetchone()[0]
+    total = cursor.fetchone()["count(*)"]
     count = 0
 
     while count < total:
