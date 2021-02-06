@@ -25,6 +25,11 @@ class RaceCode(models.TextChoices):
     HAWAIIAN_PACIFIC = "HAWAIIAN_PACIFIC", gettext("Native Hawaiian/Pacific Islander")
 
 
+class StatuteType(models.TextChoices):
+    ORDINANCE = "O", gettext("Ordinance")
+    STATUTE = "S", gettext("Statute")
+
+
 class Arrestee(models.Model):
     class Meta:
         constraints = [
@@ -104,12 +109,15 @@ class Offense(models.Model):
     disposition_date = models.DateField(null=True)
     description = models.TextField(null=False)
     originating_sequence = models.IntegerField(null=True)
+
+    statute_type = models.CharField(max_length=1, choices=StatuteType.choices, null=True)
     statute_title = models.TextField(null=True)
     statute_section = models.TextField(null=True)
     statute_subsection = models.TextField(null=True)
     inchoate_statute_title = models.TextField(null=True)
     inchoate_statute_section = models.TextField(null=True)
     inchoate_statute_subsection = models.TextField(null=True)
+
     grade = models.CharField(max_length=2, null=True)
     docket = models.ForeignKey(Docket, on_delete=models.CASCADE, null=False)
 

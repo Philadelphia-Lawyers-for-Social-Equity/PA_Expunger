@@ -4,6 +4,5 @@ from . import views
 app_name = 'pa_court_archive'
 
 urlpatterns = [
-    path("search/", views.PaRecordView.as_view(),
-         name="search")
+    path("search/", views.PaCourtArchiveView.as_view(), name="search")
 ]

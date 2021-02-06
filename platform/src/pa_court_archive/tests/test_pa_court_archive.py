@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-
-from copy import copy
-
 from django.test import TestCase
 from django.urls import reverse
 
@@ -44,51 +41,57 @@ class TestPaCourtArchive(TestCase):
 
         assert serializers.merge_statute("18", "902", "A") == "18 § 902 §§ A"
 
+    def test_factory_generation(self):
+        """Make sure each factory can be constructed."""
+        factories.ArresteeFactory()
+        factories.CaseFactory()
+        factories.DocketFactory()
+        factories.OffenseFactory()
+
     def test_make_petition_fields(self):
         """Test convesion of PaRecord to petitition_fields."""
-        parecord = factories.PaRecordFactory()
-        uglified = copy(parecord)
+        case = factories.CaseFactory()
+        serializer = serializers.CaseToPetitionFieldsSerializer(case)
 
-        uglified.dob = parecord.birthdate + " 00:00:00.000"
-        uglified.zip = parecord.zipcode + ".0"
-        uglified.filed_date = parecord.filed_date + " 16:15:00.000"
-        uglified.offense_date = parecord.offense_date + " 00:00:00.000"
-        uglified.case_disposition_date = parecord.case_disposition_date + \
-            " 00:00:00.000"
-
-        serializer = serializers.PaRecordToPetitionFieldsSerializer(uglified)
-
+        arrestee = case.arrestees.first()
         self.assertEqual(
             serializer.data["petitioner"],
             {"name": serializers.merge_name(
-                parecord.first_name, parecord.last_name,
-                parecord.middle_name),
+                arrestee.first_name, arrestee.last_name,
+                arrestee.middle_name),
              "aliases": None,
-             "dob": parecord.birthdate})
+             "dob": arrestee.birth_date.isoformat()})
 
         self.assertEqual(
             serializer.data["petition"],
-            {"otn": parecord.offense_tracking_number,
+            {"otn": case.otn,
              "arrest_date": None,
              "arrest_officer": None,
              "arrest_agency": None,
-             "judge": parecord.disposing_judge,
+             "judge": case.disposing_judge,
              "ratio": None})
 
+        dockets = case.docket_set.all()
         self.assertEqual(
             serializer.data["dockets"],
-            [parecord.docket_number])
+            [x.docket_number for x in dockets])
 
-        self.assertEqual(
-            serializer.data["charges"],
-            [{"statute": serializers.merge_statute(
-                parecord.inchoate_statute_title,
-                parecord.inchoate_statute_section,
-                parecord.inchoate_statute_subsection),
-              "description": parecord.offense_description,
-              "grade": parecord.offense_grade,
-              "date": parecord.offense_date,
-              "disposition": parecord.offense_disposition}])
+        charges = []
+
+        for docket in dockets:
+            for offense in docket.offense_set.all():
+                charges.append({
+                    "statute": serializers.merge_statute(
+                        offense.inchoate_statute_title,
+                        offense.inchoate_statute_section,
+                        offense.inchoate_statute_subsection),
+                    "description": offense.description,
+                    "grade": offense.grade,
+                    "date": offense.date.isoformat(),
+                    "disposition": offense.disposition
+                })
+
+        self.assertEqual(serializer.data["charges"], charges)
 
 
 class TestApi(Authenticated, TestCase):
@@ -100,5 +103,4 @@ class TestApi(Authenticated, TestCase):
         data = {"first_name": "Harry", "last_name": "Potter"}
         url = reverse("pa_court_archive:search")
         res = self.authenticated_client.get(url, data, content_type="application/json")
-        self.assertEqual(res.status_code, 200, msg="bad response: %s" %
-                         res.content)
+        self.assertEqual(res.status_code, 200, msg="bad response: %s" % res.content)

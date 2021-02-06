@@ -176,8 +176,17 @@ class ArchiveQueue:
         if row["DocketNumber"] is None:
             return
 
+        if row["StatuteType"] is None:
+            statute_type = None
+        else:
+            try:
+                statute_type = m.StatuteType(row["StatuteType"][0])
+            except ValueError:
+                logger.warn("Invalid StatuteType %s", row["StatuteType"])
+                statute_type = None
+
         self.offense_inserts.append(
-            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
             "(SELECT id FROM pa_court_archive_docket WHERE docket_number = %s))"
         )
 
@@ -187,6 +196,7 @@ class ArchiveQueue:
             parse_date_string(row["OffenseDispositionDate"]),
             row["OffenseDescription"],
             row["OriginatingOffenseSequence"],
+            statute_type,
             row["StatuteTitle"],
             row["StatuteSection"],
             row["StatuteSubSection"],
@@ -278,7 +288,7 @@ class ArchiveQueue:
 
         query = """INSERT INTO pa_court_archive_offense
         (disposition, date, disposition_date, description,
-         originating_sequence, statute_title, statute_section,
+         originating_sequence, statute_type, statute_title, statute_section,
          statute_subsection, inchoate_statute_title, inchoate_statute_section,
          inchoate_statute_subsection, grade, docket_id)
         VALUES %s
