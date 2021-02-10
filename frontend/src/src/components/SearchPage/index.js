@@ -102,7 +102,6 @@ function SearchResults(props) {
                     <th>Name</th>
                     <th>Birthdate</th>
                     <th>OTN</th>
-                    <th>Arrest Date</th>
                 </tr></thead>
                 <tbody>
                     { props.searchResults.map((petitionFields, key) => (
@@ -123,7 +122,6 @@ function SearchResults(props) {
                 <td>{props.petitionFields.petitioner.name}</td>
                 <td>{props.petitionFields.petitioner.dob}</td>
                 <td>{props.petitionFields.petition.otn}</td>
-                <td>{props.petitionFields.petition.arrest_date}</td>
                 <td><Link to={{"pathname": "/generate", "state": {"petitionFields": props.petitionFields} }}>Create Petition</Link></td>
             </tr>
         );
