@@ -11,12 +11,17 @@ class CaseToPetitionFieldsSerializer(serializers.Serializer):
     def get_petitioner(self, obj):
         arrestee = obj.arrestees.first()
 
+        if arrestee.birth_date is None:
+            dob = None
+        else:
+            dob = arrestee.birth_date.isoformat()
+
         return {
             "name": merge_name(
                 arrestee.first_name, arrestee.last_name,
                 arrestee.middle_name),
             "aliases": None,
-            "dob": arrestee.birth_date.isoformat()
+            "dob": dob
         }
 
     def get_petition(self, obj):
@@ -38,6 +43,12 @@ class CaseToPetitionFieldsSerializer(serializers.Serializer):
 
         for docket in dockets:
             for offense in docket.offense_set.all():
+
+                if offense.date is None:
+                    date = None
+                else:
+                    date = offense.date.isoformat()
+
                 charges.append({
                     "statute":  merge_statute(
                         offense.inchoate_statute_title,
@@ -45,7 +56,7 @@ class CaseToPetitionFieldsSerializer(serializers.Serializer):
                         offense.inchoate_statute_subsection),
                     "description": offense.description,
                     "grade": offense.grade,
-                    "date": offense.date.isoformat(),
+                    "date": date,
                     "disposition": offense.disposition
                 })
 

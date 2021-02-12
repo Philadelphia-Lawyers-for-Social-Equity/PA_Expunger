@@ -1,48 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
 
 import { Button, Col, Form, Row, Table, ToggleButton } from 'react-bootstrap';
 
+/* TODO:
+    - Include ratio.
+    - Move components to be imported.
+*/
+
 const labelWidth = 2;
+const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
+const defaultPetitionFields = {
+    "petitioner": {
+        "name": "",
+        "aliases": [],
+        "dob": ""
+    },
+    "petition": {
+        "otn": "",
+        "arrest_date": "",
+        "arrest_officer": "",
+        "arrest_agency": "",
+        "judge": "",
+        "ratio": "full",
+    },
+    "dockets": [],
+    "charges": [],
+    "restitution": {
+        "total": 0,
+        "paid": 0
+    }
+}
+
+function postRequestConfig() {
+    let bearer = "Bearer ";
+    let token = bearer.concat(localStorage.getItem("access_token"));
+    return {
+      'responseType': 'arraybuffer',
+      'headers': { 'Authorization': token }
+    };
+}
+
+function mergeReduce(initial, changes) {
+    return({...initial, ...changes});
+}
+
+function postGeneratorRequest(petitioner, petition, dockets, charges, restitution) {
+    let petitionFields = {
+        "petitioner": petitioner,
+        "petition": { ...petition, "date": today()},
+        "dockets": dockets,
+        "charges": charges,
+        "restitution": restitution
+    }
+
+    console.info(petitionFields);
+    axios.post(url, petitionFields, postRequestConfig()).then(
+        res => {
+            if (res.status === 200) {
+                let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+                let downloadUrl = window.URL.createObjectURL(blob);
+                let filename = "petition.docx";
+                let disposition = res.headers["content-disposition"];
+                let a = document.createElement("a");
+
+                if (typeof a.download === "undefined") {
+                  window.location.href = downloadUrl;
+                } else {
+                  a.href = downloadUrl;
+                  a.download = filename;
+                  document.body.appendChild(a);
+                  a.click();
+                }
+            }
+        }).catch(
+            error => {
+                console.error(error);
+            }
+        );
+}
 
 export default function GeneratePage(props) {
     /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
 
-    let defaultPetitionFields = {
-        "petitioner": {
-            "name": "",
-            "aliases": [],
-            "dob": ""
-        },
-        "petition": {
-            "otn": "",
-            "arrest_date": "",
-            "arrest_officer": "",
-            "arrest_agency": "",
-            "judge": "",
-            "ratio": "full",
-        },
-        "dockets": [],
-        "charges": [],
-        "restitution": {
-            "total": 0,
-            "paid": 0
-        }
-    }
-
     let petitionFields = props.location.state.petitionFields || props.petitionFields || defaultPetitionFields;
 
     const history = useHistory();
 
-    const [petitioner, setPetitioner] = useState(petitionFields.petitioner);
-    const [petition, setPetition] = useState(petitionFields.petition);
+    const [petitioner, setPetitioner] = useReducer(mergeReduce, petitionFields.petitioner);
+    const [petition, setPetition] = useReducer(mergeReduce, petitionFields.petition);
     const [dockets, setDockets] = useState(petitionFields.dockets);
     const [charges, setCharges] = useState(petitionFields.charges);
-    const [restitution, setRestitution] = useState(petitionFields.restitution);
+    const [restitution, setRestitution] = useReducer(mergeReduce, petitionFields.restitution);
 
     return (
         <Form className="generator">
@@ -51,16 +104,8 @@ export default function GeneratePage(props) {
             <Dockets dockets={dockets} handleChange={setDockets} />
             <Charges charges={charges} handleChange={setCharges} />
             <Restitution {... restitution} handleChange={setRestitution} />
-            <Button onClick={
-                () => { console.log({
-                    "petitioner": petitioner,
-                    "petition": petition,
-                    "dockets": dockets,
-                    "charges": charges,
-                    "restitution": restitution,
-                });
-            }}
-            >Console State</Button>
+            <Button onClick={() => { postGeneratorRequest(petitioner, petition, dockets, charges, restitution); }}
+            >Generate Petition</Button>
         </Form>
 
     );
@@ -73,68 +118,57 @@ function Petitioner(props) {
         - dob: iso formatted date string
         - handleChange: function to handle updates
 
+        We don't currently take the address or ssn as arguments because they are
+        not available is any of our source data.  Manual entry only.
+
         Side effects
         - adds address via handleChange
     */
 
-    const [name, setName] = useState(props.name);
-    const [aliases, setAliases] = useState(props.aliases || []);
-    const [dob, setDob] = useState(props.dob);
-
-    // We don't currently take the address or ssn as arguments because they are
-    // not available is any of our source data.  Manual entry only.
-    const [ssn, setSsn] = useState("");
-    const [address, setAddress] = useState({"street1": "", "street2": "", "city": "", "state": "", "zipcode": ""});
-
-
     function aliasItems() {
-        return aliases.map((a) => ({"text": a, "key": a}));
+        if(!props.aliases) {
+            return([]);
+        }
+
+        return props.aliases.map((a) => ({"text": a, "key": a}));
     }
 
     function saveAliases(items) {
         let newAliases = items.map((a) => (a.text));
-        setAliases(newAliases);
+        props.handleChange({"aliases": newAliases});
     }
-
-    function save() {
-        let petitioner = {
-            "name": name,
-            "aliases": aliases,
-            "dob": dob,
-            "ssn": ssn,
-            "address": address
-        };
-        props.handleChange(petitioner);
-    }
-
-    useEffect(() => {save();}, [name, aliases, dob, ssn, address] );
 
     return(
         <>
             <h2>Petitioner</h2>
-
             <GeneratorInput
                 label="Full Name"
                 type="text"
                 placeholder="Full Name"
-                value={name}
-                handleChange={setName}
+                name="name"
+                value={props.name}
+                handleChange={props.handleChange}
+                required={true}
             />
 
             <GeneratorInput
                 label="Birth Date"
                 type="date"
-                value={dob}
-                handleChange={setDob}
+                name="dob"
+                value={props.dob}
+                handleChange={props.handleChange}
+                required={true}
             />
 
             <GeneratorInput
                 label="Social Security Number"
                 type="text"
                 placeholder="###-##-####"
-                value={ssn}
-                handleChange={setSsn}
-            /> 
+                name="ssn"
+                value={props.ssn}
+                handleChange={props.handleChange}
+                required={true}
+            />
 
             <EditableList
                 label="Aliases"
@@ -144,7 +178,7 @@ function Petitioner(props) {
                 handleChange={(e) => {saveAliases(e)}}
             />
 
-            <Address handleChange={setAddress} />
+            <Address {... props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
         </>
         );
 }
@@ -152,27 +186,19 @@ function Petitioner(props) {
 function Address(props) {
     /*
     Props expects:
-    - handleChange: function to handle updates
+    - street1
+    - street2
+    - city
+    - state
+    - zipcode
+    - handleChange: should accept a single address object
     */
 
-    const [street1, setStreet1] = useState("");
-    const [street2, setStreet2] = useState("");
-    const [city, setCity] = useState("");
-    const [usState, setUSState] = useState("");
-    const [zipcode, setZipCode] = useState("");
-
-    function save() {
-        let address = {
-            "street1": street1,
-            "street2": street2,
-            "city": city,
-            "state": usState,
-            "zipcode": zipcode
-        };
-        props.handleChange(address);
+    function handleChange(change) {
+        let address = {"street1": props.street1, "street2": props.street2, "city": props.city, "state": props.state, "zipcode": props.zipcode};
+        let newAddress = mergeReduce(address, change);
+        props.handleChange(newAddress);
     }
-
-    useEffect(() => {save();}, [street1, street2, city, usState, zipcode]);
 
     return(
         <>
@@ -180,34 +206,36 @@ function Address(props) {
             label={ <strong>Address</strong> }
             type="text"
             placeholder="Street Address"
-            value={street1}
-            handleChange={setStreet1}
+            name="street1"
+            value={props.street1 || ""}
+            handleChange={handleChange}
         />
 
         <GeneratorInput
             type="text"
             placeholder="Optional Apt/Unit"
-            value={street2}
-            handleChange={setStreet2}
+            name="street2"
+            value={props.street2 || ""}
+            handleChange={handleChange}
         />
 
-        <Form.Group as={Row} controlId="formPlaintextCityStateZip">
+        <Form.Group as={Row}>
             <Col sm={labelWidth}/>
             <Col sm={4}>
-                <Form.Control placeholder="City" value={city} onChange={e => {
-                    setCity(e.target.value);
-                }} />
-            </Col>
-
-            <Col sm={labelWidth}>
-                <Form.Control placeholder="State (2-Letter)" value={usState} onChange={e => {
-                    setUSState(e.target.value);
+                <Form.Control placeholder="City" value={props.city || ""} onChange={e => {
+                    handleChange({"city": e.target.value});
                 }} />
             </Col>
 
             <Col sm={2}>
-                <Form.Control placeholder="Zip" value={zipcode} onChange={e => {
-                    setZipCode(e.target.value);
+                <Form.Control placeholder="State (2-Letter)" value={props.state || ""} onChange={e => {
+                    handleChange({"state": e.target.value});
+                }} />
+            </Col>
+
+            <Col sm={2}>
+                <Form.Control placeholder="Zip" value={props.zipcode || ""} onChange={e => {
+                    handleChange({"zipcode": e.target.value});
                 }} />
             </Col>
         </Form.Group>
@@ -217,36 +245,15 @@ function Address(props) {
 
 function Petition(props) {
     /* props expects:
-        - otn: string
-        - dc: string
+        - otn
+        - dc
         - arrest_date: isoformatted date string, eg "2021-01-29"
-        - arrest_officer: string
-        - arrest_agency: string
-        - judge: string, should be the full name of the judge
+        - arrest_officer
+        - arrest_agency
+        - judge
         - ratio: string, either "partial" or "full"
-        - handleChange(petition): function should accept a single object
+        - handleChange
     */
-
-    const [otn, setOtn] = useState(props.otn);
-    const [dc, setDc] = useState(props.dc);
-    const [arrestDate, setArrestDate] = useState(props.arrest_date);
-    const [arrestOfficer, setArrestOfficer] = useState(props.arrest_date);
-    const [arrestAgency, setArrestAgency] = useState(props.arrest_date);
-    const [judge, setJudge] = useState(props.judge);
-    const [ratio, setRatio] = useState(props.ratio);
-
-    function save() {
-        props.handleChange({
-            "otn": otn,
-            "arrest_date": arrestDate,
-            "arrest_officer": arrestOfficer,
-            "arrest_agency": arrestAgency,
-            "judge": judge,
-            "ratio": ratio
-        });
-    }
-
-    useEffect(() => {save();}, [otn, dc, arrestDate, arrestOfficer, arrestAgency, judge, ratio]);
 
     return (
         <>
@@ -255,49 +262,121 @@ function Petition(props) {
             label="Offense Tracking Number (OTN)"
             type="text"
             placeholder="########" 
-            value={otn}
-            handleChange={setOtn}
+            name="otn"
+            value={props.otn}
+            handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="DC"
             type="text"
             placeholder="########" 
-            value={dc}
-            handleChange={setDc}
+            name="dc"
+            value={props.dc}
+            handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="Arrest Date"
             type="date"
-            value={arrestDate}
-            handleChange={setArrestDate}
+            name="arrest_date"
+            value={props.arrest_date}
+            handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="Arrest Agency"
             type="text"
             placeholder="Arresting Agency"
-            value={arrestAgency}
-            handleChange={setArrestAgency}
+            name="arrest_agency"
+            value={props.arrest_agency}
+            handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="Arresting Officer"
             type="text"
             placeholder="First & Last Name"
-            value={arrestOfficer}
-            handleChange={setArrestOfficer}
+            name="arrest_officer"
+            value={props.arrest_officer}
+            handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="Judge"
             type="text"
             placeholder="First & Last Name"
-            value={judge}
-            handleChange={setJudge}
+            name="judge"
+            value={props.judge}
+            handleChange={props.handleChange}
+        />
+        <Radio
+            label="Is this a full or partial expungement?"
+            name="ratio"
+            handleChange={props.handleChange}
+            items={[["full", "Full Expungement"], ["partial", "Partial Expungement"]]}
+            selected={props.ratio || "full"}
         />
         </>
+    );
+}
+
+function Radio(props) {
+    /* Build a radio selection
+
+    props expects:
+    * label - string title of the entire selection set
+    * name - string name for the entire selection set
+    * handleChange - function to set the new value
+    * items - array of [value, string] combinations, that will build each
+    * selected - value of checked item
+    */
+
+    function RadioOption(props) {
+        /* Build a radio option
+
+        * label
+        * name
+        * value
+        * handleChange
+        * checked - boolean
+        */
+
+        let itemId = props.name + props.value;
+        let name = props.name
+
+        return (
+            <li>
+                <input type="radio" name={name} id={itemId}
+                    value={props.value} className="form-check-input"
+                    defaultChecked={props.checked}
+                    onChange={() => { props.handleChange({[name]: props.value}); }}
+                />
+                <label htmlFor={ itemId } className="form-check-label">{props.label}</label>
+            </li>
+        );
+    }
+
+    return(
+        <Row>
+            <Col sm={labelWidth}>
+                {props.label}
+            </Col>
+            <Col>
+                <ul>
+                    { props.items.map((item, idx) => (
+                        <RadioOption
+                            key={item[0]}
+                            label={item[1]}
+                            name={props.name}
+                            value={item[0]}
+                            handleChange={props.handleChange}
+                            checked={item[0] === props.selected}
+                        />
+                    ))}
+                </ul>
+            </Col>
+        </Row>
     );
 }
 
@@ -374,38 +453,26 @@ function Restitution(props) {
         - handleChange
     */
 
-    const [total, setTotal] = useState(props.total || "");
-    const [paid, setPaid] = useState(props.paid || "");
-
-    function save() {
-        let newTotal = parseFloat(total);
-        let newPaid = parseFloat(paid);
-
-        props.handleChange({"total": newTotal, "paid": newPaid});
-    }
-
-    useEffect(() => {save();}, [total, paid]);
-
-    // Stub
     return (
         <>
             <h2>Restitution</h2>
             <GeneratorInput
                 label="Total"
                 placeholder="Decimal Number"
-                value={total}
-                handleChange={setTotal}
+                name="total"
+                value={props.total || 0}
+                handleChange={props.handleChange}
             />
             <GeneratorInput
                 label="Paid"
                 placeholder="Decimal Number"
-                value={paid}
-                handleChange={setPaid}
+                name="paid"
+                value={props.paid || 0}
+                handleChange={props.handleChange}
             />
         </>
     );
 }
-
 
 function GeneratorInput(props) {
     /* A typical label + value pair for this page's single-row inputs.
@@ -414,9 +481,16 @@ function GeneratorInput(props) {
         - label
         - type: html5 input type
         - placeholder
+        - name
         - value
         - handleChange
     */
+
+    if (!props.name) {
+        return(<p>Missing name for {props.label}</p>);
+    }
+
+    let keyName = props.name;
 
     return (
         <Form.Group as={Row}>
@@ -428,7 +502,10 @@ function GeneratorInput(props) {
                     type={props.type}
                     placeholder={props.placeholder}
                     value={props.value || ""}
-                    onChange={(e) => { props.handleChange(e.target.value); }}
+                    onChange={(e) => {
+                        let res = {[keyName]: e.target.value};
+                        props.handleChange(res);
+                    }}
                 />
             </Col>
         </Form.Group>
@@ -473,7 +550,6 @@ function EditableList(props) {
     function isEmpty(obj) {
         let objString = JSON.stringify(obj);
         let emptyString = JSON.stringify(props.emptyItem);
-        console.log("Compare " + objString + " " + emptyString);
         return(objString == emptyString);
     }
 
@@ -557,7 +633,7 @@ function RemovableCharge(props) {
             onFocus={() => {setEditing(true);}}
             onBlur={() => {save();}}
         >
-        <Row>
+        <Row className="mb-2">
             <Col sm={labelWidth}><Form.Label>{props.label || ""}</Form.Label></Col>
             <Col sm={2}>
                 <Form.Control
@@ -592,14 +668,13 @@ function RemovableCharge(props) {
                 />
             </Col>
             <Col sm={1}>
-                { hovering
-                    ?  <Button
-                            variant="danger"
-                            onClick={ props.handleRemove }
-                            cursor="pointer"
-                        >X</Button>
-                    : <></> 
-                }
+            <Button
+                variant={ hovering ? "danger" : "secondary"}
+                onClick={ props.handleRemove }
+                cursor="pointer"
+            >
+                X
+            </Button>
             </Col>
         </Row>
         <Row>
@@ -647,6 +722,7 @@ function RemovableTextField(props) {
         <Row
             onMouseOver={() => setHovering(true)}
             onMouseOut={() => setHovering(false)}
+            className="mb-2"
         >
             <Col sm={labelWidth}>
                 <Form.Label>
@@ -664,15 +740,22 @@ function RemovableTextField(props) {
             />
             </Col>
             <Col sm={1}>
-                { hovering
-                    ?  <Button
-                            variant="danger"
-                            onClick={ props.handleRemove }
-                            cursor="pointer"
-                        >X</Button>
-                    : <></> 
-                }
+            <Button
+                variant={ hovering ? "danger" : "secondary"}
+                onClick={ props.handleRemove }
+                cursor="pointer"
+            >
+                X
+            </Button>
             </Col>
         </Row>
     );
+}
+
+function today() {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+    return(yyyy + '-' + mm + '-' + dd);
 }

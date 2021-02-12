@@ -93,6 +93,48 @@ class TestPaCourtArchive(TestCase):
 
         self.assertEqual(serializer.data["charges"], charges)
 
+    def test_serialize_with_empty_values(self):
+        """
+        Make sure the serializer survives if all nullable values are empty.
+        """
+        case = factories.CaseFactory()
+        arrestee = case.arrestees.first()
+
+        arrestee.first_name = None
+        arrestee.middle_name = None
+        arrestee.gender_code = None
+        arrestee.race_code = None
+        arrestee.birth_date = None
+
+        case.filed_date = None
+        case.city = None
+        case.county = None
+        case.state = None
+        case.zip = None
+        case.disposition = None
+        case.disposition_date = None
+        case.disposing_judge = None
+
+        docket = case.docket_set.filter(offense__isnull=False).first()
+        offense = docket.offense_set.first()
+
+        offense.disposition = None
+        offense.date = None
+        offense.disposition_date = None
+        offense.originating_sequence = None
+        offense.statute_type = None
+        offense.statute_title = None
+        offense.statute_section = None
+        offense.statute_subsection = None
+        offense.inchoate_statute_title = None
+        offense.inchoate_statute_section = None
+        offense.inchoate_statute_subsection = None
+        offense.grade = None
+
+        case.save()
+        serializer = serializers.CaseToPetitionFieldsSerializer(case)
+        serializer.to_representation(case)
+
 
 class TestApi(Authenticated, TestCase):
     """Make sure the REST interface works."""
