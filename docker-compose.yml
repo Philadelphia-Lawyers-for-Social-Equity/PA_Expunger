@@ -31,6 +31,7 @@ services:
             EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
             EXPUNGER_DB: expunger_db
             EXPUNGER_DB_HOST: postgres
+            EXPUNGER_DB_PORT: 5432
             HOSTNAME: ${BACKEND_HOST:-localhost}
             FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
             BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}

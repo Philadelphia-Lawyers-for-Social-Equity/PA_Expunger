@@ -89,6 +89,7 @@ DATABASES = {
         'USER': os.environ.get('EXPUNGER_USER'),
         'PASSWORD': os.environ.get('EXPUNGER_PASS'),
         'HOST': os.environ.get('EXPUNGER_DB_HOST'),
+        'PORT': os.environ.get('EXPUNGER_DB_PORT'),
         'TEST': {
             'NAME': "%s_test" % os.environ.get('EXPUNGER_DB')
         },
