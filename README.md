@@ -28,20 +28,22 @@ Settings are controlled via environmental variables, and can be reviewed in the
 `docker-compose.yml` file.  The following may be changed:
 
 - The primary admin username is `plse` and is not designed to change.
-- `EXPUNGER_PASS` controls the administrator password for user `plse`.  Default is
+- **EXPUNGER_PASS** controls the administrator password for user `plse`.  Default is
   `defaultTestPassword`. It is set on the *first build,* after which any
   changes must be made via the back-end.
-- `EXPUNGER_KEY` is used by the back-end for Django internal security.
+- **EXPUNGER_KEY** is used by the back-end for Django internal security.
   Set on first build, not readily changeable.  It should be altered from the
   default on production builds.
-- `BACKEND_HOST` sets the hostname and port for the Django backend. Default is
+
+- **MYSQL_USER** and **MYSQL_PASS**: for the external pa_record database, needed to initialize
+  pa_court_archive
+- **DJANGO_LOG_LEVEL**=INFO
+- **BACKEND_HOST** sets the hostname and port for the Django backend. Default is
   `http://localhost:8000`. On production it will need to be changed to match
   the server url.
-   
-- `FRONTEND_HOST` sets the hostname and port for the React frontend. Default is
+- **FRONTEND_HOST** sets the hostname and port for the React frontend. Default is
   `http://localhost:3000`. On production it will need to be changed to gave the
    server url.
-
 
 ## Testing
 
@@ -58,3 +60,14 @@ The Dockerfile for the `expunger` project also can be run as a production app
 as-is. Access the production app at `http://localhost:8000` after executing
 `docker-compose run --build`. Note that the production app is an optimized React
 build and will not have development features like hot-reloading.
+
+### Initializing the pa_court_archive
+
+Importing 3+ million records takes a bit of time. By default, the main script
+will run "silent," switch to `DJANGO_LOG_LEVEL=DEBUG` if you crave feedback.
+
+Build with your desired settings, then:
+
+1. `docker-compose run --entrypoint bash expunger`
+2. `python3 ./manage.py import pa_records`
+3. Wait a bit.
