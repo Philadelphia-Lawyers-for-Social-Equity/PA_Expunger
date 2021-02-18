@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function EditableList(props) {
     /* Turn a list of property objects into specified items, including widgets
@@ -57,21 +58,22 @@ export default function EditableList(props) {
             >Add { props.label }</Button>
         );
     }
-    
+
     return (
         <Form.Group as="div">
             { props.label ? <h2>{props.label}</h2> : <></> }
             { props.items.map((innerProps, idx) => {
                     return(
                         <Inner
-                            {... innerProps}
+                            {...innerProps}
+                            key={uuidv4()}
                             handleChange={(txt) => {updateItem(idx, txt);}}
                             handleRemove={() => { dropItem(idx);}}
                 />);
             })}
 
             <Row>
-                <Col sm={labelWidth}/>
+                <Col sm={2}/>
                 <Col className="text-left" sm={8}>
                     <AddButton />
                 </Col>

@@ -39,7 +39,7 @@ export default function Radio(props) {
 
     return(
         <Row>
-            <Col sm={labelWidth}>
+            <Col sm={2}>
                 {props.label}
             </Col>
             <Col>

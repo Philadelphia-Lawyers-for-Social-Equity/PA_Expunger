@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 
 export default function RemovableTextField(props) {
@@ -7,7 +7,7 @@ export default function RemovableTextField(props) {
         props expects
         - label
         - text
-        - handleChange 
+        - handleChange
         - handleRemove
     */
 
@@ -32,7 +32,7 @@ export default function RemovableTextField(props) {
             onMouseOut={() => setHovering(false)}
             className="mb-2"
         >
-            <Col sm={labelWidth}>
+            <Col sm={2}>
                 <Form.Label>
                     { props.label }
                 </Form.Label>

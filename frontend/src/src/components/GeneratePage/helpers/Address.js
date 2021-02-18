@@ -15,7 +15,7 @@ export default function Address(props) {
 
     function handleChange(change) {
         let address = {"street1": props.street1, "street2": props.street2, "city": props.city, "state": props.state, "zipcode": props.zipcode};
-        let newAddress = mergeReduce(address, change);
+        let newAddress = {...address, ...change};
         props.handleChange(newAddress);
     }
 
@@ -39,7 +39,7 @@ export default function Address(props) {
         />
 
         <Form.Group as={Row}>
-            <Col sm={labelWidth}/>
+            <Col sm={2}/>
             <Col sm={4}>
                 <Form.Control placeholder="City" value={props.city || ""} onChange={e => {
                     handleChange({"city": e.target.value});

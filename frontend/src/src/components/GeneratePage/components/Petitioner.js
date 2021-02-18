@@ -2,6 +2,7 @@ import React from 'react';
 import GeneratorInput from '../helpers/GeneratorInput';
 import EditableList from '../helpers/EditableList';
 import Address from '../helpers/Address';
+import RemovableTextField from '../helpers/RemovableTextField';
 
 export default function Petitioner(props) {
     /* Props expects:
@@ -70,7 +71,7 @@ export default function Petitioner(props) {
                 handleChange={(e) => {saveAliases(e)}}
             />
 
-            <Address {... props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
+            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
         </>
         );
 }

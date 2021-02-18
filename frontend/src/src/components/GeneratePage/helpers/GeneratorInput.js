@@ -21,7 +21,7 @@ export default function GeneratorInput(props) {
 
     return (
         <Form.Group as={Row}>
-            <Col sm={labelWidth}>
+            <Col sm={2}>
                 <Form.Label>{props.label}</Form.Label>
             </Col>
             <Col sm={8}>

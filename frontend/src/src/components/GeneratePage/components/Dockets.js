@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableList from '../helpers/EditableList';
+import RemovableTextField from '../helpers/RemovableTextField';
 
 export default function Dockets(props) {
     /* props expects:
@@ -7,22 +8,14 @@ export default function Dockets(props) {
         - handleChange: function should accept a list of docket strings and do the update
     */
 
-    const [dockets, setDockets] = useState(props.dockets);
-
     function makeItems() {
-        return(dockets.map((d) => ({"text": d, "key": d})));
+        return(props.dockets.map((d) => ({"text": d, "key": d})));
     }
 
     function saveItems(items) {
         let newDockets = items.map((item) => (item.text));
-        setDockets(newDockets);
+        props.handleChange(newDockets);
     }
-
-    function save(){
-        props.handleChange(dockets);
-    }
-
-    useEffect(() => {save();}, [dockets]);
 
     return (
         <EditableList

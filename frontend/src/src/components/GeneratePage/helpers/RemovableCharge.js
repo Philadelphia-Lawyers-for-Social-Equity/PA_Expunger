@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 
 export default function RemovableCharge(props) {
@@ -11,7 +11,7 @@ export default function RemovableCharge(props) {
         - disposition
         - handleChange
         - handleRemove
-        
+
     */
 
     const [statute, setStatute] = useState(props.statute || "");
@@ -43,7 +43,7 @@ export default function RemovableCharge(props) {
             onBlur={() => {save();}}
         >
         <Row className="mb-2">
-            <Col sm={labelWidth}><Form.Label>{props.label || ""}</Form.Label></Col>
+            <Col sm={2}><Form.Label>{props.label || ""}</Form.Label></Col>
             <Col sm={2}>
                 <Form.Control
                     placeholder="Statute"
@@ -87,7 +87,7 @@ export default function RemovableCharge(props) {
             </Col>
         </Row>
         <Row>
-            <Col sm={labelWidth}></Col>
+            <Col sm={2}></Col>
             <Col sm={7}>
                 <Form.Control
                     value={description}
@@ -96,7 +96,7 @@ export default function RemovableCharge(props) {
                 />
             </Col>
         </Row>
-        <Row><Col sm={labelWidth}/><Col sm={8}><hr /></Col></Row>
+        <Row><Col sm={2}/><Col sm={8}><hr /></Col></Row>
         </div>
     );
 }
