@@ -46,7 +46,7 @@ class PetitionAPIView(APIView):
                             request.data.get("charges", [])]
             }
         except KeyError as err:
-            msg = "Missing field: %s" % str(err)
+            msg = "Missing field: %s" % (err)
             logger.warn(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 

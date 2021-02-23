@@ -36,6 +36,8 @@ services:
             FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
             BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
             DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASS: ${MYSQL_PASS}
         ports:
             - 8000:8000
         restart: on-failure

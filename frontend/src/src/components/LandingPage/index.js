@@ -9,9 +9,6 @@ import { Button, ButtonGroup, Modal, Col } from 'react-bootstrap';
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
     const [attorneyKey, setAttorneyKey] = useState(0);
-    const [attorneyName, setAttorneyName] = useState("");
-    const [attorneyBar, setAttorneyBar] = useState("");
-    const [attorneyURL, setAttorneyURL] = useState("");
     const [isAttorneyChosen, setAttorneyChosen] = useState(false);
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
@@ -89,8 +86,7 @@ export default function LandingPage() {
     }
 
     if (profileGenerated) {
-        // redirect to input form
-        return <Redirect to="/inputform" />;
+        return <Redirect to="/action" />;
     }
 
     return (
@@ -106,9 +102,6 @@ export default function LandingPage() {
                         <ButtonGroup vertical >
                             {attorneyData.map(item => (<Button id="attorneyNames" key={item.pk} onClick={e => {
                                 setAttorneyKey(item.pk);
-                                setAttorneyName(item.name);
-                                setAttorneyBar(item.bar);
-                                setAttorneyURL(item.url);
                             }}>{item.name}</Button>))}
                         </ButtonGroup>
                     </Col>

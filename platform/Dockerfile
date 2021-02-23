@@ -1,4 +1,4 @@
-FROM dan0mau/devuan-ascii
+FROM debian:stable
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APPDIR /srv/plse/expunger
@@ -6,6 +6,8 @@ ENV APPDIR /srv/plse/expunger
 ARG EXPUNGER_USER
 ARG EXPUNGER_PASS
 ARG EXPUNGER_KEY
+ARG MYSQL_USER
+ARG MYSQL_PASS
 ARG DJANGO_SETTINGS_MODULE
 
 ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
@@ -38,11 +40,6 @@ RUN apt-get update -y -qq && \
     && apt-get purge -y \
     && apt-get clean -y
 
-# Install Yarn for production frontend build later
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y -qq nodejs
-RUN npm install -g yarn
-
 # timezone-related fixes
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
@@ -66,7 +63,7 @@ RUN if [ ${USER_ID:-0} -ne 0 ] && [ ${GROUP_ID:-0} -ne 0 ];\
 RUN echo ${EXPUNGER_USER}:${EXPUNGER_PASS} | chpasswd
 
 RUN mkdir -p ${APPDIR}/static
-RUN chown --changes --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
+RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
 USER ${EXPUNGER_USER}
 
 # Library install
@@ -87,19 +84,8 @@ RUN pip3 install ./
 
 # App install
 WORKDIR ${APPDIR}
-COPY platform/src/ .
-
-# -- PROD BUILD --
-# Frontend install
-
-WORKDIR ${APPDIR}/frontend/src
-COPY frontend/src/ .
-USER root
-RUN yarn install --non-interactive --silent --production
-RUN yarn build
-USER ${EXPUNGER_USER}
-WORKDIR ${APPDIR}
-RUN python3 ./manage.py collectstatic --noinput
+COPY --chown=${EXPUNGER_USER}:${EXPUNGER_USER} platform/src/ .
+RUN python3 ./manage.py collectstatic
 
 ## -- FINAL BUILD --
 ENTRYPOINT python3 ./manage.py makemigrations && python3 ./manage.py migrate && python3 ./manage.py runmodwsgi --log-to-terminal
