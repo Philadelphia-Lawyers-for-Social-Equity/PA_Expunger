@@ -74,6 +74,10 @@ export default function GeneratePage(props) {
             "restitution": restitution
         }
 
+        if (!petitionFields.petition.ratio) {
+            petitionFields.petition.ratio = "full";
+        }
+
         console.info(petitionFields);
         axios.post(url, petitionFields, postRequestConfig()).then(
             res => {
