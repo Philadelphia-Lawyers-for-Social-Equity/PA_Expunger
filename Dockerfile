@@ -1,4 +1,4 @@
-FROM dan0mau/devuan-ascii
+FROM debian:stable
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APPDIR /srv/plse/expunger
@@ -68,7 +68,7 @@ RUN if [ ${USER_ID:-0} -ne 0 ] && [ ${GROUP_ID:-0} -ne 0 ];\
 RUN echo ${EXPUNGER_USER}:${EXPUNGER_PASS} | chpasswd
 
 RUN mkdir -p ${APPDIR}/static
-RUN chown --changes --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
+RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
 USER ${EXPUNGER_USER}
 
 # Library install
