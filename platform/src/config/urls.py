@@ -33,5 +33,6 @@ urlpatterns = [
     path('api/v0.2.0/petition/', include('petition.urls',
          namespace='petition')),
     path('api/v0.2.1/pa_court_archive/', include('pa_court_archive.urls',
-         namespace='pa_court_archive'))
+         namespace='pa_court_archive')),
+    url(r'^(?:.*)/?$', staticbundle),
 ]
