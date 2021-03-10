@@ -21,6 +21,7 @@ services:
                 EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
                 EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
                 DJANGO_SETTINGS_MODULE: config.settings.docker
+                REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
         depends_on:
             - postgres
         image: expunger:platform
