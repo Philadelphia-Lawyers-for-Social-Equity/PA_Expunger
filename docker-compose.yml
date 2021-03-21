@@ -40,6 +40,7 @@ services:
             DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
             MYSQL_USER: ${MYSQL_USER}
             MYSQL_PASS: ${MYSQL_PASS}
+            BACKEND_ONLY: active
         ports:
             - 8000:8000
         restart: on-failure
