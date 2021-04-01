@@ -28,8 +28,7 @@ if SECRET_KEY is None or SECRET_KEY.strip() == "":
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-
-ALLOWED_HOSTS = [os.environ.get("HOSTNAME")]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -44,7 +43,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'expunger',
     'petition',
-    'pa_court_archive'
+    'pa_court_archive',
+    'mod_wsgi.server'
 ]
 
 MIDDLEWARE = [

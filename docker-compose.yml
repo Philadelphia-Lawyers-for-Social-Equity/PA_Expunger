@@ -15,19 +15,20 @@ services:
     expunger:
         build:
             context: ./
-            dockerfile: ./platform/Dockerfile
+            dockerfile: ./Dockerfile
             args:
                 EXPUNGER_USER: plse
                 EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
                 EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
-                DJANGO_SETTINGS_MODULE: config.settings.docker
+                DJANGO_SETTINGS_MODULE: config.settings.dev
                 REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
         depends_on:
             - postgres
         image: expunger:platform
         environment:
+            BACKEND_ONLY: "true"
             REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-            DJANGO_SETTINGS_MODULE: config.settings.docker
+            DJANGO_SETTINGS_MODULE: config.settings.dev
             EXPUNGER_USER: plse
             EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
             EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
@@ -38,9 +39,6 @@ services:
             FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
             BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
             DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
-            MYSQL_USER: ${MYSQL_USER}
-            MYSQL_PASS: ${MYSQL_PASS}
-            BACKEND_ONLY: active
         ports:
             - 8000:8000
         restart: on-failure

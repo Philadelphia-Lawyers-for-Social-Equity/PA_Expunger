@@ -2,6 +2,7 @@ FROM debian:stable
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APPDIR /srv/plse/expunger
+ENV BACKEND_ONLY "false"
 
 ARG EXPUNGER_USER
 ARG EXPUNGER_PASS
@@ -93,7 +94,6 @@ WORKDIR ${APPDIR}
 COPY platform/src/ .
 
 
-# TODO: make this only happen in production
 #https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues/47
 # -- PROD BUILD --
 # Frontend install
@@ -101,8 +101,8 @@ COPY platform/src/ .
 WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
 USER root
-RUN yarn install --non-interactive --silent --production
-RUN yarn build
+# prod_build.sh will only build the front end if BACKEND_ONLY == "true"
+RUN ./prod_build.sh
 USER ${EXPUNGER_USER}
 WORKDIR ${APPDIR}
 RUN python3 ./manage.py collectstatic --noinput
