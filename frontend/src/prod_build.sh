@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ $BACKEND_ONLY = "true" ]
+if [ "$BACKEND_ONLY" = "true" ]
 then
     yarn install --non-interactive --silent --production
     yarn build
