@@ -2,7 +2,6 @@ FROM debian:stable
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APPDIR /srv/plse/expunger
-ENV BACKEND_ONLY "false"
 
 ARG EXPUNGER_USER
 ARG EXPUNGER_PASS
