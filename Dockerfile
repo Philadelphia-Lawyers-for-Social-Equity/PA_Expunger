@@ -101,7 +101,8 @@ WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
 USER root
 # prod_build.sh will only build the front end if BACKEND_ONLY == "true"
-RUN ./prod_build.sh
+RUN if [ "$BACKEND_ONLY" = "true" ]; then ./prod_build.sh; else echo "Dev build, frontend not compiled into django."; fi
+
 USER ${EXPUNGER_USER}
 WORKDIR ${APPDIR}
 RUN python3 ./manage.py collectstatic --noinput
