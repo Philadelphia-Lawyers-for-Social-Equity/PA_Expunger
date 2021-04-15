@@ -20,18 +20,20 @@ export default function Petition(props) {
         <GeneratorInput
             label="Offense Tracking Number (OTN)"
             type="text"
-            placeholder="########" 
+            placeholder="########"
             name="otn"
             value={props.otn}
+            errorMsg={props.errorReport['petition.otn']}
             handleChange={props.handleChange}
         />
 
         <GeneratorInput
             label="DC"
             type="text"
-            placeholder="########" 
+            placeholder="########"
             name="dc"
             value={props.dc}
+            errorMsg={props.errorReport['petition.dc']}
             handleChange={props.handleChange}
         />
 
@@ -40,6 +42,7 @@ export default function Petition(props) {
             type="date"
             name="arrest_date"
             value={props.arrest_date}
+            errorMsg={props.errorReport['petition.arrest_date']}
             handleChange={props.handleChange}
         />
 
@@ -49,6 +52,7 @@ export default function Petition(props) {
             placeholder="Arresting Agency"
             name="arrest_agency"
             value={props.arrest_agency}
+            errorMsg={props.errorReport['petition.arrest_agency']}
             handleChange={props.handleChange}
         />
 
@@ -58,6 +62,7 @@ export default function Petition(props) {
             placeholder="First & Last Name"
             name="arrest_officer"
             value={props.arrest_officer}
+            errorMsg={props.errorReport['petition.arrest_officer']}
             handleChange={props.handleChange}
         />
 
@@ -67,6 +72,7 @@ export default function Petition(props) {
             placeholder="First & Last Name"
             name="judge"
             value={props.judge}
+            errorMsg={props.errorReport['petition.judge']}
             handleChange={props.handleChange}
         />
         <Radio

@@ -14,6 +14,7 @@ export default function Charges(props) {
             inner={RemovableCharge}
             items={props.charges}
             emptyItem={{"statute": "", "description": "", "grade": "", "date": "", "disposition": "", "key": ""}}
+            errorMsg={props.errorReport['charges']}
             handleChange={props.handleChange}
         />
     );

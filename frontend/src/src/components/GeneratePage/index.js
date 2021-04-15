@@ -63,6 +63,8 @@ export default function GeneratePage(props) {
     const [petition, setPetition] = useReducer(mergeReduce, petitionFields.petition);
     const [dockets, setDockets] = useState(petitionFields.dockets);
     const [charges, setCharges] = useState(petitionFields.charges);
+    const [errorReport, setErrorReport] = useState({});
+    const [topLevelError, setTopLevelError] = useState(null);
     const [restitution, setRestitution] = useReducer(mergeReduce, petitionFields.restitution);
 
     function postGeneratorRequest() {
@@ -96,6 +98,14 @@ export default function GeneratePage(props) {
                       document.body.appendChild(a);
                       a.click();
                     }
+                } else if (res.status === 400) {
+                    if (res.data.errorReport) {
+                        setErrorReport(res.data.errorReport)
+                    } else {
+                        setTopLevelError("Something went wrong but no errorReport was returned")
+                    }
+                } else {
+                    setTopLevelError("An unknown error occurred")
                 }
             }).catch(
                 error => {
@@ -106,11 +116,12 @@ export default function GeneratePage(props) {
 
     return (
         <Form className="generator">
-            <Petitioner {... petitioner} handleChange={setPetitioner} />
-            <Petition {... petition} handleChange={setPetition} />
-            <Dockets dockets={dockets} handleChange={setDockets} />
-            <Charges charges={charges} handleChange={setCharges} />
-            <Restitution {... restitution} handleChange={setRestitution} />
+            <Petitioner {... petitioner} errorReport={errorReport} handleChange={setPetitioner} />
+            <Petition {... petition} errorReport={errorReport} handleChange={setPetition} />
+            <Dockets dockets={dockets} errorReport={errorReport} handleChange={setDockets} />
+            <Charges charges={charges} errorReport={errorReport} handleChange={setCharges} />
+            <Restitution {... restitution} errorReport={errorReport} handleChange={setRestitution} />
+            {topLevelError != null ? <b>{topLevelError}</b> : null}
             <Button onClick={postGeneratorRequest}>Generate Petition</Button>
         </Form>
 
