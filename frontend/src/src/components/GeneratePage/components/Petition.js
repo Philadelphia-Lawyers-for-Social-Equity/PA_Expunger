@@ -3,15 +3,17 @@ import GeneratorInput from '../helpers/GeneratorInput';
 import Radio from '../helpers/Radio';
 
 export default function Petition(props) {
-    /* props expects:
+    /* 
+    props expects:
         - otn
+        - judge
+        - ratio: string, either "partial" or "full"
+        - handleChange
+    props also includes (but does not use):
         - dc
         - arrest_date: isoformatted date string, eg "2021-01-29"
         - arrest_officer
         - arrest_agency
-        - judge
-        - ratio: string, either "partial" or "full"
-        - handleChange
     */
 
     return (
@@ -23,41 +25,6 @@ export default function Petition(props) {
             placeholder="########" 
             name="otn"
             value={props.otn}
-            handleChange={props.handleChange}
-        />
-
-        <GeneratorInput
-            label="DC"
-            type="text"
-            placeholder="########" 
-            name="dc"
-            value={props.dc}
-            handleChange={props.handleChange}
-        />
-
-        <GeneratorInput
-            label="Arrest Date"
-            type="date"
-            name="arrest_date"
-            value={props.arrest_date}
-            handleChange={props.handleChange}
-        />
-
-        <GeneratorInput
-            label="Arrest Agency"
-            type="text"
-            placeholder="Arresting Agency"
-            name="arrest_agency"
-            value={props.arrest_agency}
-            handleChange={props.handleChange}
-        />
-
-        <GeneratorInput
-            label="Arresting Officer"
-            type="text"
-            placeholder="First & Last Name"
-            name="arrest_officer"
-            value={props.arrest_officer}
             handleChange={props.handleChange}
         />
 
