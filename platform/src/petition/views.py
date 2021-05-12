@@ -1,6 +1,7 @@
 import logging
 import os
 import jinja2
+from datetime import date
 from docxtpl import DocxTemplate
 
 from django.http import HttpResponse
@@ -31,26 +32,32 @@ class PetitionAPIView(APIView):
             "Profile %s found attorney %s" % (profile, profile.attorney))
 
         try:
-            context = {
-                "organization": profile.organization,
-                "attorney": profile.attorney,
-                "petitioner":
-                    models.Petitioner.from_dict(request.data["petitioner"]),
-                "petition":
-                    models.Petition.from_dict(request.data["petition"]),
-                "dockets": [models.DocketId.from_dict(d) for d in
-                            request.data.get("dockets", [])],
-                "restitution":
-                    models.Restitution.from_dict(request.data["restitution"]),
-                "charges": [models.Charge.from_dict(c) for c in
-                            request.data.get("charges", [])]
-            }
-        except KeyError as err:
-            msg = "Missing field: %s" % (err)
-            logger.warn(msg)
-            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
+            context, error_report = validated_context(request.data)
+        except ValueError as err:
+            logger.debug(err)
+            return Response({"error_report": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 
         logger.debug("Petition POSTed with context: %s" % context)
+
+        if error_report != {}:
+            return Response({"error_report": error_report},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # try:
+        #     context = {
+        #         "organization": profile.organization,
+        #         "attorney": profile.attorney,
+        #         "petitioner":
+        #             models.Petitioner.from_dict(request.data["petitioner"]),
+        #         "petition":
+        #             models.Petition.from_dict(request.data["petition"]),
+        #         "dockets": [models.DocketId.from_dict(d) for d in
+        #                     request.data.get("dockets", [])],
+        #         "restitution":
+        #             models.Restitution.from_dict(request.data["restitution"]),
+        #         "charges": [models.Charge.from_dict(c) for c in
+        #                     request.data.get("charges", [])]
+        #     }
 
         docx = os.path.join(
             BASE_DIR, "petition", "templates", "petition", "petition.docx")
@@ -249,3 +256,155 @@ def disposition_to_charge(disp):
         "date": charge_date,
         "disposition": disp.get("offense_disposition", None)
     }
+
+
+def validated_context(data):
+    """
+    Produce a tuple of validated context dict, and error report.
+
+    Arg:
+        Dict of petition fields, per the api.
+    Return:
+        (validated petition fields, error_report)
+    """
+    context = {}
+    error_report = {}
+
+    try:
+        petition, errors = validated_context_petition(data.get("petition"))
+        context.update(petition)
+        error_report.update(errors)
+    except ValueError as err:
+        logger.debug("invalid petition: %s", str(err))
+        error_report["petition"] = str(err)
+
+    try:
+        petitioner, errors = validated_context_petitioner(data.get("petitioner"))
+        context.update(petitioner)
+        error_report.update(errors)
+    except ValueError as err:
+        logger.debug("invalid petitioner: %s", str(err))
+        error_report["petitioner"] = str(err)
+
+    raise NotImplementedError("Need to validate restitution, dockets ... ")
+    return (context, errors)
+
+def validated_context_petition(data):
+    """
+    Produce validated petition_fields, error_report.
+    """
+    if data is None:
+        return ({}, {"petition": "missing petition section"})
+
+    context = {}
+    error_report = {}
+
+    try:
+        context["judge"] = validated_string_nonempty(data.get("judge"))
+    except ValueError:
+        error_report["petition.judge"] = "missing judge name"
+
+    try:
+        context["otn"] = validated_string_nonempty(data.get("otn"))
+    except ValueError:
+        error_report["petition.otn"] = "missing otn"
+
+    ratio = data.get("ratio")
+
+    if ratio in ["full", "partial"]:
+        context["ratio"] = ratio
+    else:
+        error_report["petition.ratio"] = "invalid ratio, must be full or partial"
+
+    return (context, error_report)
+
+def validated_context_petitioner(data):
+    """Produce tuple containing a dict of petitioner data, errors."""
+    if data is None:
+        return
+
+    context = {}
+    error_report = {}
+
+    try:
+       context["name"] = validated_string_nonempty(data.get("name"))
+    except ValueError:
+        error_report["petitioner.name"] = "missing petitioner name"
+
+    try:
+        context["dob"] = validated_date(data.get("dob"))
+    except ValueError:
+        error_report["petitioner.dob"] = "invalid dob"
+
+    try:
+        context["ssn"] = validated_string_nonempty(data.get("ssn"))
+    except ValueError:
+        error_report["petitioner.ssn"] = "missing ssn"
+
+    context["aliases"] = data.get("aliases", [])
+
+    try:
+        address, errors = validated_address(data.get("address"))
+        context["address"] = address
+        error_report.update(errors)
+    except ValueError:
+        error_report["petitioner.address"] = "invalid address"
+
+    return (context, error_report)
+
+def validated_address(data):
+    """Produce an address context, errors for the petitioner address."""
+    if data is None:
+        raise ValueError("No value")
+
+    context = {}
+    error_report = {}
+
+    try:
+        context["street1"] = validated_string_nonempty(data.get("street1"))
+    except ValueError:
+        error_report["petitioner.address.street1"] = "missing street"
+
+    try:
+        context["street2"] = validated_string_nonempty(data.get("street2"))
+    except ValueError:
+        pass
+
+    try:
+        context["city"] = validated_string_nonempty(data.get("city"))
+    except ValueError:
+        error_report["petitioner.address.city"] = "missing city"
+
+    try:
+        context["zipcode"] = validated_string_nonempty(data.get("zipcode"))
+    except ValueError:
+        error_report["petitioner.address.zipcode"] = "missing zip"
+
+    try:
+        state = validated_string_nonempty(data.get("state"))
+        if len(state) == 2:
+            context["state"] = state
+        else:
+            error_report["petitioner.state.state"] = "invalid state"
+    except ValueError:
+        error_report["petitioner.address.state"] = "missing state"
+
+    return (context, error_report)
+
+def validated_string_nonempty(text):
+    """Return the string, or raise ValueError."""
+    if text is None:
+        raise ValueError("No value")
+
+    if text.strip() == "":
+        raise ValueError("No Value")
+
+    return text
+
+def validated_date(text):
+    """Produce a date from an iso formatted (YYYY-MM-DD) string."""
+    if text is None:
+        raise ValueError("No value")
+
+    yt, mt, dt = text.split("-")
+    return date(int(yt), int(mt), int(dt))
