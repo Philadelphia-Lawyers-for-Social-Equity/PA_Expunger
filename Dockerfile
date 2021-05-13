@@ -2,13 +2,13 @@ FROM debian:stable
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APPDIR /srv/plse/expunger
-ENV BACKEND_ONLY "false"
 
 ARG EXPUNGER_USER
 ARG EXPUNGER_PASS
 ARG EXPUNGER_KEY
 ARG DJANGO_SETTINGS_MODULE
 ARG REACT_APP_BACKEND_HOST
+ARG BACKEND_ONLY
 
 ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
 
@@ -102,7 +102,8 @@ WORKDIR ${APPDIR}/frontend/src
 COPY frontend/src/ .
 USER root
 # prod_build.sh will only build the front end if BACKEND_ONLY == "true"
-RUN ./prod_build.sh
+RUN if [ "$BACKEND_ONLY" = "true" ]; then ./prod_build.sh; else echo "Dev build, frontend not compiled into django."; fi
+
 USER ${EXPUNGER_USER}
 WORKDIR ${APPDIR}
 RUN python3 ./manage.py collectstatic --noinput
