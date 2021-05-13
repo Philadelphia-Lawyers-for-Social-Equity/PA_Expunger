@@ -42,6 +42,8 @@ class PetitionAPIView(APIView):
         if error_report != {}:
             return Response({"error_report": error_report},
                             status=status.HTTP_400_BAD_REQUEST)
+        context["organization"] = profile.organization
+        context["attorney"] = profile.attorney
 
         # try:
         #     context = {
@@ -272,7 +274,7 @@ def validated_context(data):
 
     try:
         petition, errors = validated_context_petition(data.get("petition"))
-        context.update(petition)
+        context["petition"] = petition
         error_report.update(errors)
     except ValueError as err:
         logger.debug("invalid petition: %s", str(err))
@@ -280,13 +282,14 @@ def validated_context(data):
 
     try:
         petitioner, errors = validated_context_petitioner(data.get("petitioner"))
-        context.update(petitioner)
+        context["petitioner"] = petitioner
         error_report.update(errors)
     except ValueError as err:
         logger.debug("invalid petitioner: %s", str(err))
         error_report["petitioner"] = str(err)
 
-    raise NotImplementedError("Need to validate restitution, dockets ... ")
+    context["restitution"] = data.get("restitution", {})
+
     return (context, errors)
 
 def validated_context_petition(data):
@@ -408,3 +411,23 @@ def validated_date(text):
 
     yt, mt, dt = text.split("-")
     return date(int(yt), int(mt), int(dt))
+
+def validated_restitution(data):
+    """Return validated restitution (fees), error context."""
+    if data is None:
+        return {"total": 0, "paid": 0}
+
+    context = {}
+    error_report = {}
+
+    try:
+        context["total"] = float(data.get("total", 0))
+    except ValueError:
+        error_report["restitution.total"] = "invalid fee total"
+
+    try:
+        context["paid"] = float(data.get("paid", 0))
+    except ValueError:
+        error_report["restitution.paid"] = "invalid fee paid"
+
+    return (context, error_report)
