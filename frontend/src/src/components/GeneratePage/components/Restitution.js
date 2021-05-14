@@ -10,7 +10,7 @@ export default function Restitution(props) {
 
     return (
         <>
-            <h2>Restitution</h2>
+            <h2>Fines & Fees</h2>
             <GeneratorInput
                 label="Total"
                 placeholder="Decimal Number"
