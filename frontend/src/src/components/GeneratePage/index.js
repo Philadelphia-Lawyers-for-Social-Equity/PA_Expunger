@@ -82,36 +82,32 @@ export default function GeneratePage(props) {
 
         console.info(petitionFields);
         axios.post(url, petitionFields, postRequestConfig()).then(
-            res => {
-                if (res.status === 200) {
-                    let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-                    let downloadUrl = window.URL.createObjectURL(blob);
-                    let filename = "petition.docx";
-                    let disposition = res.headers["content-disposition"];
-                    let a = document.createElement("a");
-
-                    if (typeof a.download === "undefined") {
-                      window.location.href = downloadUrl;
-                    } else {
-                      a.href = downloadUrl;
-                      a.download = filename;
-                      document.body.appendChild(a);
-                      a.click();
-                    }
-                } else if (res.status === 400) {
-                    if (res.data.errorReport) {
-                        setErrorReport(res.data.errorReport)
-                    } else {
-                        setTopLevelError("Something went wrong but no errorReport was returned")
-                    }
+            (res) => {
+                let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+                let downloadUrl = window.URL.createObjectURL(blob);
+                let filename = "petition.docx";
+                let disposition = res.headers["content-disposition"];
+                let a = document.createElement("a");
+                if (typeof a.download === "undefined") {
+                    window.location.href = downloadUrl;
                 } else {
-                    setTopLevelError("An unknown error occurred")
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
                 }
             }).catch(
-                error => {
-                    console.error(error);
-                }
-            );
+                (error) => {
+                    const enc = new TextDecoder("utf-8");
+                    const error_data = JSON.parse(enc.decode(error.response.data));
+                    console.log("Why tho");
+                    console.log(error_data);
+                    if (error_data.error_report) {
+	                      setErrorReport(error_data.error_report);
+                    } else {
+	                      setTopLevelError("Something went wrong but no errorReport was returned")
+	                  }
+                });
     }
 
     return (

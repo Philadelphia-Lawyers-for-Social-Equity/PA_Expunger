@@ -75,7 +75,11 @@ export default function Petitioner(props) {
                 handleChange={(e) => {saveAliases(e)}}
             />
 
-            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
-        </>
+            <Address
+        {...props.address}
+        handleChange={(a) => {props.handleChange({"address": a});}}
+        errorReport={props.errorReport}
+            />
+            </>
         );
 }

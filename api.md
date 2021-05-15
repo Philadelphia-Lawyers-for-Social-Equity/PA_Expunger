@@ -8,7 +8,7 @@ containing:
             - dob: petitioners date of birth, iso formatted, such as
                    "2019-10-17"
 
-            - ssn: social security number. Only used as input on generator.
+            - ssn: social security number. # Only used as input on generator.
             - address: # Only used as input on generator.
                 - street1: string, address line 1
                 - street2: string, address line 2
@@ -130,33 +130,7 @@ parsing. This is where the real work gets done.
 
   - Requires access token header
   - POST with valid data produces a microsoft .docx petition
-  - Expects JSON of
-    - petitioner
-      - name: string, full name
-      - aliases: list of strings, aliases of the petitioner
-      - dob: petitioners date of birth, iso formatted, such as
-        "2019-10-17"
-      - ssn: string, petitioner's social security number
-      - address:
-        - street1: string
-        - street2: string or null
-        - city: string
-        - state: string, two character state abbreviation
-        - zipcode: string formatted zip code
-    - petition
-      - date: iso formatted date, such as "2019-10-17"
-      - ratio: string, must be "full" if every charge is to be
-        expunged, or "partial" if some charges are excluded.
-      - otn: string
-      - dc: string
-      - arrest_date: iso formatted date, such as "2019-10-17"
-      - arrest_officer: string, arresting officer's full name
-      - disposition: string
-      - judge: string, full name of the judge
-    - docket: String of a docket id, such as "MC-51-CR-1234567-1995"
-    - restitution:
-      - total: decimal number
-      - paid: decimal number
+  - Expects JSON of Petition Fields (see above).
 
 - **api/v0.2.0/petition/parse_docket/**
     - Requires access token header
