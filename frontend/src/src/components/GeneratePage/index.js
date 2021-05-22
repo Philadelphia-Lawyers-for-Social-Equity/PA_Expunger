@@ -118,7 +118,7 @@ export default function GeneratePage(props) {
             <Charges charges={charges} errorReport={errorReport} handleChange={setCharges} />
             <Restitution {... restitution} errorReport={errorReport} handleChange={setRestitution} />
             {topLevelError != null ? <b>{topLevelError}</b> : null}
-            <Button onClick={postGeneratorRequest}>Generate Petition</Button>
+            <Button id='ExpungeButton' onClick={postGeneratorRequest}>Generate Petition</Button>
         </Form>
 
     );
