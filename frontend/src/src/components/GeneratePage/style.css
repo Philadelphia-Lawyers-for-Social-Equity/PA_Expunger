@@ -10,7 +10,10 @@ form.generator {
 
 #ExpungeButton {
     background-color : #0a5688;
-    margin-top : 20px;
     border-color : #0a5688;
-    width : 100%;
+    position : relative;
+    left : 25%;
+    width : 50%;
+    margin-top: 20px;
+    margin-bottom: 50px;
 }
