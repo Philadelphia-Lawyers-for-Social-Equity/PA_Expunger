@@ -63,8 +63,6 @@ export default function GeneratePage(props) {
     const [petition, setPetition] = useReducer(mergeReduce, petitionFields.petition);
     const [dockets, setDockets] = useState(petitionFields.dockets);
     const [charges, setCharges] = useState(petitionFields.charges);
-    const [errorReport, setErrorReport] = useState({});
-    const [topLevelError, setTopLevelError] = useState(null);
     const [restitution, setRestitution] = useReducer(mergeReduce, petitionFields.restitution);
 
     function postGeneratorRequest() {
@@ -82,43 +80,38 @@ export default function GeneratePage(props) {
 
         console.info(petitionFields);
         axios.post(url, petitionFields, postRequestConfig()).then(
-            (res) => {
-                let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-                let downloadUrl = window.URL.createObjectURL(blob);
-                let filename = "petition.docx";
-                let disposition = res.headers["content-disposition"];
-                let a = document.createElement("a");
-                if (typeof a.download === "undefined") {
-                    window.location.href = downloadUrl;
-                } else {
-                    a.href = downloadUrl;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
+            res => {
+                if (res.status === 200) {
+                    let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+                    let downloadUrl = window.URL.createObjectURL(blob);
+                    let filename = "petition.docx";
+                    let disposition = res.headers["content-disposition"];
+                    let a = document.createElement("a");
+
+                    if (typeof a.download === "undefined") {
+                      window.location.href = downloadUrl;
+                    } else {
+                      a.href = downloadUrl;
+                      a.download = filename;
+                      document.body.appendChild(a);
+                      a.click();
+                    }
                 }
             }).catch(
-                (error) => {
-                    const enc = new TextDecoder("utf-8");
-                    const error_data = JSON.parse(enc.decode(error.response.data));
-                    console.log("Why tho");
-                    console.log(error_data);
-                    if (error_data.error_report) {
-	                      setErrorReport(error_data.error_report);
-                    } else {
-	                      setTopLevelError("Something went wrong but no errorReport was returned")
-	                  }
-                });
+                error => {
+                    console.error(error);
+                }
+            );
     }
 
     return (
         <Form className="generator">
-            <Petitioner {... petitioner} errorReport={errorReport} handleChange={setPetitioner} />
-            <Petition {... petition} errorReport={errorReport} handleChange={setPetition} />
-            <Dockets dockets={dockets} errorReport={errorReport} handleChange={setDockets} />
-            <Charges charges={charges} errorReport={errorReport} handleChange={setCharges} />
-            <Restitution {... restitution} errorReport={errorReport} handleChange={setRestitution} />
-            {topLevelError != null ? <b>{topLevelError}</b> : null}
-            <Button id='ExpungeButton' onClick={postGeneratorRequest}>Generate Petition</Button>
+            <Petitioner {... petitioner} handleChange={setPetitioner} />
+            <Petition {... petition} handleChange={setPetition} />
+            <Dockets dockets={dockets} handleChange={setDockets} />
+            <Charges charges={charges} handleChange={setCharges} />
+            <Restitution {... restitution} handleChange={setRestitution} />
+            <Button onClick={postGeneratorRequest}>Generate Petition</Button>
         </Form>
 
     );

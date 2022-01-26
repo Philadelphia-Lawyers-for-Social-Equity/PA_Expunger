@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf -*-
 from datetime import date
 import factory
 import factory.fuzzy
@@ -44,6 +44,10 @@ class PetitionFactory(factory.Factory):
     date = date.today()
     ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
+    dc = factory.fuzzy.FuzzyInteger(1000000000, 9999999999)
+    arrest_agency = "Philadelphia Pd"
+    arrest_date = factory.Faker("date_this_century")
+    arrest_officer = factory.Faker("name")
     judge = factory.Faker("name")
 
 

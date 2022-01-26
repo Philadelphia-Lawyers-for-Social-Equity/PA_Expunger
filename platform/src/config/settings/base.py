@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'expunger',
     'petition',
     'pa_court_archive',
+    'mod_wsgi.server'
 ]
 
 MIDDLEWARE = [
@@ -119,7 +120,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
@@ -165,5 +165,3 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(hours=3)
 }
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import os
 import jinja2
-from datetime import date
 from docxtpl import DocxTemplate
 
 from django.http import HttpResponse
@@ -32,39 +29,28 @@ class PetitionAPIView(APIView):
 
         logger.debug(
             "Profile %s found attorney %s" % (profile, profile.attorney))
-        logger.debug("Petition POSTed with: %s" % request.data)
 
         try:
-            validated_input, error_report = validate_input(request.data)
-        except ValueError as err:
-            logger.debug(err)
-            return Response({"error_report": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+            context = {
+                "organization": profile.organization,
+                "attorney": profile.attorney,
+                "petitioner":
+                    models.Petitioner.from_dict(request.data["petitioner"]),
+                "petition":
+                    models.Petition.from_dict(request.data["petition"]),
+                "dockets": [models.DocketId.from_dict(d) for d in
+                            request.data.get("dockets", [])],
+                "restitution":
+                    models.Restitution.from_dict(request.data["restitution"]),
+                "charges": [models.Charge.from_dict(c) for c in
+                            request.data.get("charges", [])]
+            }
+        except KeyError as err:
+            msg = "Missing field: %s" % (err)
+            logger.warn(msg)
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        logger.debug("Petition validation result: %s" % validated_input)
-        if error_report != {}:
-            logger.debug("Error report: %s" % error_report)
-            return Response({"error_report": error_report},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-
-        context = {}
-        context["organization"] = profile.organization
-        context["attorney"] = profile.attorney
-        context["petitioner"] = models.Petitioner.from_dict(validated_input["petitioner"])
-        context["petition"] = models.Petition.from_dict(validated_input["petition"])
-        context["restitution"] = models.Restitution.from_dict(validated_input["restitution"])
-
-        try:
-            context["dockets"] = [models.DocketId.from_dict(d) for d in request.data.get("dockets", [])]
-        except ValueError as err:
-            logger.debug("Input error on dockets: %s", str(err))
-            return Response({"error_report": {"dockets": "invalid docket: %s" % str(err)}}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            context["charges"] = [models.Charge.from_dict(c) for c in request.data.get("charges", [])]
-        except ValueError as err:
-            logger.debug("Input error on charges: %s", str(err))
-            return Response({"error_report": {"charges": "invalid charges: %s" % str(err)}}, status=status.HTTP_400_BAD_REQUEST)
+        logger.debug("Petition POSTed with context: %s" % context)
 
         docx = os.path.join(
             BASE_DIR, "petition", "templates", "petition", "petition.docx")
@@ -263,186 +249,3 @@ def disposition_to_charge(disp):
         "date": charge_date,
         "disposition": disp.get("offense_disposition", None)
     }
-
-
-def validate_input(data):
-    """
-    Produce a tuple of validate context dict, and error report.
-
-    Arg:
-        Dict of petition fields, per the api.
-    Return:
-        (validate petition fields, error_report)
-    """
-    context = {}
-    error_report = {}
-
-    def validate(section, validator):
-        """
-        Update the context and error report according to the results of a validator."
-
-        Args:
-           - section: name of a section, such as "petitioner" or "restitution"
-           - validator: a function that will return a tuple, containing validated data and updates to the error report, or throw a ValueError
-        Effect:
-           - updates the context and error report.
-        """
-        try:
-            result, errors = validator(data.get(section))
-            context[section] = result
-            if errors != {}:
-                error_report.update(errors)
-        except ValueError as err:
-            logger.debug("invalid %s: %s", section, str(err))
-            error_report[section] = str(err)
-
-    validate("petition", validate_petition)
-    validate("petitioner", validate_petitioner)
-    validate("restitution", validate_restitution)
-
-    return (context, error_report)
-
-def validate_petition(data):
-    """
-    Produce validate petition_fields, error_report.
-    """
-    if data is None:
-        return ({}, {"petition": "missing petition section"})
-
-    context = {}
-    error_report = {}
-
-    try:
-        context["judge"] = validate_string_nonempty(data.get("judge"))
-    except ValueError:
-        error_report["petition.judge"] = "missing judge name"
-
-    try:
-        context["otn"] = validate_string_nonempty(data.get("otn"))
-    except ValueError:
-        error_report["petition.otn"] = "missing otn"
-
-    try:
-        context["date"] = validate_date(data.get("date"))
-    except ValueError:
-        error_report["petition.date"] = "invalid date"
-
-    ratio = data.get("ratio")
-
-    if ratio in ["full", "partial"]:
-        context["ratio"] = ratio
-    else:
-        error_report["petition.ratio"] = "invalid ratio, must be full or partial"
-
-    return (context, error_report)
-
-def validate_petitioner(data):
-    """Produce tuple containing a dict of petitioner data, errors."""
-    if data is None:
-        return
-
-    context = {}
-    error_report = {}
-
-    try:
-       context["name"] = validate_string_nonempty(data.get("name"))
-    except ValueError:
-        error_report["petitioner.name"] = "missing petitioner name"
-
-    try:
-        context["dob"] = validate_date(data.get("dob"))
-    except ValueError:
-        error_report["petitioner.dob"] = "invalid dob"
-
-    try:
-        context["ssn"] = validate_string_nonempty(data.get("ssn"))
-    except ValueError:
-        error_report["petitioner.ssn"] = "missing ssn"
-
-    context["aliases"] = data.get("aliases", [])
-
-    try:
-        address, errors = validate_address(data.get("address"))
-        context["address"] = address
-        error_report.update(errors)
-    except ValueError:
-        error_report["petitioner.address"] = "invalid address"
-
-    return (context, error_report)
-
-def validate_address(data):
-    """Produce an address context, errors for the petitioner address."""
-    if data is None:
-        raise ValueError("No value")
-
-    context = {}
-    error_report = {}
-
-    try:
-        context["street1"] = validate_string_nonempty(data.get("street1"))
-    except ValueError:
-        error_report["petitioner.address.street1"] = "missing street"
-
-    try:
-        context["street2"] = validate_string_nonempty(data.get("street2"))
-    except ValueError:
-        pass
-
-    try:
-        context["city"] = validate_string_nonempty(data.get("city"))
-    except ValueError:
-        error_report["petitioner.address.city"] = "missing city"
-
-    try:
-        context["zipcode"] = validate_string_nonempty(data.get("zipcode"))
-    except ValueError:
-        error_report["petitioner.address.zipcode"] = "missing zip"
-
-    try:
-        state = validate_string_nonempty(data.get("state"))
-        if len(state) == 2:
-            context["state"] = state
-        else:
-            error_report["petitioner.address.state"] = "invalid state"
-    except ValueError:
-        error_report["petitioner.address.state"] = "missing state"
-
-    return (context, error_report)
-
-def validate_string_nonempty(text):
-    """Return the string, or raise ValueError."""
-    if text is None:
-        raise ValueError("No value")
-
-    if text.strip() == "":
-        raise ValueError("No Value")
-
-    return text
-
-def validate_date(text):
-    """Produce a date from an iso formatted (YYYY-MM-DD) string."""
-    if text is None:
-        raise ValueError("No value")
-
-    yt, mt, dt = text.split("-")
-    return date(int(yt), int(mt), int(dt))
-
-def validate_restitution(data):
-    """Return validate restitution (fees), error context."""
-    if data is None:
-        return ({"total": 0, "paid": 0}, {})
-
-    context = {}
-    error_report = {}
-
-    try:
-        context["total"] = float(data.get("total", 0))
-    except ValueError:
-        error_report["restitution.total"] = "invalid fee total in %s" % str(data)
-
-    try:
-        context["paid"] = float(data.get("paid", 0))
-    except ValueError:
-        error_report["restitution.paid"] = "invalid fee paid is %s"  % str(data)
-
-    return (context, error_report)

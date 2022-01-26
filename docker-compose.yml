@@ -28,7 +28,7 @@ services:
         environment:
             BACKEND_ONLY: ${BACKEND_ONLY:-"false"}
             REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-            DJANGO_SETTINGS_MODULE: config.settings.docker
+            DJANGO_SETTINGS_MODULE: config.settings.dev
             EXPUNGER_USER: plse
             EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
             EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}

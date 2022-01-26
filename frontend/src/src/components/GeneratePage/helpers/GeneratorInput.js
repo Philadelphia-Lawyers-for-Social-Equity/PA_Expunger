@@ -33,9 +33,7 @@ export default function GeneratorInput(props) {
                         let res = {[keyName]: e.target.value};
                         props.handleChange(res);
                     }}
-                    isInvalid={props.errorMsg != null}
                 />
-                <div style={{color: "red"}}>{props.errorMsg}</div>
             </Col>
         </Form.Group>
     );
