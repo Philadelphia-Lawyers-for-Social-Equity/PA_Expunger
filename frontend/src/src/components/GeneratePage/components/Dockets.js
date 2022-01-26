@@ -23,6 +23,7 @@ export default function Dockets(props) {
             inner={RemovableTextField}
             items={makeItems()}
             emptyItem={{"text": "", "key": ""}}
+            errorMsg={props.errorReport['dockets']}
             handleChange={(e) => {saveItems(e);}}
         />
     );

@@ -75,6 +75,7 @@ export default function EditableList(props) {
             <Row>
                 <Col sm={2}/>
                 <Col className="text-left" sm={8}>
+                    <div style={{color: "red"}}>{props.errorMsg}</div>
                     <AddButton />
                 </Col>
             </Row>

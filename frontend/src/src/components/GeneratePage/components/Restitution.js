@@ -10,12 +10,13 @@ export default function Restitution(props) {
 
     return (
         <>
-            <h2>Restitution</h2>
+            <h2>Fines & Fees</h2>
             <GeneratorInput
                 label="Total"
                 placeholder="Decimal Number"
                 name="total"
                 value={props.total || 0}
+                errorMsg={props.errorReport['restitution.total']}
                 handleChange={props.handleChange}
             />
             <GeneratorInput
@@ -23,6 +24,7 @@ export default function Restitution(props) {
                 placeholder="Decimal Number"
                 name="paid"
                 value={props.paid || 0}
+                errorMsg={props.errorReport['restitution.paid']}
                 handleChange={props.handleChange}
             />
         </>

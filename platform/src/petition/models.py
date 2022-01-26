@@ -81,7 +81,7 @@ class Petitioner:
 
         return Petitioner(
             data["name"], aliases,
-            dateparser.parse(data["dob"]),
+            data["dob"],
             data["ssn"], Address.from_dict(data["address"]))
 
     def __repr__(self):
@@ -173,8 +173,7 @@ class PetitionRatio(enum.Enum):
 
 class Petition:
     """The petition data"""
-    def __init__(self, date, ratio, otn, dc, arrest_agency, arrest_date,
-                 arrest_officer, judge):
+    def __init__(self, date, ratio, otn, judge):
 
         if not isinstance(ratio, PetitionRatio):
             raise ValueError("Invalid PetitionRatio")
@@ -182,28 +181,21 @@ class Petition:
         self.date = date
         self.ratio = ratio
         self.otn = otn
-        self.dc = dc
-        self.arrest_agency = arrest_agency
-        self.arrest_date = arrest_date
-        self.arrest_officer = arrest_officer
         self.judge = judge
 
     @staticmethod
     def from_dict(data):
         """Produce a petition from it's dict representation"""
         return Petition(
-            dateparser.parse(data["date"]),
+            data["date"],
             PetitionRatio[data["ratio"]],
-            data["otn"], data["dc"], data["arrest_agency"],
-            dateparser.parse(data["arrest_date"]),
-            data["arrest_officer"], data["judge"]
+            data["otn"],
+            data["judge"]
         )
 
     def __repr__(self):
-        return "Petition(%s, %s, '%s', '%s', %s, '%s', '%s', '%s')" % (
-            repr(self.date), self.ratio, self.otn, self.dc,
-            self.arrest_agency, repr(self.arrest_date), self.arrest_officer,
-            self.judge)
+        return "Petition(%s, %s, '%s', '%s')" % (
+            repr(self.date), self.ratio, self.otn, self.judge)
 
 
 class Restitution:

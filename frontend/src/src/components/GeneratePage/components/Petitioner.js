@@ -40,6 +40,7 @@ export default function Petitioner(props) {
                 placeholder="Full Name"
                 name="name"
                 value={props.name}
+                errorMsg={props.errorReport['petitioner.name']}
                 handleChange={props.handleChange}
                 required={true}
             />
@@ -49,6 +50,7 @@ export default function Petitioner(props) {
                 type="date"
                 name="dob"
                 value={props.dob}
+                errorMsg={props.errorReport['petitioner.dob']}
                 handleChange={props.handleChange}
                 required={true}
             />
@@ -59,6 +61,7 @@ export default function Petitioner(props) {
                 placeholder="###-##-####"
                 name="ssn"
                 value={props.ssn}
+                errorMsg={props.errorReport['petitioner.ssn']}
                 handleChange={props.handleChange}
                 required={true}
             />
@@ -68,10 +71,15 @@ export default function Petitioner(props) {
                 inner={RemovableTextField}
                 emptyItem={{"text": "", "key": ""}}
                 items={aliasItems()}
+                errorMsg={props.errorReport['petitioner.aliases']}
                 handleChange={(e) => {saveAliases(e)}}
             />
 
-            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
-        </>
+            <Address
+        {...props.address}
+        handleChange={(a) => {props.handleChange({"address": a});}}
+        errorReport={props.errorReport}
+            />
+            </>
         );
 }
