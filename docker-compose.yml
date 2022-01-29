@@ -41,6 +41,8 @@ services:
             DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
         ports:
             - 8000:8000
+        volumes:
+            - ./platform/src/:/srv/plse/expunger
         restart: on-failure
 
     frontend:
@@ -56,8 +58,12 @@ services:
             PORT: 3000
             REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
             CI: "true"
+            CHOKIDAR_USEPOLLING: "true"
         ports:
             - 3000:3000
+        volumes:
+            - ./frontend/src/:/home/node/app/
+            - /home/node/app/node_modules
         restart: on-failure
 volumes:
     postgres_data:
