@@ -85,7 +85,6 @@ export default function GeneratePage(props) {
                     let blob = new Blob([res.data], {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
                     let downloadUrl = window.URL.createObjectURL(blob);
                     let filename = "petition.docx";
-                    let disposition = res.headers["content-disposition"];
                     let a = document.createElement("a");
 
                     if (typeof a.download === "undefined") {
