@@ -6,6 +6,10 @@ Docket Dashboard generates PA criminal record expungement paperwork.  It can
 base the paperwork on manually entered fields or by parsing PA common pleas
 docket sheets.  The app runs as small web-based dashboard.
 
+## Contributing
+
+Devs should please familiarize themselves with the [guidelines for contributing](./CONTRIBUTING.md). 
+
 ## Dev Setup
 
 Devs will need basic familiarity with docker and
