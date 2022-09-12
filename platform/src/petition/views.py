@@ -61,7 +61,8 @@ class PetitionAPIView(APIView):
         jinja_env.filters["date"] = date_string
 
         document.render(context, jinja_env)
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         response['Content-Disposition'] = 'attachment; filename="petition.docx"'
         document.save(response)
 
@@ -151,7 +152,7 @@ def petition_from_parser(parsed, ratio):
         "judge": case_info.get("judge"),
         "arrest_date": arrest_date,
         "ratio": ratio.name
-        }
+    }
 
 
 def dockets_from_parser(parsed):
@@ -211,6 +212,10 @@ def restitution_from_parser(parsed):
         return {}
 
     data = parsed["section_financial_information"]
+
+    if not data:
+        return {}
+
     total = data.get("assessment", 0)
     paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
 
