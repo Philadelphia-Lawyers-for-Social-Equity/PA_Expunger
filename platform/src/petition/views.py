@@ -147,6 +147,7 @@ def petition_from_parser(parsed, ratio):
 
     return {
         "otn": case_info.get("otn"),
+        "dc": case_info.get("district_control_number"),
         "arrest_officer": officer,
         "arrest_agency": case_info.get("arrest_agency"),
         "judge": case_info.get("judge"),

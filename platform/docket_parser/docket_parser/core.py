@@ -69,7 +69,7 @@ docket_decoder = Grammar(r"""
     arrest_officer_name = name+
 
     originating_docket = "Originating Docket No" colon space* docket_id
-    district_control_number = "District Control Number" (space*) dcn
+    district_control_number = "District Control Number" next_line next_line dcn
     dcn = alphanum+
 
     section_status_information =
@@ -260,7 +260,7 @@ class DocketExtractor(NodeVisitor):
         return ("originating_docket", val_named("docket_id", visited_children))
 
     def visit_district_control_number(self, node, visited_children):
-        return ("district_control_number", visited_children[2])
+        return ("district_control_number", tval(visited_children[3]))
 
     def visit_dcn(self, node, visited_children):
         return ("dcn", node.text.strip())
