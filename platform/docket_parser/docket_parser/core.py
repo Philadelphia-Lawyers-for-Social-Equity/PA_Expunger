@@ -78,7 +78,7 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    arrest_date = "Arrest Date" colon space* date
+    arrest_date = "Arrest Date" colon next_line next_line date
 
     section_defendant_information =
         "DEFENDANT INFORMATION"
@@ -272,7 +272,7 @@ class DocketExtractor(NodeVisitor):
         return ("section_status_information", result)
 
     def visit_arrest_date(self, node, visited_children):
-        return ("arrest_date", tval(visited_children[-1]))
+        return ("arrest_date", tval(visited_children[4]))
 
     def visit_section_defendant_information(self, node, visited_children):
         result = {
