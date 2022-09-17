@@ -122,8 +122,12 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    grand_totals = "Grand Totals" colon space+ money space+ money space+
-                    money space+ money space+ money
+    grand_totals = "Grand Totals" colon next_line next_line 
+                    money next_line next_line 
+                    money next_line next_line
+                    money next_line next_line 
+                    money next_line next_line 
+                    money
     money = ("$" numeric) / ("($" numeric ")")
 
     section_head =
@@ -367,11 +371,11 @@ class DocketExtractor(NodeVisitor):
 
     def visit_grand_totals(self, node, visited_children):
         result = {
-            "assessment": tval(visited_children[3]),
-            "payments": tval(visited_children[5]),
-            "adjustments": tval(visited_children[7]),
-            "non-monetary": tval(visited_children[9]),
-            "total": tval(visited_children[11])
+            "assessment": tval(visited_children[4]),
+            "payments": tval(visited_children[7]),
+            "adjustments": tval(visited_children[10]),
+            "non-monetary": tval(visited_children[13]),
+            "total": tval(visited_children[16])
         }
         return ("grand_totals", result)
 
