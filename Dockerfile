@@ -104,6 +104,11 @@ USER root
 # prod_build.sh will only build the front end if BACKEND_ONLY == "true"
 RUN if [ "$BACKEND_ONLY" = "true" ]; then ./prod_build.sh; else echo "Dev build, frontend not compiled into django."; fi
 
+#Running the command below as root, then switch back to newly created user below
+USER root
+#Change owner of the newly created files, before running the collectstatic command
+RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
+#Then, switch back to the newly created user - not the root user
 USER ${EXPUNGER_USER}
 WORKDIR ${APPDIR}
 RUN python3 ./manage.py collectstatic --noinput
