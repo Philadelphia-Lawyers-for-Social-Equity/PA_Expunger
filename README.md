@@ -45,6 +45,12 @@ Once the system is up and running, you should be able to access the front end
 via `http://localhost:3000` and the back end at
 `http://localhost:8000/admin`.
 
+### Setting up the user data
+
+To set up the user data to be able to test the petition generator, follow the steps outlined in [8000steps.pdf](https://codeforphilly.slack.com/files/UDSLHGC03/F02H8NF2ERY/8000steps.pdf).
+
+* Note: These are the steps to follow for port 8000, it is not actually 8000 steps.
+
 ### Troubleshooting
 
 #### Docker CLI check
