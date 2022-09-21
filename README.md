@@ -12,19 +12,58 @@ Devs should please familiarize themselves with the [guidelines for contributing]
 
 ## Dev Setup
 
-Devs will need basic familiarity with docker and
-[docker-compose](https://docs.docker.com/compose/) and command line interfaces.
-Be sure and check the **settings** section before you do your first setup.
+### Prerequisites
 
-The *fastest* route to a local install should be:
+Devs will need basic familiarity with Docker and
+[docker-compose](https://docs.docker.com/compose/) and command line interfaces (CLIs).
 
-1. Clone and enter this repository directory.
-2. Run `docker-compose build` to set up the images.
-3. Run `docker-compose up` to run the suite.
+Devs will need to download [Docker](https://docs.docker.com/get-docker/) to work on this project. For most computers, Docker will not install the Docker CLI until Docker Desktop is opened for the first time.
+
+### Cloning the repository
+
+The *fastest* route to a local install should be running the following commands:
+
+```sh
+# Pull down the repo
+git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
+
+# If you need to set up ssh settings with Github, follow [this tutorial](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+```
+
+### Starting up the app
+
+```sh
+# Start it up
+docker-compose up --build
+```
+
+This command runs the [docker-compose.yml](docker-compose.yml) file. This sets up React, Django, and the database simultaneously.
+
+### Seeing the app in browser
 
 Once the system is up and running, you should be able to access the front end
 via `http://localhost:3000` and the back end at
 `http://localhost:8000/admin`.
+
+### Troubleshooting
+
+#### Docker CLI check
+
+To check if the Docker CLI is installed run:
+```sh
+docker --help
+
+# And the output should be
+Usage:  docker [OPTIONS] COMMAND
+
+A self-sufficient runtime for containers
+```
+#### docker-compose command error
+If you get the following error when running any `docker-compose command`:
+```sh
+Failed to execute script docker-compose
+```
+Open Docker Desktop app. You can quit it again and it should keep running in the background and allow you to try again.
 
 ## Settings
 
@@ -55,8 +94,18 @@ The backend includes some tests, and is expected to follow TDD practices going
 forward.  In order to run the tests:
 
 1. Spin up a build per the Dev Setup.
-2. While it is running, execute `docker-compose exec expunger python3
-   ./manage.py test`
+2. While it is running, open a new terminal tab and execute:
+```sh
+# Open a bash terminal in the docker container
+docker-compose exec -it expunger bash
+
+# Run the tests
+python3 manage.py test
+
+# Or run an individual test
+# This command runs the test_petition test in petitions/tests/test_rest.py
+python3 manage.py test petition.tests.test_rest.TestRest.test_petition
+```
 
 ## Production
 
