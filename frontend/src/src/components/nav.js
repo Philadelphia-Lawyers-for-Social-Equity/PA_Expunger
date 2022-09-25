@@ -1,9 +1,15 @@
 import React from "react";
-//import { BrowserRouter as Link } from "react-router-dom";
 import { Navbar, Nav } from "react-bootstrap";
 
 const nav = () => (
-  <Navbar collapseOnSelect expand="lg" bg="light" variant="light" inverse fluid>
+  <Navbar 
+    collapseOnSelect 
+    expand="lg" 
+    bg="light" 
+    variant="light" 
+    inverse="true" 
+    fluid="true"
+  >
     <Navbar.Brand href="/">
       <img
         src="http://plsephilly.org/wp-content/uploads/2014/11/PLSE_logotype_320.png"
