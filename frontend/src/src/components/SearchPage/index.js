@@ -1,12 +1,11 @@
 import axios from 'axios';
 
 import React, { useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button, Modal, Col, Row, Table } from 'react-bootstrap';
 
 export default function SearchPage() {
 
-    const history = useHistory();
 
     // searchResults is an of Petition Fields, per the api glossary.
     // null indicates that a search has not yet been performed.

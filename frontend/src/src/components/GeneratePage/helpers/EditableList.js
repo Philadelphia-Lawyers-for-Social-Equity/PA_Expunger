@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,7 +16,6 @@ export default function EditableList(props) {
     */
 
     const Inner = props.inner;
-    const [showAddButton, setShowAddButton] = useState(true);
 
     function addItem() {
         let arr = props.items.slice();
@@ -40,7 +39,7 @@ export default function EditableList(props) {
     function isEmpty(obj) {
         let objString = JSON.stringify(obj);
         let emptyString = JSON.stringify(props.emptyItem);
-        return(objString == emptyString);
+        return(objString === emptyString);
     }
 
     function AddButton() {

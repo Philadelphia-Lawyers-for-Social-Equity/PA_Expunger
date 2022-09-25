@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Redirect, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
@@ -11,7 +11,6 @@ export default function FileUpload() {
 
     const [fileName, setFileName] = useState(undefined);
     const [isError, setIsError] = useState(false);
-    const [docketDataReady, setDocketDataReady] = useState(false);
 
     // On click for the cancel button
     function returnToChooseAction() {
