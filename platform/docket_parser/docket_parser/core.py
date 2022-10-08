@@ -31,9 +31,9 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    defendant = "Commonwealth of Pennsylvania" next_line next_line
-                space+ "v." next_line
-                space* defendant_name next_line
+    defendant = "Commonwealth of Pennsylvania" next_line
+                "v." next_line
+                defendant_name next_line
     defendant_name = name+
 
     docket = "Docket Number" colon docket_id
@@ -69,7 +69,7 @@ docket_decoder = Grammar(r"""
     arrest_officer_name = name+
 
     originating_docket = "Originating Docket No" colon space* docket_id
-    district_control_number = "District Control Number" (space*) dcn
+    district_control_number = "District Control Number" next_line next_line dcn
     dcn = alphanum+
 
     section_status_information =
@@ -78,7 +78,7 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    arrest_date = "Arrest Date" colon space* date
+    arrest_date = "Arrest Date" colon next_line next_line date
 
     section_defendant_information =
         "DEFENDANT INFORMATION"
@@ -122,8 +122,12 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    grand_totals = "Grand Totals" colon space+ money space+ money space+
-                    money space+ money space+ money
+    grand_totals = "Grand Totals" colon next_line next_line 
+                    money next_line next_line 
+                    money next_line next_line
+                    money next_line next_line 
+                    money next_line next_line 
+                    money
     money = ("$" numeric) / ("($" numeric ")")
 
     section_head =
@@ -199,7 +203,7 @@ class DocketExtractor(NodeVisitor):
         return ("section_docket", result)
 
     def visit_defendant(self, node, visited_children):
-        result = tval(visited_children[7])
+        result = tval(visited_children[4])
         logger.debug("defendant: %s", result)
         return ("defendant", result)
 
@@ -260,7 +264,7 @@ class DocketExtractor(NodeVisitor):
         return ("originating_docket", val_named("docket_id", visited_children))
 
     def visit_district_control_number(self, node, visited_children):
-        return ("district_control_number", tval(visited_children[2]))
+        return ("district_control_number", tval(visited_children[3]))
 
     def visit_dcn(self, node, visited_children):
         return ("dcn", node.text.strip())
@@ -272,7 +276,7 @@ class DocketExtractor(NodeVisitor):
         return ("section_status_information", result)
 
     def visit_arrest_date(self, node, visited_children):
-        return ("arrest_date", tval(visited_children[-1]))
+        return ("arrest_date", tval(visited_children[4]))
 
     def visit_section_defendant_information(self, node, visited_children):
         result = {
@@ -285,7 +289,8 @@ class DocketExtractor(NodeVisitor):
         return ("dob", tval(visited_children[-1]))
 
     def visit_aliases(self, node, visited_children):
-        result = [tval(x) for x in flatten(visited_children[1]) if tname(x) == "alias"]
+        result = [tval(x) for x in flatten(
+            visited_children[1]) if tname(x) == "alias"]
         logger.debug("aliases: %s", result)
         return ("aliases", result)
 
@@ -366,11 +371,11 @@ class DocketExtractor(NodeVisitor):
 
     def visit_grand_totals(self, node, visited_children):
         result = {
-            "assessment": tval(visited_children[3]),
-            "payments": tval(visited_children[5]),
-            "adjustments": tval(visited_children[7]),
-            "non-monetary": tval(visited_children[9]),
-            "total": tval(visited_children[11])
+            "assessment": tval(visited_children[4]),
+            "payments": tval(visited_children[7]),
+            "adjustments": tval(visited_children[10]),
+            "non-monetary": tval(visited_children[13]),
+            "total": tval(visited_children[16])
         }
         return ("grand_totals", result)
 
