@@ -8,6 +8,9 @@ export default function ProfilePage() {
   const [myUsername, setMyUsername] = useState("");
   const [myFirstName, setMyFirstName] = useState("");
   const [myLastName, setMyLastName] = useState("");
+
+  const [myRole, setMyRole] = useState("");
+
   const [myEmail, setMyEmail] = useState("");
   const [attorneypk, setAttorneypk] = useState(0);
   const [attorneyName, setAttorneyName] = useState("");
@@ -44,6 +47,8 @@ export default function ProfilePage() {
             setMyFirstName(res.data.user.first_name);
             setMyLastName(res.data.user.last_name);
             setMyEmail(res.data.user.email);
+
+            setMyRole(res.data.user.role);
 
             setAttorneypk(res.data.attorney.pk);
             setAttorneyName(res.data.attorney.name);
@@ -102,7 +107,8 @@ export default function ProfilePage() {
         "email": myEmail,
         "first_name": myFirstName,
         "last_name": myLastName,
-        "username": myUsername
+        "username": myUsername,
+        "role" : myRole
       }
     }
 
@@ -114,7 +120,8 @@ export default function ProfilePage() {
         "email": myEmail,
         "first_name": myFirstName,
         "last_name": myLastName,
-        "username": myUsername
+        "username": myUsername,
+        "role": myRole
       }
     }
 
@@ -150,7 +157,7 @@ export default function ProfilePage() {
         <Modal.Body>
           <Row>
             <Col>
-              Username :
+              Username:
           </Col>
             <Col>
               {myUsername}
@@ -158,7 +165,7 @@ export default function ProfilePage() {
           </Row>
           <Row>
             <Col>
-              Name :
+              Name:
           </Col>
             <Col>
               {!isEdit && myFirstName} {!isEdit && myLastName}
@@ -172,7 +179,7 @@ export default function ProfilePage() {
           </Row>
           <Row>
             <Col>
-              Email Address :
+              Email Address:
           </Col>
             <Col>
               {!isEdit && myEmail}
@@ -183,7 +190,22 @@ export default function ProfilePage() {
           </Row>
           <Row>
             <Col>
-              Header Text for Petition :
+              Role:
+          </Col>
+            <Col>
+              {!isEdit && myRole}
+              {isEdit && <select type="text" onChange={e => {
+                setMyRole(e.target.value);
+              }} placeholder="Role">
+                <option value="lawyer">Lawyer</option>
+                <option value="staff">Staff</option>
+                <option value="intern">Intern</option>
+                </select>}
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              Header Text for Petition:
           </Col>
             <Col>
               <p className="petp">{orgName}</p>
@@ -197,7 +219,7 @@ export default function ProfilePage() {
           </Row>
           <Row>
             <Col>
-              Expungement Petition Signature :
+              Expungement Petition Signature:
           </Col>
             <Col>
               {attorneyName}, Esquire

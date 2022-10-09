@@ -5,3 +5,4 @@ __pycache__
 docket_parser/build/*
 *.swp
 mysql_cert.pem
+*.DS_Store
