@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Button } from "react-bootstrap";
+import axios from "axios";
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
@@ -13,7 +14,7 @@ export default function SignUp() {
   const [isError, setIsError] = useState(false);
 
   // On click to check that all fields are entered
-  function saveProfile() {
+  async function saveProfile() {
     // check that
     if (
       firstName === "" ||
@@ -32,6 +33,26 @@ export default function SignUp() {
       localStorage.setItem("email", email);
       localStorage.setItem("username", username);
       localStorage.setItem("password", password);
+
+      const profileURL =
+        process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
+      const bearer = "Bearer ";
+      const token = bearer.concat(localStorage.getItem("access_token"));
+      const config = {
+        headers: { Authorization: token },
+      };
+
+      const profileData = {
+        firstName,
+        lastName,
+        role,
+        email,
+        username,
+        password,
+      };
+      await axios.post(profileURL, { user: profileData }, config).catch((err) => {
+        console.error(err);
+      });
       setIsProfileReady(true);
     }
   }
