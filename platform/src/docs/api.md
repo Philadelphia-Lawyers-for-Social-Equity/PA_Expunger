@@ -148,8 +148,7 @@ parsing. This is where the real work gets done.
       - ratio: string, must be "full" if every charge is to be
         expunged, or "partial" if some charges are excluded.
       - otn: string
-      - dc: string
-      - complaint_date: iso formatted date, such as "2019-10-17"
+      - arrest_date: iso formatted date, such as "2019-10-17"
       - arrest_officer: string, arresting officer's full name
       - disposition: string
       - judge: string, full name of the judge

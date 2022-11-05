@@ -35,13 +35,12 @@ petition
     - date
     - ratio
     - OTN#
-    - DC#
     - arrest date
     - arrest_officer
     - disposition
     - judge
 
-restitition
+fines
     - total
     - paid
 
