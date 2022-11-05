@@ -204,7 +204,7 @@ class Petition:
             self.judge)
 
 
-class Restitution:
+class Fines:
     """Court ordered payments"""
     def __init__(self, total, paid):
         self.total = total
@@ -212,6 +212,6 @@ class Restitution:
 
     @staticmethod
     def from_dict(data):
-        return Restitution(
+        return Fines(
             data["total"],
             data["paid"])

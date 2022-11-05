@@ -33,18 +33,16 @@ class PetitionAPIView(APIView):
             context = {
                 "organization": profile.organization,
                 "attorney": profile.attorney,
-                "petitioner": models.Petitioner.from_dict(request.data["petitioner"]),
-                "petition": models.Petition.from_dict(request.data["petition"]),
-                "dockets": [
-                    models.DocketId.from_dict(d)
-                    for d in request.data.get("dockets", [])
-                ],
-                "restitution": models.Restitution.from_dict(
-                    request.data["restitution"]
-                ),
-                "charges": [
-                    models.Charge.from_dict(c) for c in request.data.get("charges", [])
-                ],
+                "petitioner":
+                    models.Petitioner.from_dict(request.data["petitioner"]),
+                "petition":
+                    models.Petition.from_dict(request.data["petition"]),
+                "dockets": [models.DocketId.from_dict(d) for d in
+                            request.data.get("dockets", [])],
+                "fines":
+                    models.Fines.from_dict(request.data["fines"]),
+                "charges": [models.Charge.from_dict(c) for c in
+                            request.data.get("charges", [])]
             }
         except KeyError as err:
             msg = f"Missing field: {err}"
@@ -99,7 +97,7 @@ class DocketParserAPIView(APIView):
             "petition": petition_from_parser(parsed, ratio),
             "dockets": docket_numbers_from_parser(parsed),
             "charges": charges,
-            "restitution": restitution_from_parser(parsed),
+            "fines": fines_from_parser(parsed)
         }
 
         logger.debug(f"Request: {request.data}")
@@ -210,15 +208,21 @@ def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]
     return ratio, expungeable_charges
 
 
-def restitution_from_parser(parsed: dict) -> dict:
-    """Produce restitution data based on the docket parser output."""
-    assessment = parsed.get("assessment")
-    payments = parsed.get("payments")
-    adjustments = parsed.get("adjustments")
-    paid = None
-    if payments is not None and adjustments is not None:
-        paid = -payments - adjustments
-    return {"total": assessment, "paid": paid}
+def fines_from_parser(parsed):
+    """Produce fines data based on the docket parser output."""
+
+    if "section_financial_information" not in parsed:
+        return {}
+
+    data = parsed["section_financial_information"]
+
+    if not data:
+        return {}
+
+    total = data.get("assessment", 0)
+    paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
+
+    return {"total": total, "paid": paid}
 
 
 def date_string(d):

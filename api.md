@@ -33,7 +33,7 @@ containing:
         - date: date, formatted such as “2020-10-11”
         - disposition: string
     
-    - restitution:
+    - fines:
             - total: decimal number
             - paid: decimal number
 
@@ -154,7 +154,7 @@ parsing. This is where the real work gets done.
       - disposition: string
       - judge: string, full name of the judge
     - docket: String of a docket id, such as "MC-51-CR-1234567-1995"
-    - restitution:
+    - fines:
       - total: decimal number
       - paid: decimal number
 
