@@ -35,8 +35,6 @@ petition
     - date
     - ratio
     - OTN#
-    - arrest date
-    - arrest_officer
     - disposition
     - judge
 

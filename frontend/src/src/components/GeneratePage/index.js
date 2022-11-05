@@ -34,10 +34,6 @@ const defaultPetitionFields = {
     },
     petition: {
         otn: "",
-        dc: "",
-        complaint_date: "",
-        arrest_officer: "",
-        arrest_agency: "",
         judge: "",
         ratio: "full",
     },

@@ -43,9 +43,6 @@ class PetitionFactory(factory.Factory):
     date = date.today()
     ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
-    arrest_agency = "Philadelphia Pd"
-    complaint_date = factory.Faker("date_this_century")
-    arrest_officer = factory.Faker("name")
     judge = factory.Faker("name")
 
 
