@@ -33,26 +33,6 @@ export default function SignUp() {
       localStorage.setItem("email", email);
       localStorage.setItem("username", username);
       localStorage.setItem("password", password);
-
-      const profileURL =
-        process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-      const bearer = "Bearer ";
-      const token = bearer.concat(localStorage.getItem("access_token"));
-      const config = {
-        headers: { Authorization: token },
-      };
-
-      const profileData = {
-        firstName,
-        lastName,
-        role,
-        email,
-        username,
-        password,
-      };
-      await axios.post(profileURL, { user: profileData }, config).catch((err) => {
-        console.error(err);
-      });
       setIsProfileReady(true);
     }
   }

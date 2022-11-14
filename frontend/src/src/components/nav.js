@@ -23,17 +23,11 @@ const nav = () => (
     <Navbar.Collapse id="basic-navbar-nav">
       <Nav className="ml-auto">
 
-
 {/* Sign up button is removed once user is logged in */}
-
         {localStorage.getItem("access_token") && <Nav.Link href="/signup">Sign up</Nav.Link>}
-
         {localStorage.getItem("access_token") && <Nav.Link href="/">Log in</Nav.Link>}
-
         {!localStorage.getItem("access_token") && <Nav.Link href="/profile">My profile</Nav.Link>}
-
         {!localStorage.getItem("access_token") && <Nav.Link href="/">Log out</Nav.Link>}
-
       </Nav>
     </Navbar.Collapse>
   </Navbar>

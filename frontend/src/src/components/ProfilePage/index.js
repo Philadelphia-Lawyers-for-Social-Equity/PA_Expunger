@@ -8,9 +8,7 @@ export default function ProfilePage() {
   const [myUsername, setMyUsername] = useState("");
   const [myFirstName, setMyFirstName] = useState("");
   const [myLastName, setMyLastName] = useState("");
-
   const [myRole, setMyRole] = useState("");
-
   const [myEmail, setMyEmail] = useState("");
   const [attorneypk, setAttorneypk] = useState(0);
   const [attorneyName, setAttorneyName] = useState("");
@@ -49,7 +47,6 @@ export default function ProfilePage() {
             setMyEmail(res.data.user.email);
 
             setMyRole(res.data.user.role);
-
             setAttorneypk(res.data.attorney.pk);
             setAttorneyName(res.data.attorney.name);
             setAttorneyBar(res.data.attorney.bar);
