@@ -127,6 +127,12 @@ will run "silent," switch to `DJANGO_LOG_LEVEL=DEBUG` if you crave feedback.
 
 Build with your desired settings, then:
 
-1. `docker-compose run --entrypoint bash expunger`
-2. `python3 ./manage.py import_parecords`
-3. Wait a bit.
+```sh
+# Open a bash terminal in the expunger container
+docker-compose run --entrypoint bash expunger
+
+# Import records for the pa_court_archive
+python3 ./manage.py import_parecords
+```
+
+and wait a bit.
