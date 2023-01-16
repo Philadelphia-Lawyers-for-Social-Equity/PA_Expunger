@@ -16,27 +16,41 @@ The _fastest_ route to a local install should be:
 git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
 ```
 
+<<<<<<< HEAD
 2. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](docker-compose.yml) while it builds!)
 
 3. Run `docker-compose up` to initialize the containers.
 4. Confirm the application is running by visiting the [User Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
    User Portal: `http://localhost:3000`
+=======
+3. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) while it builds!)
+
+4. Run `docker-compose up` to initialize the containers.
+5. Confirm the application is running by visiting the [Frontend Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
+
+   Frontend Portal: `http://localhost:3000`
+   
+>>>>>>> 241ac2a (Update SETUP.md)
    Admin Portal: `http://localhost:8000/admin`
 
 ## Default Credentials
 
-**Admin**
-Username: `plse`
-Password: `defaultTestPassword`
+### Frontend
 
-**User**
-Username: `plse`
-Password: `defaultTestPassword`
+   Username: `plse`
+
+   Password: `defaultTestPassword`
+
+### Admin
+
+   Username: `plse`
+
+   Password: `defaultTestPassword`
 
 ## Settings
 
 Settings are controlled via environment variables, and can be reviewed in the
-[docker-compose.yml](docker-compose.yml) file:
+[docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) file:
 
 - The primary admin username is `plse` and is not designed to change.
 - **EXPUNGER_PASS** controls the administrator password for user `plse`. Default is `defaultTestPassword`. It is set on the _first build,_ after which any changes must be made via the back-end.
@@ -58,9 +72,11 @@ no valid drivers found: error during connect: this error may indicate that the d
 Failed to execute script docker-compose
 ```
 
-**Solution**
+### Solution
+
 Close and restart Docker Desktop
-Confirm Docker CLI is installed: `docker --help`
+
+Confirm Docker CLI is installed via `docker --help`
 
 # Setting up the user data
 
@@ -68,25 +84,34 @@ Confirm Docker CLI is installed: `docker --help`
    - Username: plse
    - Password: defaultTestPassword
 2. Under **Authentication and Authorization**, select `Add` next to "Users"
+
    ![](https://i.gyazo.com/41fd84642f9a67653e6e0de6822fba3c.png)
+   
    All Users need to be created via the `Add` button here, then can later be assigned to `Attorney`.
 3. Create a User profile and select `SAVE`
+
    ![](https://i.gyazo.com/1aa19c350713795d5a197ddfeddec9c2.png)
+   
 4. Under **Expunger**, select `Add` next to "Attorneys"
-5. Choose your User profile from the dropdown and select `SAVE` ![](https://i.gyazo.com/1d4c3cfb0bdc74f099ce5c1453e3fe7f.png)
+5. Choose your User profile from the dropdown and select `SAVE` 
+
+   ![](https://i.gyazo.com/1d4c3cfb0bdc74f099ce5c1453e3fe7f.png)
+
 6. You should now see your User profile listed under "Attorneys"
 
 That is all of the back end setup needed. Now onto the front end~
 
-# Accessing UI
+# Accessing Frontend
 
-The UI allows users to sign up and associate their account with an Attorney (sampleTestUser from above)
+The Frontend Portal allows users to sign up and associate their account with an Attorney (sampleTestUser from above)
 
-1. Login to the [User Portal](http://localhost:3000) using the defaults:
+1. Login to the [Frontend Portal](http://localhost:3000) using the defaults:
    Username: `plse`
    Password: `defaultTestPassword`
 2. Fill out the sign-up form with your own custom credentials
 3. Select the attorney you created on the backend
+
    ![](https://i.gyazo.com/c6835ea9b7c87e5e8c81326ad4b0febe.png)
+   
 4. Upload [this docket](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/platform/docket_parser/tests/data/test-01.pdf)
 5. You should see a JSON Object in your terminal running Docker
