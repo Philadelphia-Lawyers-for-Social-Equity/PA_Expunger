@@ -36,43 +36,13 @@ git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard
    Username: `plse`
 
    Password: `defaultTestPassword`
-
-## Settings
-
-Settings are controlled via environment variables, and can be reviewed in the
-[docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) file:
-
-- The primary admin username is `plse` and is not designed to change.
-- **EXPUNGER_PASS** controls the administrator password for user `plse`. Default is `defaultTestPassword`. It is set on the _first build,_ after which any changes must be made via the back-end.
-- **EXPUNGER_KEY** is used by the back-end for Django internal security. Set on first build, not readily changeable. It should be altered from the default on production builds.
-- **MYSQL_USER** and **MYSQL_PASS**: for the external pa_record database, needed to initialize pa_court_archive
-- **DJANGO_LOG_LEVEL**=INFO
-- **BACKEND_HOST** sets the hostname and port for the Django backend. Default is `http://localhost:8000`. On production it will need to be changed to match the server URL.
-- **FRONTEND_HOST** sets the hostname and port for the React frontend. Default is `http://localhost:3000`. On production it will need to be changed to gave the server URL.
-
-## Troubleshooting:
-
-Some common errors you may see in initial setup:
-
-```
-no valid drivers found: error during connect: this error may indicate that the docker daemon is not running: Get "http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.24/info": open //./pipe/docker_engine: The system cannot find the file specified.
-```
-
-```
-Failed to execute script docker-compose
-```
-
-### Solution
-
-Close and restart Docker Desktop
-
-Confirm Docker CLI is installed via `docker --help`
+   
 
 # Setting up the user data
 
 1. Login to the [Admin Portal](http://localhost:8000/admin)
-   - Username: plse
-   - Password: defaultTestPassword
+   - Username: `plse`
+   - Password: `defaultTestPassword`
 2. Under **Authentication and Authorization**, select `Add` next to "Users"
 
    ![](https://i.gyazo.com/41fd84642f9a67653e6e0de6822fba3c.png)
@@ -105,3 +75,35 @@ The Frontend Portal allows users to sign up and associate their account with an 
    
 4. Upload [this docket](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/platform/docket_parser/tests/data/test-01.pdf)
 5. You should see a JSON Object in your terminal running Docker
+
+## Settings
+
+Settings are controlled via environment variables, and can be reviewed in the
+[docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) file:
+
+- The primary admin username is `plse` and is not designed to change.
+- **EXPUNGER_PASS** controls the administrator password for user `plse`. Default is `defaultTestPassword`. It is set on the _first build,_ after which any changes must be made via the back-end.
+- **EXPUNGER_KEY** is used by the back-end for Django internal security. Set on first build, not readily changeable. It should be altered from the default on production builds.
+- **MYSQL_USER** and **MYSQL_PASS**: for the external pa_record database, needed to initialize pa_court_archive
+- **DJANGO_LOG_LEVEL**=INFO
+- **BACKEND_HOST** sets the hostname and port for the Django backend. Default is `http://localhost:8000`. On production it will need to be changed to match the server URL.
+- **FRONTEND_HOST** sets the hostname and port for the React frontend. Default is `http://localhost:3000`. On production it will need to be changed to gave the server URL.
+
+## Troubleshooting:
+
+Some common errors you may see in initial setup:
+
+```
+no valid drivers found: error during connect: this error may indicate that the docker daemon is not running: Get "http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.24/info": open //./pipe/docker_engine: The system cannot find the file specified.
+```
+
+```
+Failed to execute script docker-compose
+```
+
+### Solution
+
+Close and restart Docker Desktop
+
+Confirm Docker CLI is installed via `docker --help`
+
