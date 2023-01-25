@@ -16,21 +16,11 @@ The _fastest_ route to a local install should be:
 git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
 ```
 
-<<<<<<< HEAD
 2. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](docker-compose.yml) while it builds!)
 
 3. Run `docker-compose up` to initialize the containers.
 4. Confirm the application is running by visiting the [User Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
    User Portal: `http://localhost:3000`
-=======
-3. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) while it builds!)
-
-4. Run `docker-compose up` to initialize the containers.
-5. Confirm the application is running by visiting the [Frontend Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
-
-   Frontend Portal: `http://localhost:3000`
-   
->>>>>>> 241ac2a (Update SETUP.md)
    Admin Portal: `http://localhost:8000/admin`
 
 ## Default Credentials
