@@ -81,23 +81,25 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    disposition_state = (word+) space+ date space+ disposition_state_value
+    disposition_state = "Sentence Condition" next_line 
+                        (word+ next_line)? 
+                        date space+ disposition_state_value
     disposition_state_value = "Final Disposition" / "Not Final"
 
-    disposition = space* integer space "/" space charge_description space+
-                  offense_disposition space+ (grade space+)? statute next_line
-                  (space+ charge_description "\n")?
-                  (space+ name+ space* date next_line)?
-    charge_description = ((alphanum / punct) space?)+
-    offense_disposition = name+
+    disposition = integer space "/" space charge_description (next_line charge_description)?
+                  offense_disposition space (grade space+)? statute next_line
+                  (name+ space* date)?
+    charge_description = !offense_disposition (cap_word space+)+
+    offense_disposition = ("Guilty Plea" / "Nolle Prossed" / "Dismissed")
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)
             / alphanum
-            ) space !"§"
+            ) space !statute_section
 
     statute = (long_statute / short_statute)
-    short_statute = alphanum+ space "§" space alphanum+
-    long_statute = short_statute space "§§" space alphanum+
+    short_statute = alphanum+ space statute_section space alphanum+
+    long_statute = short_statute space statute_section space alphanum+
+    statute_section = ("§"+ / "\\xc2\\xa7"+)
 
     section_financial_information =
         "CASE FINANCIAL INFORMA TION"
@@ -128,6 +130,7 @@ docket_decoder = Grammar(r"""
 
     next_line = ~"."* "\n"
     junk = (word / ws)
+    cap_word = (capital / punct)+
     word = ~"[^\s]"+
     ws = ~"\s"+
 
@@ -135,6 +138,7 @@ docket_decoder = Grammar(r"""
     dash = "-"
     date = ~"\d\d/\d\d/\d\d\d\d"
 
+    capital = ~"[A-Z]"
     letter = ~"[A-Za-z]"
     integer = ~"[\d]"+
     alphanum = ~"[A-Za-z0-9]"
@@ -288,15 +292,15 @@ class DocketExtractor(NodeVisitor):
 
     def visit_disposition(self, node, visited_children):
         result = {
-            "sequence": tval(visited_children[1]),
-            "charge_description": tval(visited_children[5]),
-            "offense_disposition": tval(visited_children[7]),
-            "grade": val_named("grade", visited_children[9]),
-            "statute": tval(visited_children[10]),
-            "date": val_named("date", visited_children[13])
+            "sequence": tval(visited_children[0]),
+            "charge_description": tval(visited_children[4]),
+            "offense_disposition": tval(visited_children[6]),
+            "grade": val_named("grade", visited_children[8]),
+            "statute": tval(visited_children[9]),
+            "date": val_named("date", visited_children[11])
         }
 
-        extra = val_named("charge_description", (visited_children[12]))
+        extra = val_named("charge_description", (visited_children[5]))
 
         if extra:
             result["charge_description"] += " " + extra

@@ -99,7 +99,7 @@ class DocketParserAPIView(APIView):
             "restitution": restitution_from_parser(parsed)
         }
 
-        logger.info("Parsed: %s", content)
+        logger.info("Parsed: %s", parsed)
         return Response(content)
 
 
