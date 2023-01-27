@@ -46,11 +46,6 @@ docket_decoder = Grammar(r"""
         "CASE INFORMATION"
         ( judge
         / otn
-        / date_filed
-        / arrest_agency
-        / arrest_officer
-        / originating_docket
-        / district_control_number
         / (!section_head junk)
         )+
 
@@ -59,18 +54,6 @@ docket_decoder = Grammar(r"""
 
     otn = "OTN" colon otn_id
     otn_id = ~"\w" space ~"\d\d\d\d\d\d" "-" ~"\d"
-
-    date_filed = "Date Filed" colon date
-
-    arrest_agency = "Arresting Agency" colon arrest_agency_name
-    arrest_agency_name = name+
-
-    arrest_officer = "Arresting Officer" colon arrest_officer_name
-    arrest_officer_name = name+
-
-    originating_docket = "Originating Docket No" colon space* docket_id
-    district_control_number = "District Control Number" next_line next_line dcn
-    dcn = alphanum+
 
     section_status_information =
         "STATUS INFORMATION"
@@ -140,7 +123,8 @@ docket_decoder = Grammar(r"""
         / "ENTRIES"
         )
 
-    name = (letter+ / punct) space?
+    # + is too greedy and for judge we want the parser to stop before these words
+    name = !("Initiation") (letter+ / punct) space*
 
     next_line = ~"."* "\n"
     junk = (word / ws)
@@ -241,30 +225,6 @@ class DocketExtractor(NodeVisitor):
 
     def visit_otn_id(self, node, visited_children):
         return ("otn_id", node.text.strip())
-
-    def visit_date_filed(self, node, visited_children):
-        return ("date_filed", tval(visited_children[-1]))
-
-    def visit_arrest_agency(self, node, visited_children):
-        return ("arrest_agency", tval(visited_children[-1]))
-
-    def visit_arrest_agency_name(self, node, visited_children):
-        return ("arrest_agency_name", node.text.strip())
-
-    def visit_arrest_officer(self, node, visited_children):
-        return ("arrest_officer", tval(visited_children[-1]))
-
-    def visit_arrest_officer_name(self, node, visited_children):
-        return ("arrest_officer_name", node.text.strip())
-
-    def visit_originating_docket(self, node, visited_children):
-        return ("originating_docket", val_named("docket_id", visited_children))
-
-    def visit_district_control_number(self, node, visited_children):
-        return ("district_control_number", tval(visited_children[3]))
-
-    def visit_dcn(self, node, visited_children):
-        return ("dcn", node.text.strip())
 
     def visit_section_status_information(self, node, visited_children):
         result = {

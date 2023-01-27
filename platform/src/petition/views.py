@@ -134,24 +134,10 @@ def petition_from_parser(parsed, ratio):
         return {}
 
     case_info = parsed["section_case_information"]
-    officer = case_info.get("arrest_officer", None)
-
-    if officer is None or officer == "Affiant":
-        officer = case_info.get("arrest_agency")
-
-    if "section_status_information" in parsed:
-        arrest_date = parsed["section_status_information"].get(
-            "arrest_date", None)
-    else:
-        arrest_date = None
 
     return {
         "otn": case_info.get("otn"),
-        "dc": case_info.get("district_control_number"),
-        "arrest_officer": officer,
-        "arrest_agency": case_info.get("arrest_agency"),
         "judge": case_info.get("judge"),
-        "arrest_date": arrest_date,
         "ratio": ratio.name
     }
 
