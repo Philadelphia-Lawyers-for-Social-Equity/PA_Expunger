@@ -46,6 +46,7 @@ docket_decoder = Grammar(r"""
         "CASE INFORMATION"
         ( judge
         / otn
+        / originating_docket
         / (!section_head junk)
         )+
 
@@ -54,6 +55,8 @@ docket_decoder = Grammar(r"""
 
     otn = "OTN" colon otn_id
     otn_id = ~"\w" space ~"\d\d\d\d\d\d" "-" ~"\d"
+    
+    originating_docket = "Originating Docket No" colon space* docket_id
 
     section_status_information =
         "STATUS INFORMATION"
@@ -230,6 +233,9 @@ class DocketExtractor(NodeVisitor):
     def visit_otn_id(self, node, visited_children):
         return ("otn_id", node.text.strip())
 
+    def visit_originating_docket(self, node, visited_children):
+        return ("originating_docket", val_named("docket_id", visited_children))
+
     def visit_section_status_information(self, node, visited_children):
         result = {
             "arrest_date": val_named("arrest_date", visited_children)
@@ -333,10 +339,10 @@ class DocketExtractor(NodeVisitor):
     def visit_grand_totals(self, node, visited_children):
         result = {
             "assessment": tval(visited_children[2]),
-            "payments": tval(visited_children[3]),
-            "adjustments": tval(visited_children[4]),
-            "non-monetary": tval(visited_children[5]),
-            "total": tval(visited_children[6])
+            "payments": tval(visited_children[6]),
+            "adjustments": tval(visited_children[5]),
+            "non-monetary": tval(visited_children[4]),
+            "total": tval(visited_children[3])
         }
         return ("grand_totals", result)
 
