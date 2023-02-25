@@ -6,14 +6,14 @@ from datetime import date
 from parsimonious.exceptions import ParseError
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import Node, NodeVisitor
-
-import pdftotext
+from pypdf import PdfReader
 
 
 logger = logging.Logger(__name__)
 
 
-docket_decoder = Grammar(r"""
+docket_decoder = Grammar(
+    r"""
     result =
         ( section_docket
         / section_case_information
@@ -31,9 +31,10 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    defendant = "Commonwealth of Pennsylvania" next_line
+    defendant = page_number "Commonwealth of Pennsylvania" next_line
                 "v." next_line
                 defendant_name next_line
+    page_number = "Page" space integer+ space "of" space integer+
     defendant_name = name+
 
     docket = "Docket Number" colon docket_id
@@ -46,11 +47,7 @@ docket_decoder = Grammar(r"""
         "CASE INFORMATION"
         ( judge
         / otn
-        / date_filed
-        / arrest_agency
-        / arrest_officer
         / originating_docket
-        / district_control_number
         / (!section_head junk)
         )+
 
@@ -59,18 +56,8 @@ docket_decoder = Grammar(r"""
 
     otn = "OTN" colon otn_id
     otn_id = ~"\w" space ~"\d\d\d\d\d\d" "-" ~"\d"
-
-    date_filed = "Date Filed" colon date
-
-    arrest_agency = "Arresting Agency" colon arrest_agency_name
-    arrest_agency_name = name+
-
-    arrest_officer = "Arresting Officer" colon arrest_officer_name
-    arrest_officer_name = name+
-
+    
     originating_docket = "Originating Docket No" colon space* docket_id
-    district_control_number = "District Control Number" next_line next_line dcn
-    dcn = alphanum+
 
     section_status_information =
         "STATUS INFORMATION"
@@ -81,14 +68,14 @@ docket_decoder = Grammar(r"""
     arrest_date = "Arrest Date" colon next_line next_line date
 
     section_defendant_information =
-        "DEFENDANT INFORMATION"
+        defendant_information
         ( dob
         / aliases
         / (!section_head junk)
         )+
 
-    dob = "Date Of Birth" colon ws date
-    aliases = "Alias Name\n" (space* alias "\n")+
+    dob = "Date Of Birth" colon date
+    aliases = "Alias Name" next_line (space* alias next_line)+
     alias = !"CASE" name+
 
     section_disposition =
@@ -98,69 +85,87 @@ docket_decoder = Grammar(r"""
         / (!section_head junk)
         )+
 
-    disposition_state = (word+) space+ date space+ disposition_state_value
+    disposition_state = "Sentence Condition" next_line 
+                        (word+ next_line)? 
+                        date space+ disposition_state_value
     disposition_state_value = "Final Disposition" / "Not Final"
 
-    disposition = space* integer space "/" space charge_description space+
-                  offense_disposition space+ (grade space+)? statute next_line
-                  (space+ charge_description "\n")?
-                  (space+ name+ space* date next_line)?
-    charge_description = ((alphanum / punct) space?)+
-    offense_disposition = name+
+    disposition = integer space "/" space charge_description (next_line charge_description)?
+                  offense_disposition space (grade space+)? statute next_line
+                  (name+ space* date)?
+    charge_description = (cap_word space+)+
+    offense_disposition =
+            ( "Guilty Plea"
+            / "Nolle Prossed"
+            / "Dismissed"
+            / "ARD - County"
+            / "Proceed to Court"
+            / "Withdrawn"
+            )
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)
             / alphanum
-            ) space !"§"
+            ) space !statute_symbol
 
     statute = (long_statute / short_statute)
-    short_statute = alphanum+ space "§" space alphanum+
-    long_statute = short_statute space "§§" space alphanum+
+    short_statute = alphanum+ space statute_symbol space alphanum+
+    long_statute = short_statute space statute_symbol space alphanum+
+    statute_symbol = ("§"+ / "\\xc2\\xa7"+)
 
     section_financial_information =
-        "CASE FINANCIAL INFORMATION"
+        case_financial_information
         ( grand_totals
         / (!section_head junk)
         )+
 
-    grand_totals = "Grand Totals" colon next_line next_line 
-                    money next_line next_line 
-                    money next_line next_line
-                    money next_line next_line 
-                    money next_line next_line 
-                    money
-    money = ("$" numeric) / ("($" numeric ")")
+    grand_totals = "Grand Totals" colon money money money money money
+    money = parens? dollar numeric parens? space*
+    parens = (~"\(" / ~"\)")
+    dollar = ~"\$"
 
     section_head =
         ( "CASE INFORMATION"
         / "STATUS INFORMATION"
         / "CASE PARTICIPANTS"
-        / "DEFENDANT INFORMATION"
+        / defendant_information
         / "CHARGES"
         / "DISPOSITION SENTENCING/PENALTIES"
         / "COMMONWEALTH INFORMATION"
         / "ATTORNEY INFORMATION"
-        / "CASE FINANCIAL INFORMATION"
+        / case_financial_information
         / "ENTRIES"
         )
+    defendant_information = 
+        ( "DEFENDANT INFORMA TION"
+        / "DEFENDANT INFROMATION" 
+        )
+    case_financial_information = 
+        ( "CASE FINANCIAL INFORMA TION"
+        / "CASE FINANCIAL INFORMATION"
+        )
 
-    name = (letter+ / punct) space?
+    # + is too greedy and for judge we want the parser to stop before these words
+    name = !("Initiation") (letter+ / punct) space*
 
     next_line = ~"."* "\n"
     junk = (word / ws)
+    cap_word = !offense_disposition (capital / punct)+
     word = ~"[^\s]"+
     ws = ~"\s"+
 
-    colon = space? ":" space?
+    colon = space? ":" space*
     dash = "-"
     date = ~"\d\d/\d\d/\d\d\d\d"
 
+    capital = ~"[A-Z]"
     letter = ~"[A-Za-z]"
     integer = ~"[\d]"+
     alphanum = ~"[A-Za-z0-9]"
     numeric = (~"[0-9]" / "." / ",")+
     punct = ~"[^A-Za-z0-9\s]"
     space = " "
-    """)
+    """
+)
 
 
 class DocketExtractor(NodeVisitor):
@@ -181,14 +186,14 @@ class DocketExtractor(NodeVisitor):
                 logger.debug("result found section %s", name)
 
                 if name in result.keys():
-
                     if type(result[name]) is list:
                         result[name] += tval(child)
                     elif type(result[name]) is dict:
                         result[name].update(tval(child))
                     else:
-                        logger.error("Unexpected result type: %s is %s", name,
-                                     type(result[name]))
+                        logger.error(
+                            "Unexpected result type: %s is %s", name, type(result[name])
+                        )
                 else:
                     result[name] = tval(child)
 
@@ -198,12 +203,12 @@ class DocketExtractor(NodeVisitor):
         """Handle the docket section."""
         result = {
             "docket": val_named("docket", visited_children),
-            "defendant": val_named("defendant", visited_children)
+            "defendant": val_named("defendant", visited_children),
         }
         return ("section_docket", result)
 
     def visit_defendant(self, node, visited_children):
-        result = tval(visited_children[4])
+        result = tval(visited_children[5])
         logger.debug("defendant: %s", result)
         return ("defendant", result)
 
@@ -230,7 +235,7 @@ class DocketExtractor(NodeVisitor):
         return ("section_case_information", result)
 
     def visit_judge(self, node, visited_children):
-        result = tval(visited_children[2])
+        result = tval(visited_children[-1])
         logger.debug("judge: %s", result)
         return ("judge", result)
 
@@ -245,34 +250,11 @@ class DocketExtractor(NodeVisitor):
     def visit_otn_id(self, node, visited_children):
         return ("otn_id", node.text.strip())
 
-    def visit_date_filed(self, node, visited_children):
-        return ("date_filed", tval(visited_children[-1]))
-
-    def visit_arrest_agency(self, node, visited_children):
-        return ("arrest_agency", tval(visited_children[-1]))
-
-    def visit_arrest_agency_name(self, node, visited_children):
-        return ("arrest_agency_name", node.text.strip())
-
-    def visit_arrest_officer(self, node, visited_children):
-        return ("arrest_officer", tval(visited_children[-1]))
-
-    def visit_arrest_officer_name(self, node, visited_children):
-        return ("arrest_officer_name", node.text.strip())
-
     def visit_originating_docket(self, node, visited_children):
         return ("originating_docket", val_named("docket_id", visited_children))
 
-    def visit_district_control_number(self, node, visited_children):
-        return ("district_control_number", tval(visited_children[3]))
-
-    def visit_dcn(self, node, visited_children):
-        return ("dcn", node.text.strip())
-
     def visit_section_status_information(self, node, visited_children):
-        result = {
-            "arrest_date": val_named("arrest_date", visited_children)
-        }
+        result = {"arrest_date": val_named("arrest_date", visited_children)}
         return ("section_status_information", result)
 
     def visit_arrest_date(self, node, visited_children):
@@ -281,7 +263,7 @@ class DocketExtractor(NodeVisitor):
     def visit_section_defendant_information(self, node, visited_children):
         result = {
             "dob": val_named("dob", visited_children),
-            "aliases": val_named("aliases", visited_children)
+            "aliases": val_named("aliases", visited_children),
         }
         return ("section_defendant_information", result)
 
@@ -289,8 +271,7 @@ class DocketExtractor(NodeVisitor):
         return ("dob", tval(visited_children[-1]))
 
     def visit_aliases(self, node, visited_children):
-        result = [tval(x) for x in flatten(
-            visited_children[1]) if tname(x) == "alias"]
+        result = [tval(x) for x in flatten(visited_children[2]) if tname(x) == "alias"]
         logger.debug("aliases: %s", result)
         return ("aliases", result)
 
@@ -298,8 +279,11 @@ class DocketExtractor(NodeVisitor):
         return ("alias", node.text.strip())
 
     def visit_section_disposition(self, node, visited_children):
-        sequence = [x for x in flatten(visited_children[1])
-                    if tname(x) in {"disposition", "disposition_state"}]
+        sequence = [
+            x
+            for x in flatten(visited_children[1])
+            if tname(x) in {"disposition", "disposition_state"}
+        ]
 
         is_final = True
         dispositions = []
@@ -314,8 +298,7 @@ class DocketExtractor(NodeVisitor):
                 d["is_final"] = is_final
                 dispositions.append(d)
 
-        logger.debug("section_disposition found %d dispositions",
-                     len(dispositions))
+        logger.debug("section_disposition found %d dispositions", len(dispositions))
 
         if len(dispositions) == 0:
             return
@@ -331,15 +314,15 @@ class DocketExtractor(NodeVisitor):
 
     def visit_disposition(self, node, visited_children):
         result = {
-            "sequence": tval(visited_children[1]),
-            "charge_description": tval(visited_children[5]),
-            "offense_disposition": tval(visited_children[7]),
-            "grade": val_named("grade", visited_children[9]),
-            "statute": tval(visited_children[10]),
-            "date": val_named("date", visited_children[13])
+            "sequence": tval(visited_children[0]),
+            "charge_description": tval(visited_children[4]),
+            "offense_disposition": tval(visited_children[6]),
+            "grade": val_named("grade", visited_children[8]),
+            "statute": tval(visited_children[9]),
+            "date": val_named("date", visited_children[11]),
         }
 
-        extra = val_named("charge_description", (visited_children[12]))
+        extra = val_named("charge_description", (visited_children[5]))
 
         if extra:
             result["charge_description"] += " " + extra
@@ -366,23 +349,25 @@ class DocketExtractor(NodeVisitor):
         return ("long_statute", node.text.strip())
 
     def visit_section_financial_information(self, node, visited_children):
-        return ("section_financial_information",
-                val_named("grand_totals", visited_children))
+        return (
+            "section_financial_information",
+            val_named("grand_totals", visited_children),
+        )
 
     def visit_grand_totals(self, node, visited_children):
         result = {
-            "assessment": tval(visited_children[4]),
-            "payments": tval(visited_children[7]),
-            "adjustments": tval(visited_children[10]),
-            "non-monetary": tval(visited_children[13]),
-            "total": tval(visited_children[16])
+            "assessment": tval(visited_children[2]),
+            "payments": tval(visited_children[6]),
+            "adjustments": tval(visited_children[5]),
+            "non-monetary": tval(visited_children[4]),
+            "total": tval(visited_children[3]),
         }
         return ("grand_totals", result)
 
     def visit_money(self, node, visited_children):
         if node.text[0] == "$":
             amount = val_named("numeric", visited_children)
-        elif node.text[:2] == "($":
+        elif node.text[0] == "(":
             amount = val_named("numeric", visited_children) * -1
         else:
             raise ValueError("unexpected money match: %s", node.text)
@@ -393,7 +378,7 @@ class DocketExtractor(NodeVisitor):
     def visit_numeric(self, node, visited_children):
         t = node.text.strip().replace(",", "")
         number = float(t)
-        return("numeric", number)
+        return ("numeric", number)
 
     def visit_date(self, node, visited_children):
         month, day, year = node.text.split("/")
@@ -411,6 +396,7 @@ class DocketExtractor(NodeVisitor):
 
     def visit_junk(self, node, visited_children):
         return
+
 
 # Helpers
 
@@ -451,7 +437,6 @@ def flatten(lol):
     """Reduce a recursive list to a flat one, removing all empty values."""
 
     def can_flatten(thing):
-
         if type(thing) in [str, tuple]:
             return False
 
@@ -462,7 +447,6 @@ def flatten(lol):
         return True
 
     for item in lol:
-
         if type(item) == Node:
             continue
 
@@ -487,8 +471,8 @@ def parse_pdf(file_data):
     """
     From an open PDF, produce complete parser result.
     """
-    pdf = pdftotext.PDF(file_data)
-    text = "\n\n".join(pdf)
+    reader = PdfReader(file_data)
+    text = "\n\n".join([page.extract_text() for page in reader.pages])
 
     try:
         tree = docket_decoder.parse(text)
