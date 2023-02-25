@@ -105,12 +105,12 @@ docket_decoder = Grammar(
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)
             / alphanum
-            ) space !statute_section
+            ) space !statute_symbol
 
     statute = (long_statute / short_statute)
-    short_statute = alphanum+ space statute_section space alphanum+
-    long_statute = short_statute space statute_section space alphanum+
-    statute_section = ("§"+ / "\\xc2\\xa7"+)
+    short_statute = alphanum+ space statute_symbol space alphanum+
+    long_statute = short_statute space statute_symbol space alphanum+
+    statute_symbol = ("§"+ / "\\xc2\\xa7"+)
 
     section_financial_information =
         case_financial_information
