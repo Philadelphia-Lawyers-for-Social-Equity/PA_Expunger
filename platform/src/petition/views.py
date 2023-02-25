@@ -22,28 +22,28 @@ logger.info("DJANGO_LOG_LEVEL: %s" % os.environ.get("DJANGO_LOG_LEVEL"))
 
 
 class PetitionAPIView(APIView):
-
     def post(self, request, *args, **kwargs):
         logger.debug("PetitionAPIView post")
         profile = request.user.expungerprofile
 
-        logger.debug(
-            "Profile %s found attorney %s" % (profile, profile.attorney))
+        logger.debug("Profile %s found attorney %s" % (profile, profile.attorney))
 
         try:
             context = {
                 "organization": profile.organization,
                 "attorney": profile.attorney,
-                "petitioner":
-                    models.Petitioner.from_dict(request.data["petitioner"]),
-                "petition":
-                    models.Petition.from_dict(request.data["petition"]),
-                "dockets": [models.DocketId.from_dict(d) for d in
-                            request.data.get("dockets", [])],
-                "restitution":
-                    models.Restitution.from_dict(request.data["restitution"]),
-                "charges": [models.Charge.from_dict(c) for c in
-                            request.data.get("charges", [])]
+                "petitioner": models.Petitioner.from_dict(request.data["petitioner"]),
+                "petition": models.Petition.from_dict(request.data["petition"]),
+                "dockets": [
+                    models.DocketId.from_dict(d)
+                    for d in request.data.get("dockets", [])
+                ],
+                "restitution": models.Restitution.from_dict(
+                    request.data["restitution"]
+                ),
+                "charges": [
+                    models.Charge.from_dict(c) for c in request.data.get("charges", [])
+                ],
             }
         except KeyError as err:
             msg = "Missing field: %s" % (err)
@@ -53,7 +53,8 @@ class PetitionAPIView(APIView):
         logger.debug("Petition POSTed with context: %s" % context)
 
         docx = os.path.join(
-            BASE_DIR, "petition", "templates", "petition", "petition.docx")
+            BASE_DIR, "petition", "templates", "petition", "petition.docx"
+        )
         document = DocxTemplate(docx)
 
         jinja_env = jinja2.Environment()
@@ -62,15 +63,15 @@ class PetitionAPIView(APIView):
 
         document.render(context, jinja_env)
         response = HttpResponse(
-            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        response['Content-Disposition'] = 'attachment; filename="petition.docx"'
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        response["Content-Disposition"] = 'attachment; filename="petition.docx"'
         document.save(response)
 
         return response
 
 
 class DocketParserAPIView(APIView):
-
     def post(self, request, *args, **kwargs):
         logger.debug("DocketParserAPIView post")
 
@@ -96,7 +97,7 @@ class DocketParserAPIView(APIView):
             "petition": petition_from_parser(parsed, ratio),
             "dockets": dockets_from_parser(parsed),
             "charges": charges,
-            "restitution": restitution_from_parser(parsed)
+            "restitution": restitution_from_parser(parsed),
         }
 
         logger.info("Parsed: %s", parsed)
@@ -104,6 +105,7 @@ class DocketParserAPIView(APIView):
 
 
 # Helpers
+
 
 def petitioner_from_parser(parsed):
     """
@@ -116,7 +118,8 @@ def petitioner_from_parser(parsed):
 
     if "section_defendant_information" in parsed:
         petitioner["aliases"] = parsed["section_defendant_information"].get(
-            "aliases", [])
+            "aliases", []
+        )
 
         dob = parsed["section_defendant_information"].get("dob", None)
 
@@ -138,7 +141,7 @@ def petition_from_parser(parsed, ratio):
     return {
         "otn": case_info.get("otn"),
         "judge": case_info.get("judge"),
-        "ratio": ratio.name
+        "ratio": ratio.name,
     }
 
 
@@ -155,8 +158,7 @@ def dockets_from_parser(parsed):
             dockets.append(primary)
 
     if "section_case_information" in parsed:
-        originating = \
-            parsed["section_case_information"].get("originating_docket", None)
+        originating = parsed["section_case_information"].get("originating_docket", None)
 
         if originating is not None:
             dockets.append(originating)
@@ -168,21 +170,24 @@ def charges_from_parser(parsed):
     """
     Produces the ratio, charges based on the docket parser output.
     """
+
     def include_charge(disp):
         """Return True if the charge should be included."""
         if "offense_disposition" not in disp:
-            raise ValueError(
-                "Charge must include a disposition, got: %s" % disp)
+            raise ValueError("Charge must include a disposition, got: %s" % disp)
 
         return disp["is_final"] and disp["offense_disposition"] in [
-            "Nolle Prossed", "ARD - County", "Not Guilty", "Dismissed",
-            "Withdrawn"]
+            "Nolle Prossed",
+            "ARD - County",
+            "Not Guilty",
+            "Dismissed",
+            "Withdrawn",
+        ]
 
     ratio = models.PetitionRatio.full
     charges = []
 
     if "section_disposition" in parsed:
-
         for disp in parsed["section_disposition"]:
             if include_charge(disp):
                 charges.append(disposition_to_charge(disp))
@@ -206,10 +211,7 @@ def restitution_from_parser(parsed):
     total = data.get("assessment", 0)
     paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
 
-    return {
-        "total": total,
-        "paid": paid
-    }
+    return {"total": total, "paid": paid}
 
 
 def date_string(d):
@@ -239,5 +241,5 @@ def disposition_to_charge(disp):
         "description": disp.get("charge_description", None),
         "grade": disp.get("grade", None),
         "date": charge_date,
-        "disposition": disp.get("offense_disposition", None)
+        "disposition": disp.get("offense_disposition", None),
     }
