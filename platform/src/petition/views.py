@@ -100,7 +100,7 @@ class DocketParserAPIView(APIView):
             "restitution": restitution_from_parser(parsed),
         }
 
-        logger.info("Parsed: %s", parsed)
+        logger.debug("Parsed: %s", content)
         return Response(content)
 
 
@@ -111,14 +111,18 @@ def petitioner_from_parser(parsed):
     """
     Produce the petioner data based on the docket parser output.
     """
-    petitioner = {}
+    petitioner = {
+        "name": None,
+        "aliases": None,
+        "dob": None,
+    }
 
     if "section_docket" in parsed:
         petitioner["name"] = parsed["section_docket"].get("defendant", None)
 
     if "section_defendant_information" in parsed:
         petitioner["aliases"] = parsed["section_defendant_information"].get(
-            "aliases", []
+            "aliases", None
         )
 
         dob = parsed["section_defendant_information"].get("dob", None)

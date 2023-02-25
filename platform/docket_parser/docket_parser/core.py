@@ -93,8 +93,15 @@ docket_decoder = Grammar(
     disposition = integer space "/" space charge_description (next_line charge_description)?
                   offense_disposition space (grade space+)? statute next_line
                   (name+ space* date)?
-    charge_description = !offense_disposition (cap_word space+)+
-    offense_disposition = ("Guilty Plea" / "Nolle Prossed" / "Dismissed")
+    charge_description = (cap_word space+)+
+    offense_disposition =
+            ( "Guilty Plea"
+            / "Nolle Prossed"
+            / "Dismissed"
+            / "ARD - County"
+            / "Proceed to Court"
+            / "Withdrawn"
+            )
     grade = ( (alphanum alphanum alphanum)
             / (alphanum alphanum)
             / alphanum
@@ -142,7 +149,7 @@ docket_decoder = Grammar(
 
     next_line = ~"."* "\n"
     junk = (word / ws)
-    cap_word = (capital / punct)+
+    cap_word = !offense_disposition (capital / punct)+
     word = ~"[^\s]"+
     ws = ~"\s"+
 
