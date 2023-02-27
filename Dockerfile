@@ -88,6 +88,7 @@ RUN pip3 install --user mod_wsgi
 WORKDIR ${INSTALL_DIR}/docket_parser
 COPY platform/docket_parser/ .
 RUN pip3 install ./
+RUN echo 'alias debug_parser="python3 /srv/plse/install/docket_parser/docket_parser"' >> ~/.bashrc
 
 # App install
 WORKDIR ${APPDIR}

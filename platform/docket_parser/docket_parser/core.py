@@ -467,12 +467,16 @@ def val_named(name, items):
     logger.debug("Could not find %s", name)
 
 
+def text_from_pdf(file_data):
+    """Read text from an open PDF"""
+    reader = PdfReader(file_data)
+    return "\n\n".join([page.extract_text() for page in reader.pages])
+
 def parse_pdf(file_data):
     """
     From an open PDF, produce complete parser result.
     """
-    reader = PdfReader(file_data)
-    text = "\n\n".join([page.extract_text() for page in reader.pages])
+    text = text_from_pdf(file_data)
 
     try:
         tree = docket_decoder.parse(text)
