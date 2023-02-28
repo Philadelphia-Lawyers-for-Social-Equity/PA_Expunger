@@ -137,13 +137,19 @@ def petition_from_parser(parsed, ratio):
     """
     Produce the petition data based on the docket parser output.
     """
-    if "section_case_information" not in parsed:
-        return {}
+    if "section_status_information" in parsed:
+        status_info = parsed["section_status_information"]
+    else:
+        status_info = {}
 
-    case_info = parsed["section_case_information"]
+    if "section_case_information" in parsed:
+        case_info = parsed["section_case_information"]
+    else:
+        case_info = {}
 
     return {
         "otn": case_info.get("otn"),
+        "complaint_date": status_info.get("complaint_date"),
         "judge": case_info.get("judge"),
         "ratio": ratio.name,
     }

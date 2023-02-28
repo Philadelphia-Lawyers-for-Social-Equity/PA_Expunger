@@ -6,7 +6,7 @@ export default function Petition(props) {
     /* props expects:
         - otn
         - dc
-        - arrest_date: isoformatted date string, eg "2021-01-29"
+        - complaint_date: isoformatted date string, eg "2021-01-29"
         - arrest_officer
         - arrest_agency
         - judge
@@ -36,10 +36,10 @@ export default function Petition(props) {
         />
 
         <GeneratorInput
-            label="Arrest Date"
+            label="Complaint Date"
             type="date"
-            name="arrest_date"
-            value={props.arrest_date}
+            name="complaint_date"
+            value={props.complaint_date}
             handleChange={props.handleChange}
         />
 

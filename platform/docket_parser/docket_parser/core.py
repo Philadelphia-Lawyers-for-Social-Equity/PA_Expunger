@@ -60,12 +60,12 @@ docket_decoder = Grammar(
     originating_docket = "Originating Docket No" colon space* docket_id
 
     section_status_information =
-        "STATUS INFORMATION"
-        ( arrest_date
+        status_information
+        ( complaint_date
         / (!section_head junk)
         )+
 
-    arrest_date = "Arrest Date" colon next_line next_line date
+    complaint_date = date space? "Complaint Date" colon
 
     section_defendant_information =
         defendant_information
@@ -125,7 +125,7 @@ docket_decoder = Grammar(
 
     section_head =
         ( "CASE INFORMATION"
-        / "STATUS INFORMATION"
+        / status_information
         / "CASE PARTICIPANTS"
         / defendant_information
         / "CHARGES"
@@ -134,6 +134,10 @@ docket_decoder = Grammar(
         / "ATTORNEY INFORMATION"
         / case_financial_information
         / "ENTRIES"
+        )
+    status_information = 
+        ( "STATUS INFORMATION"
+        / "STA TUS INFORMA TION"
         )
     defendant_information = 
         ( "DEFENDANT INFORMA TION"
@@ -254,11 +258,11 @@ class DocketExtractor(NodeVisitor):
         return ("originating_docket", val_named("docket_id", visited_children))
 
     def visit_section_status_information(self, node, visited_children):
-        result = {"arrest_date": val_named("arrest_date", visited_children)}
+        result = {"complaint_date": val_named("complaint_date", visited_children)}
         return ("section_status_information", result)
 
-    def visit_arrest_date(self, node, visited_children):
-        return ("arrest_date", tval(visited_children[4]))
+    def visit_complaint_date(self, node, visited_children):
+        return ("complaint_date", val_named("date", visited_children))
 
     def visit_section_defendant_information(self, node, visited_children):
         result = {
