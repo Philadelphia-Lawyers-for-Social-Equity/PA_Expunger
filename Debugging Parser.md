@@ -1,5 +1,5 @@
-The `docket_parser` module has a simple command line interface for debugging. 
-It can be run with `python3 [directory of the docket_parser module]`
+The `docket_parser` package has a simple command line interface for debugging. 
+It can be run with `python3 [directory of the docket_parser package]`
 
 To print the text extracted from a pdf (which is the subject of parsing), use it without `-o`.
 
