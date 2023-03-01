@@ -43,7 +43,7 @@ def main():
                 found_matching_test = True
                 break
         if found_matching_test:
-            print(f"{args.filename} not found. Using {pdf_path} instead.")
+            print(f"{args.filename} not found. Using {pdf_path} instead.", file=sys.stderr)
 
     with pdf_path.open("rb") as f:
         if args.o:
