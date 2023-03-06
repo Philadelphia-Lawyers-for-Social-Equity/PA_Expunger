@@ -1,0 +1,226 @@
+whole_docket =
+    page_header
+    ( section_case_information
+    / section_status_information
+    / section_defendant_information
+    / defendant_name_segment
+    / section_disposition
+    / section_financial_information
+    / junk_segment
+    )+
+
+page_header =
+    ( section_docket_header
+    / docket_number_segment
+    / (!end_of_page_header junk_segment)
+    )+
+    end_of_page_header
+
+section_docket_header = header_content properties_72y_bold newline
+
+# [xxx.xx,72y.yy,bold]. header is always the only thing with this y coordinate range on every page
+properties_72y_bold = props_open coordinate comma &'72' coordinate comma bold props_close
+
+docket_number_segment = "Docket Number: " docket_number properties_bold newline
+docket_number = content_char+
+
+
+
+section_case_information =
+    case_information_header
+    ( cross_court_docket_segment
+    / judge_segment
+    / otn_segment
+    / originating_docket_segment
+    / (page_break case_information_header)
+    / (!generic_header junk_segment)
+    )+
+case_information_header = "CASE INFORMATION" properties_bold newline
+judge_segment = "Judge Assigned:" space* judge properties_normal newline
+judge = content_char*
+
+otn_segment = "OTN:" space* otn properties_normal newline
+otn = content_char+
+
+originating_docket_segment = "Originating Docket No:" space* originating_docket_number properties_normal newline
+originating_docket_number = content_char+
+# It says docket Nos so there might be dockets that have more than one. Will need an example to parse correctly.
+cross_court_docket_segment = "Cross Court Docket Nos:" space* cross_court_docket_numbers properties_normal newline
+cross_court_docket_numbers = content_char+
+
+
+section_status_information =
+    status_information_header
+    ( complaint_date_segment
+    / (page_break status_information_header)
+    / (!generic_header junk_segment)
+    )+
+
+complaint_date_segment = complaint_date comes_before "Complaint Date:" properties_normal newline
+status_information_header = "STATUS INFORMATION" properties_bold newline
+complaint_date = content_char+
+
+section_defendant_information =
+    defendant_information_header
+    ( dob_lines
+    / aliases
+    / (page_break defendant_information_header)
+    / (!generic_header junk_segment)
+    )+
+
+defendant_information_header = "DEFENDANT INFORMATION" properties_bold newline
+dob_lines = ~r"Date of Birth"i content_char* properties_normal newline
+            dob (tab content_char+)* properties_normal newline
+dob = content_char+
+
+# If necessary, can use fact that aliases have x coordinate < 100
+aliases =
+    aliases_start
+    ( alias_segment
+    / (!generic_header junk_segment)
+    )+
+aliases_start = "Alias Name" properties_normal newline
+# Sometimes there are multiple columns for aliases (separated by tab)
+alias_segment = alias (tab content_char+)* properties_03x_normal newline
+alias = content_char+
+
+properties_03x_normal = props_open &'03' coordinates normal props_close
+
+# We get defendant name from case participants section
+defendant_name_segment = "Defendant" tab defendant_name properties_normal newline
+defendant_name = content_char+
+
+section_disposition =
+    disposition_full_header
+    ( (event_disposition_segment
+        (!case_event_date_finality_segment junk_segment)*
+        case_event_date_finality_segment
+            ( charge_info
+            / mid_disposition_page_break
+            / (!generic_header !event_disposition_segment junk_segment)
+            )+)
+    / mid_disposition_page_break
+    / (!generic_header !event_disposition_segment junk_segment)
+    )+
+
+# Assuming the bold "Disposition" line always starts with x coord ~= 36 so [03x.xx,yyy.yy,bold]
+event_disposition_segment = event_disposition properties_03x_bold newline
+case_event_date_finality_segment = content_char+ tab disposition_finality comes_before case_event properties_normal newline
+properties_03x_bold = props_open &'03' coordinates bold props_close
+event_disposition = content_char+
+case_event = content_char+
+disposition_finality = content_char+
+
+# Assuming Sequence/Description segments always have x coordinate 05x.xx
+charge_info = charge_info_oneline / charge_info_multiline
+charge_info_oneline = sequence_description_start tab disposition_grade_statute properties_05x_normal newline
+charge_info_multiline =
+    sequence_description_start properties_05x_normal newline
+    ( mid_disposition_page_break
+    / continued_description_segment
+    )+
+    # To avoid confusion, using "statute" to refer to the thing with § instead of "section"
+    disposition_grade_statute properties_normal newline
+
+sequence_description_start = sequence space slash space charge_description
+continued_description_segment = charge_description properties_05x_normal newline
+properties_05x_normal = props_open &'05' coordinates normal props_close
+sequence = (digit / comma)+
+charge_description = content_char+
+
+disposition_grade_statute = offense_disposition tab statute (comes_before grade)?
+offense_disposition = content_char+
+statute = content_char+
+grade = content_char{,3}
+
+mid_disposition_page_break = page_break disposition_full_header
+
+# All the underlined field names directly under disposition header:
+disposition_full_header =
+    disposition_header
+    (!sentence_conditions junk_segment)+
+    sentence_conditions
+
+disposition_header = "DISPOSITION SENTENCING/PENALTIES" properties_bold newline
+sentence_conditions = "Sentence Conditions" properties_0xx_normal newline
+properties_0xx_normal = props_open &'0' coordinates normal props_close
+
+
+section_financial_information =
+    financial_information_header
+    ( grand_totals
+    / (!generic_header junk_segment)
+    )+
+
+financial_information_header = "CASE FINANCIAL INFORMATION" properties_bold newline
+
+# Anticipating possibility of "Grand Totals:" on same line as the amounts, because they're very close y coordinates.
+grand_totals =
+    "Grand Totals:" ((properties_normal newline) / space*)
+    assessment tab total comes_before non_monetary comes_before adjustments comes_before payments properties_normal newline
+assessment = content_char+
+total = content_char+
+non_monetary = content_char+
+adjustments = content_char+
+payments = content_char+
+
+# How can we know an all caps, bold segment is a section header and not a page header?
+# If it has y coord > 700 is part of page header. that's definitely true. (top of page is 792)
+# guess: if it has 700 > y coord > 600 and comes immediately after a bold segment, it is part of page header
+# and if it comes after a normal segment it's a (non docket) section header
+
+generic_header = (header_content generic_header_properties1 newline) /
+                 (&(properties_normal newline) header_content generic_header_properties2 newline)
+
+
+# y coord < 600:
+generic_header_properties1 = props_open coordinate comma !('7'/'6') coordinate comma bold props_close
+
+# y coord starts with 6:
+generic_header_properties2 = props_open coordinate comma &'6' coordinate comma bold props_close
+
+header_content = (~r"[A-Z]" / space / slash)+
+
+page_break =
+    printed_on_segment
+    (!end_of_page_header junk_segment)+
+    end_of_page_header
+
+printed_on_segment = "Printed:" space* date space* properties_normal newline
+
+end_of_page_header = "v" dot space* properties_normal newline
+                     junk_segment # This is defendant name, but it's more convenient for parsing to get name from unique place
+
+
+junk_segment =
+    (content_char / tab / comes_before)*
+    (properties_bold / properties_normal)
+    newline
+
+
+# bold, normal are the only two fonts used.
+properties_bold = props_open coordinates bold props_close
+properties_normal = props_open coordinates normal props_close
+
+coordinates = coordinate comma coordinate comma
+coordinate = digit{3} dot digit{2}
+
+
+date = digit{2} slash digit{2} slash digit{4}
+
+font = bold / normal
+bold = "bold"
+normal = "normal"
+
+content_char = ~r"NOT_INSERTED_CHARACTER_REGEX"
+props_open = "INSERTED_PROPS_OPEN"
+props_close = "INSERTED_PROPS_CLOSE"
+newline = 'INSERTED_NEWLINE'
+tab = 'INSERTED_TAB'
+comes_before = "INSERTED_COMES_BEFORE"
+
+digit = ~r"[0-9]"
+comma = ','
+dot = '.'
+slash = '/'
+space = " "

@@ -1,456 +1,175 @@
 # -*- coding: utf-8 -*-
-
 import logging
-from datetime import date
+from collections.abc import Iterable
+from pathlib import Path
+from typing import IO, Union
 
 from parsimonious.exceptions import ParseError
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import Node, NodeVisitor
-from pypdf import PdfReader
+
+from extraction import DocketReader
+
+logger = logging.getLogger(__name__)
+
+REPLACEMENTS = {"NOT_INSERTED_CHARACTER_REGEX": DocketReader.generate_content_regex(),
+                "INSERTED_PROPS_OPEN": DocketReader.properties_open,
+                "INSERTED_PROPS_CLOSE": DocketReader.properties_close,
+                "INSERTED_NEWLINE": DocketReader.newline,
+                "INSERTED_TAB": DocketReader.tab,
+                "INSERTED_COMES_BEFORE": DocketReader.comes_before}
+
+singles = ["defendant_name", "docket_number", "judge", "otn", "originating_docket", "cross_court_docket(s)",
+           "complaint_date", "dob", "alias", "event_disposition", "case_event", "disposition_finality", "sequence",
+           "charge_description", "grade", "statute", "offense_disposition",
+           ]
 
 
-logger = logging.Logger(__name__)
-
-
-docket_decoder = Grammar(
-    r"""
-    result =
-        ( section_docket
-        / section_case_information
-        / section_status_information
-        / section_defendant_information
-        / section_disposition
-        / section_financial_information
-        / junk
-        )+
-
-    section_docket =
-        ( !"CRIMINAL DOCKET" "DOCKET")
-        ( defendant
-        / docket
-        / (!section_head junk)
-        )+
-
-    defendant = page_number "Commonwealth of Pennsylvania" next_line
-                "v." next_line
-                defendant_name next_line
-    page_number = "Page" space integer+ space "of" space integer+
-    defendant_name = name+
-
-    docket = "Docket Number" colon docket_id
-    docket_id = court dash ~"\d\d" dash case_type dash ~"\d\d\d\d\d\d\d"
-                dash ~"\d\d\d\d"
-    court = "CP" / "MC"
-    case_type = "CR" / "SU" / "MD"
-
-    section_case_information =
-        "CASE INFORMATION"
-        ( judge
-        / otn
-        / originating_docket
-        / (!section_head junk)
-        )+
-
-    judge = "Judge Assigned" colon judge_name
-    judge_name = name+
-
-    otn = "OTN" colon otn_id
-    otn_id = ~"\w" space ~"\d\d\d\d\d\d" "-" ~"\d"
-    
-    originating_docket = "Originating Docket No" colon space* docket_id
-
-    section_status_information =
-        status_information
-        ( complaint_date
-        / (!section_head junk)
-        )+
-
-    complaint_date = date space? "Complaint Date" colon
-
-    section_defendant_information =
-        defendant_information
-        ( dob
-        / aliases
-        / (!section_head junk)
-        )+
-
-    dob = "Date Of Birth" colon date
-    aliases = "Alias Name" next_line (space* alias next_line)+
-    alias = !"CASE" name+
-
-    section_disposition =
-        "DISPOSITION SENTENCING/PENALTIES"
-        ( disposition_state
-        / disposition
-        / (!section_head junk)
-        )+
-
-    disposition_state = "Sentence Condition" next_line 
-                        (word+ next_line)? 
-                        date space+ disposition_state_value
-    disposition_state_value = "Final Disposition" / "Not Final"
-
-    disposition = integer space "/" space charge_description (next_line charge_description)?
-                  offense_disposition space (grade space+)? statute next_line
-                  (name+ space* date)?
-    charge_description = (cap_word space+)+
-    offense_disposition =
-            ( "Guilty Plea"
-            / "Nolle Prossed"
-            / "Dismissed"
-            / "ARD - County"
-            / "Proceed to Court"
-            / "Withdrawn"
-            )
-    grade = ( (alphanum alphanum alphanum)
-            / (alphanum alphanum)
-            / alphanum
-            ) space !statute_symbol
-
-    statute = (long_statute / short_statute)
-    short_statute = alphanum+ space statute_symbol space alphanum+
-    long_statute = short_statute space statute_symbol space alphanum+
-    statute_symbol = ("§"+ / "\\xc2\\xa7"+)
-
-    section_financial_information =
-        case_financial_information
-        ( grand_totals
-        / (!section_head junk)
-        )+
-
-    grand_totals = "Grand Totals" colon money money money money money
-    money = parens? dollar numeric parens? space*
-    parens = (~"\(" / ~"\)")
-    dollar = ~"\$"
-
-    section_head =
-        ( "CASE INFORMATION"
-        / status_information
-        / "CASE PARTICIPANTS"
-        / defendant_information
-        / "CHARGES"
-        / "DISPOSITION SENTENCING/PENALTIES"
-        / "COMMONWEALTH INFORMATION"
-        / "ATTORNEY INFORMATION"
-        / case_financial_information
-        / "ENTRIES"
-        )
-    status_information = 
-        ( "STATUS INFORMATION"
-        / "STA TUS INFORMA TION"
-        )
-    defendant_information = 
-        ( "DEFENDANT INFORMA TION"
-        / "DEFENDANT INFROMATION" 
-        )
-    case_financial_information = 
-        ( "CASE FINANCIAL INFORMA TION"
-        / "CASE FINANCIAL INFORMATION"
-        )
-
-    # + is too greedy and for judge we want the parser to stop before these words
-    name = !("Initiation") (letter+ / punct) space*
-
-    next_line = ~"."* "\n"
-    junk = (word / ws)
-    cap_word = !offense_disposition (capital / punct)+
-    word = ~"[^\s]"+
-    ws = ~"\s"+
-
-    colon = space? ":" space*
-    dash = "-"
-    date = ~"\d\d/\d\d/\d\d\d\d"
-
-    capital = ~"[A-Z]"
-    letter = ~"[A-Za-z]"
-    integer = ~"[\d]"+
-    alphanum = ~"[A-Za-z0-9]"
-    numeric = (~"[0-9]" / "." / ",")+
-    punct = ~"[^A-Za-z0-9\s]"
-    space = " "
-    """
-)
-
-
-class DocketExtractor(NodeVisitor):
-    "Produce the docket data."
+# noinspection PyMethodMayBeStatic, PyUnusedLocal
+class DocketVisitor(NodeVisitor):
+    """Produce the docket data."""
 
     def generic_visit(self, node, visited_children):
         """Default behavior is to go further down the tree."""
-        return visited_children or node
+        return flatten(visited_children) or node
 
-    def visit_result(self, node, visited_children):
+    def visit_whole_docket(self, node, visited_children):
         """Merge the sections represented by the parsed tree"""
-        result = {}
+        docket_info = {}
+        # page_header, *visited_children = visited_children
+        for visited_child in flatten(visited_children):
+            if isinstance(visited_child, dict):
+                docket_info.update(visited_child)
+        return docket_info
 
-        for child in flatten(visited_children):
-            name = tname(child)
-
-            if name and name[:7] == "section":
-                logger.debug("result found section %s", name)
-
-                if name in result.keys():
-                    if type(result[name]) is list:
-                        result[name] += tval(child)
-                    elif type(result[name]) is dict:
-                        result[name].update(tval(child))
-                    else:
-                        logger.error(
-                            "Unexpected result type: %s is %s", name, type(result[name])
-                        )
-                else:
-                    result[name] = tval(child)
-
-        return result
-
-    def visit_section_docket(self, node, visited_children):
-        """Handle the docket section."""
-        result = {
-            "docket": val_named("docket", visited_children),
-            "defendant": val_named("defendant", visited_children),
-        }
-        return ("section_docket", result)
-
-    def visit_defendant(self, node, visited_children):
-        result = tval(visited_children[5])
-        logger.debug("defendant: %s", result)
-        return ("defendant", result)
+    def visit_docket_number(self, node, visited_children):
+        # logger.debug("visit_docket_number:" + node.text.strip())
+        return {"docket_number": node.text.strip()}
 
     def visit_defendant_name(self, node, visited_children):
-        return ("defendant_name", node.text.strip())
-
-    def visit_docket(self, node, visited_children):
-        result = tval(visited_children[2])
-        logger.debug("docket: %s", result)
-        return ("docket", result)
-
-    def visit_docket_id(self, node, visited_children):
-        return ("docket_id", node.text.strip())
-
-    def visit_section_case_information(self, node, visited_children):
-        result = {}
-
-        for item in flatten(visited_children):
-            name = tname(item)
-
-            if name is not None:
-                result[name] = tval(item)
-
-        return ("section_case_information", result)
+        # logger.debug("visit_defendant_name:" + node.text.strip())
+        return {"defendant_name": node.text.strip()}
 
     def visit_judge(self, node, visited_children):
-        result = tval(visited_children[-1])
-        logger.debug("judge: %s", result)
-        return ("judge", result)
-
-    def visit_judge_name(self, node, visited_children):
-        return ("judge_name", node.text.strip())
+        return {"judge": node.text.strip()}
 
     def visit_otn(self, node, visited_children):
-        result = tval(visited_children[-1])
-        logger.debug("otn: %s", result)
-        return ("otn", result)
+        return {"otn": node.text.strip()}
 
-    def visit_otn_id(self, node, visited_children):
-        return ("otn_id", node.text.strip())
+    def visit_originating_docket_number(self, node, visited_children):
+        return {"originating_docket": node.text.strip()}
 
-    def visit_originating_docket(self, node, visited_children):
-        return ("originating_docket", val_named("docket_id", visited_children))
-
-    def visit_section_status_information(self, node, visited_children):
-        result = {"complaint_date": val_named("complaint_date", visited_children)}
-        return ("section_status_information", result)
+    def visit_cross_court_docket_numbers(self, node, visited_children):
+        return {"cross_court_docket(s)": node.text.strip()}
 
     def visit_complaint_date(self, node, visited_children):
-        return ("complaint_date", val_named("date", visited_children))
-
-    def visit_section_defendant_information(self, node, visited_children):
-        result = {
-            "dob": val_named("dob", visited_children),
-            "aliases": val_named("aliases", visited_children),
-        }
-        return ("section_defendant_information", result)
+        return {"complaint_date": node.text.strip()}
 
     def visit_dob(self, node, visited_children):
-        return ("dob", tval(visited_children[-1]))
+        return {"dob": node.text.strip()}
 
     def visit_aliases(self, node, visited_children):
-        result = [tval(x) for x in flatten(visited_children[2]) if tname(x) == "alias"]
-        logger.debug("aliases: %s", result)
-        return ("aliases", result)
+        aliases = []
+        for child in flatten(visited_children):
+            if "alias" in child:
+                aliases.append(child["alias"])
+        logger.debug(f"aliases: {aliases}")
+        return {"aliases": aliases}
 
     def visit_alias(self, node, visited_children):
-        return ("alias", node.text.strip())
+        return {"alias": node.text.strip()}
 
     def visit_section_disposition(self, node, visited_children):
-        sequence = [
-            x
-            for x in flatten(visited_children[1])
-            if tname(x) in {"disposition", "disposition_state"}
-        ]
+        # logger.debug(dumps([child.text for child in node.children[1].children[0].children[0].children[3].children], indent=2))
+        case_events = []
+        header, visited_children = visited_children
+        logger.debug("visited_case_events: " + str(visited_children))
+        case_event = {}
+        charges = []
+        for child in visited_children:
+            logger.debug("section_disposition child: " + str(child))
+            if 'event_disposition' in child and 'event_disposition' in case_event:
+                case_event["charges"] = charges
+                case_events.append(case_event)
+                case_event = child
+                charges = []
+            elif 'charge_info' in child:
+                charges.append(child['charge_info'])
+            else:
+                case_event.update(child)
+        case_event["charges"] = charges
+        case_events.append(case_event)
+        return {"section_disposition": case_events}
 
-        is_final = True
-        dispositions = []
+    def visit_event_disposition(self, node, visited_children):
+        return {"event_disposition": node.text.strip()}
 
-        for s in sequence:
-            if tname(s) == "disposition_state":
-                logger.debug("Disposition sequence state: %s" % tval(s))
-                is_final = tval(s) == "Final Disposition"
-            elif tname(s) == "disposition":
-                d = tval(s)
-                logger.debug("Disposition sequence item #%d" % d["sequence"])
-                d["is_final"] = is_final
-                dispositions.append(d)
+    def visit_case_event(self, node, visited_children):
+        return {"case_event": node.text.strip()}
 
-        logger.debug("section_disposition found %d dispositions", len(dispositions))
+    def visit_disposition_finality(self, node, visited_children):
+        return {"disposition_finality": node.text.strip()}
 
-        if len(dispositions) == 0:
-            return
+    def visit_charge_info_oneline(self, node, visited_children):
+        # unnecessary?
+        charge_info = {}
+        for child in flatten(visited_children):
+            charge_info.update(child)
+        return {"charge_info": charge_info}
 
-        return ("section_disposition", dispositions)
+    def visit_charge_info_multiline(self, node, visited_children):
+        charge_info = {}
+        charge_description_lines = []
+        # Sequence and first line of charge description:
+        # for child in visited_children:
+        for child in flatten(visited_children):
+            if "charge_description" in child:
+                charge_description_lines.append(child.pop("charge_description"))
+            charge_info.update(child)
 
-    def visit_disposition_state(self, node, visited_children):
-        val = val_named("disposition_state_value", visited_children)
-        return ("disposition_state", val)
+        charge_info["charge_description"] = ' '.join(charge_description_lines).strip()
+        return {"charge_info": charge_info}
 
-    def visit_disposition_state_value(self, node, visited_children):
-        return ("disposition_state_value", node.text)
-
-    def visit_disposition(self, node, visited_children):
-        result = {
-            "sequence": tval(visited_children[0]),
-            "charge_description": tval(visited_children[4]),
-            "offense_disposition": tval(visited_children[6]),
-            "grade": val_named("grade", visited_children[8]),
-            "statute": tval(visited_children[9]),
-            "date": val_named("date", visited_children[11]),
-        }
-
-        extra = val_named("charge_description", (visited_children[5]))
-
-        if extra:
-            result["charge_description"] += " " + extra
-
-        logger.debug("disposition %s", result)
-        return ("disposition", result)
+    def visit_sequence(self, node, visited_children):
+        # Replacement only necessary because dockets sometimes use 99,999 for dismissed/withdrawn charges
+        return {'sequence': node.text.strip().replace(',', '')}
 
     def visit_charge_description(self, node, visited_children):
-        return ("charge_description", node.text.strip())
-
-    def visit_offense_disposition(self, node, visited_children):
-        return ("offense_disposition", node.text.strip())
+        return {'charge_description': node.text.strip()}
 
     def visit_grade(self, node, visited_children):
-        return ("grade", node.text.strip())
+        # logger.debug(f"grade node.expr: {node.text}")
+        return {"grade": node.text.strip()}
 
     def visit_statute(self, node, visited_children):
-        return ("statute", tval(visited_children[0]))
+        return {"statute": node.text.strip()}
 
-    def visit_short_statute(self, node, visited_children):
-        return ("short_statute", node.text.strip())
+    def visit_offense_disposition(self, node, visited_children):
+        return {"offense_disposition": node.text.strip()}
 
-    def visit_long_statute(self, node, visited_children):
-        return ("long_statute", node.text.strip())
 
-    def visit_section_financial_information(self, node, visited_children):
-        return (
-            "section_financial_information",
-            val_named("grand_totals", visited_children),
-        )
+def add_term_method(term: str, cls: type):
+    def visit_term(self, node, visited_children):
+        return {term: node.text.strip()}
 
-    def visit_grand_totals(self, node, visited_children):
-        result = {
-            "assessment": tval(visited_children[2]),
-            "payments": tval(visited_children[6]),
-            "adjustments": tval(visited_children[5]),
-            "non-monetary": tval(visited_children[4]),
-            "total": tval(visited_children[3]),
-        }
-        return ("grand_totals", result)
+    method_name = "visit_" + term
+    setattr(cls, method_name, visit_term)
 
-    def visit_money(self, node, visited_children):
-        if node.text[0] == "$":
-            amount = val_named("numeric", visited_children)
-        elif node.text[0] == "(":
-            amount = val_named("numeric", visited_children) * -1
-        else:
-            raise ValueError("unexpected money match: %s", node.text)
 
-        logger.debug("money with amount: %s", amount)
-        return ("money", amount)
-
-    def visit_numeric(self, node, visited_children):
-        t = node.text.strip().replace(",", "")
-        number = float(t)
-        return ("numeric", number)
-
-    def visit_date(self, node, visited_children):
-        month, day, year = node.text.split("/")
-        return ("date", date(int(year), int(month), int(day)))
-
-    def visit_integer(self, node, visited_children):
-        text = node.text.strip()
-        return ("integer", int(text))
-
-    def visit_alphanum(self, node, visited_children):
-        return ("alphanum", node.text.strip())
-
-    def visit_name(self, node, visited_children):
-        return ("name", node.text.strip())
-
-    def visit_junk(self, node, visited_children):
-        return
-
+# for term in singles:
+#     add_term_method(term, DocketVisitor)
 
 # Helpers
 
-
-def debug_list(items):
-    i = 0
-
-    for x in items:
-        logger.debug("[%d]: %s", i, x)
-        i += 1
-
-
-def tname(tup):
-    """Produce the first item in a tuple, or None for invalid sources."""
-    try:
-        result = tup[0]
-    except IndexError:
-        return
-    except TypeError:
-        return
-
-    return result
-
-
-def tval(tup):
-    """Produce the second item in a tuple, or None for invalid sources."""
-    try:
-        result = tup[1]
-    except IndexError:
-        return
-    except TypeError:
-        return
-
-    return result
-
-
-def flatten(lol):
-    """Reduce a recursive list to a flat one, removing all empty values."""
+def flatten(visited_children):
+    """Recursively flatten a list of iterables, removing all non-visited nodes."""
 
     def can_flatten(thing):
-        if type(thing) in [str, tuple]:
+        if isinstance(thing, (str, dict, bytes, tuple)):
             return False
+        return isinstance(thing, Iterable)
 
-        try:
-            iter(thing)
-        except:
-            return False
-        return True
-
-    for item in lol:
+    for item in visited_children:
         if type(item) == Node:
             continue
 
@@ -460,30 +179,40 @@ def flatten(lol):
             yield from flatten(item)
 
 
-def val_named(name, items):
-    """Get a named value from a list of items if available."""
-    flat = flatten(items)
-
-    for item in flat:
-        if tname(item) == name:
-            return tval(item)
-
-    logger.debug("Could not find %s", name)
+def get_grammar_from_file(ppeg_file_path: str) -> Grammar:
+    with open(ppeg_file_path, 'r') as grammar_file:
+        rules_text = grammar_file.read()
+    for key, value in REPLACEMENTS.items():
+        rules_text = rules_text.replace(key, value)
+    return Grammar(rules_text)
 
 
-def parse_pdf(file_data):
+def text_from_pdf(file: Union[str, IO, Path], human_readable=False):
+    """Read text from an open PDF"""
+    reader = DocketReader(file)
+    extracted_text = reader.extract_text()
+    if human_readable:
+        return extracted_text.replace(reader.newline, '\n')
+    return extracted_text
+
+
+def parse_pdf(file: Union[str, IO, Path]):
     """
-    From an open PDF, produce complete parser result.
+    From a PDF, return complete parser result.
     """
-    reader = PdfReader(file_data)
-    text = "\n\n".join([page.extract_text() for page in reader.pages])
+    text = text_from_pdf(file)
+
+    # TODO: put this in distribution, convert to wheel?
+    ppeg_file_path = r'platform/docket_parser/docket_parser/docket_grammar_rules.ppeg'
+
+    docket_grammar = get_grammar_from_file(ppeg_file_path)
 
     try:
-        tree = docket_decoder.parse(text)
+        tree = docket_grammar.parse(text)
     except ParseError as err:
         logger.error("Unable to parse pdf")
         raise err
 
-    composer = DocketExtractor()
-    result = composer.visit(tree)
-    return result
+    visitor = DocketVisitor()
+    parsed = visitor.visit(tree)
+    return parsed
