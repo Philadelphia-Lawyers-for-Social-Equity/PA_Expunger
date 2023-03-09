@@ -3,9 +3,9 @@
 import argparse
 import logging
 from pathlib import Path
-from core import parse_pdf, logger, text_from_pdf
 import sys
 import json
+from core import parse_pdf, text_from_pdf
 
 # Command Line
 
@@ -17,21 +17,19 @@ def get_arguments():
     # -o could have a better argument name and or help text
     parser.add_argument("-o", help="Return the output of the parser, rather than the text being parsed",
                         action='store_true')
-    parser.add_argument("--loglevel", help="set log level", default="INFO")
-    parser.add_argument(
-        "--verbose", help="print logging messages", action="store_const",
-        const=True, default=False)
+    parser.add_argument("--log-level", help="set log level" ,default="INFO")
     return parser.parse_args()
 
 
 def main():
     args = get_arguments()
 
-    logger.setLevel(args.loglevel)
-
-    if args.verbose:
-        handler = logging.StreamHandler()
-        logger.addHandler(handler)
+    logger = logging.getLogger()
+    logger.setLevel(args.log_level.upper())
+    handler = logging.StreamHandler(stream=sys.stderr)
+    logger.addHandler(handler)
+    formatter = logging.Formatter(fmt='{name} <{levelname}>: {message}', style='{')
+    handler.setFormatter(formatter)
 
     pdf_path = Path(args.filename)
     if not pdf_path.is_file():

@@ -9,7 +9,7 @@ from parsimonious.nodes import Node, NodeVisitor
 from pypdf import PdfReader
 
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 docket_decoder = Grammar(
