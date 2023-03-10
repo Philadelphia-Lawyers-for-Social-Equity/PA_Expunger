@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docket_parser"
+requires-python = ">=3.7"
+version = "0.2.0"
+dynamic = ["dependencies"]
+#dependencies = ["parsimonious >= 0.8.1", "pypdf >= 3.2.1", "numpy >= 1.24.2", "pytest >= "]
+
+[project.scripts]
+debug_docket_parser = 'docket_parser.__main__:main'
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+docket_parser = ["*.ppeg"]
+"docket_parser.tests.data" = ["*.pdf"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}

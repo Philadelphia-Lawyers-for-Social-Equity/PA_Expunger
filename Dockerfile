@@ -75,8 +75,6 @@ USER ${EXPUNGER_USER}
 
 # Library install
 WORKDIR ${INSTALL_DIR}
-COPY platform/docket_parser/requirements.txt .
-RUN pip3 install -r requirements.txt
 
 COPY platform/src/requirements.txt .
 RUN pip3 install -r requirements.txt
@@ -86,7 +84,8 @@ RUN pip3 install --user mod_wsgi
 # Docket parser install
 
 WORKDIR ${INSTALL_DIR}/docket_parser
-COPY platform/docket_parser/ .
+COPY platform/docket_parser .
+# installing requirements separately is not necessary due to pyproject.toml
 RUN pip3 install ./
 
 # App install

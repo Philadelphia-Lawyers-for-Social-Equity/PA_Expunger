@@ -8,8 +8,10 @@ from typing import Union, IO, List, Dict, Tuple
 from numpy import matmul
 from pypdf import PdfReader, PageObject
 from pypdf._cmap import parse_to_unicode
+from pypdf.errors import PdfReadError
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass()
 class TextSegment:
@@ -21,6 +23,7 @@ class TextSegment:
     def reset(self):
         self.__init__()
 
+
 @dataclass(frozen=True)
 class TextState:
     """ Contains variables of pdf text state.
@@ -31,11 +34,12 @@ class TextState:
     f_name: str
     size: float
 
+
 class DocketReader(PdfReader):
     """Subclass of pypdf PdfReader for reading dockets"""
     # These characters need to be ones that aren't in the pdf.
-    # These also can't be whitespace unless we find a way to escape them when put into grammar
-    newline = '^'
+    # Maybe refactor these to not be class variables? Also, could dynamically change these to characters not in the pdf.
+    terminator = '\n'
     tab = '_'
     comes_before = '|'
     properties_open = '['
@@ -43,6 +47,10 @@ class DocketReader(PdfReader):
 
     def __init__(self, stream: Union[str, IO, Path]):
         super().__init__(stream)
+        if self.metadata['/Creator'] != 'Crystal Reports':
+            # This warning should get passed along to person using our app (end user).
+            logger.warning(f"{self.__class__.__name__} is only designed to read pdfs by Crystal Reports.\n"
+                           f"Instead found: {self.metadata['/Producer']}, {self.metadata['/Creator']}")
         self.font_map_dicts = {}
         self._pages = [DocketPageObject(self, page) for page in super().pages]
 
@@ -62,15 +70,22 @@ class DocketReader(PdfReader):
         return extracted_text
 
     @classmethod
+    def get_special_characters(cls) -> List[str]:
+        """Return a list of each special character used by this reader."""
+        return [cls.tab, cls.terminator, cls.properties_open, cls.properties_close, cls.comes_before]
+
+    @classmethod
     def generate_content_regex(cls) -> str:
         """Return a regular expression that will match any character that is not added by this reader."""
         # inserted_chars = cls.tab  + cls.properties_open + cls.properties_close + cls.comes_before
-        inserted_chars = cls.tab + cls.newline + cls.properties_open + cls.properties_close + cls.comes_before
+        inserted_chars = ''.join(cls.get_special_characters())
         inserted_chars_expression = '[^' + escape(inserted_chars) + ']'
         return inserted_chars_expression
 
     def _debug_get_all_operations(self) -> List[List[Union[bytes, List]]]:
+        """For debugging purposes, collect and return a list of all operations in the pdf's content stream"""
         operations = []
+
         # noinspection PyUnusedLocal
         def visitor(operator, operand, cm, tm):
             operations.append([operator, operand])
@@ -78,7 +93,9 @@ class DocketReader(PdfReader):
         return operations
 
     def _debug_count_operators_used(self) -> Dict[bytes, int]:
+        """For debugging purposes, collect all operators used in pdf and return dictionary with counts for each."""
         operator_counts = {}
+
         # noinspection PyUnusedLocal
         def visitor(operator, *args):
             if operator not in operator_counts:
@@ -94,17 +111,16 @@ class DocketPageObject(PageObject):
     """Subclass of pypdf's PageObject to give an extract_text method that is an improvement of pypdf's extract_text
     specifically for reading dockets.
     Info about pdfs: https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
-    Relevant sections referenced in comments. 9.1"""
-
+    Relevant sections referenced in comments. Text info overview: section 9.1"""
 
     def __init__(self, reader: DocketReader, page: PageObject) -> None:
         """Copy info from given page to self, and prepare font lookup dictionaries"""
-        
+
         # noinspection PyTypeChecker
         super().__init__(pdf=reader, indirect_reference=page.indirect_reference)
         self.reader = reader
         self.update(page)
-        
+
         # Set up font dictionaries. Assumes TrueType font with /ToUnicode, see 9.6
         self.font_map_dicts: Dict[str, Dict[str, str]] = {}
         self.font_width_dicts: Dict[str, Dict[str, int]] = {}
@@ -119,11 +135,17 @@ class DocketPageObject(PageObject):
             map_dict, space_code, int_entry = parse_to_unicode(font_dict, 0)
             self.font_map_dicts[font_resource_name] = map_dict
 
+            for char in map_dict.values():
+                if char in reader.get_special_characters():
+                    raise PdfReadError(f"Special character '{char}' was found in pdf's fonts. "
+                                       "Please use a different special character.")
+
             widths_dict = {}
-            for i in range(font_dict['/FirstChar'], font_dict['/LastChar']+1):
+            for i in range(font_dict['/FirstChar'], font_dict['/LastChar'] + 1):
                 char = chr(i)
                 if char in map_dict:
                     widths_dict[chr(i)] = font_dict['/Widths'][i - font_dict['/FirstChar']]
+
             self.font_width_dicts[font_resource_name] = widths_dict
 
             if 'bold' in font_dict['/BaseFont'].lower():
@@ -131,20 +153,26 @@ class DocketPageObject(PageObject):
             else:
                 self.font_output_names[font_resource_name] = 'normal'
 
-
-    def extract_text(self, space_threshold=.3, **kwargs) -> str:
+    def extract_text(self, x_tolerance=.3, y_tolerance=1, **kwargs) -> str:
         """ Extract text from a docket, with coordinates and font name.
-        Text will be ordered as it is in pdf content stream. Text that is in the same block in pdf content stream
-        and on the same horizontal line will get output together. Spacing that comes from pdf instructions and not
-        actual space characters will be represented by the reader's tab character if it's positive, and the reader's
-        comes_before character if negative. Each output segment will have x, y coordinates and font name at the end,
-        surrounded by reader's properties_open and properties_close.
+        Text will be ordered as it is in pdf content stream. Text that is in the same block in pdf content stream, has
+        the same font, and is on the same horizontal line will be considered a "segment".
+        y_tolerance determines how much vertical space is required to count as a new segment.
+        Spacing larger than x_tolerance that comes from pdf positioning instructions (not space characters) will be
+        represented by the reader's tab character if positive, and the reader's comes_before character if negative.
+        Each output segment will have x, y coordinates and font name at the end, surrounded by reader's properties_open
+        and properties_close.
+        Segments are separated by reader's terminator character.
         """
 
+        # text state is a subset of graphics state, see 9.3.1
         text_state = TextState('', 0)
+        text_state_stack: List[TextState] = []
+
+        # segment will be modified until terminate_segment() is called,
+        # which adds a copy of segment to the list, and resets segment
         segment = TextSegment()
         extracted_segments: List[TextSegment] = []
-        text_state_stack: List[TextState] = []
 
         # displacement calculation details in 9.4.4
         # cur_displacement stores how much horizontal space is taken up by text, in text units, since last repositioning
@@ -153,10 +181,10 @@ class DocketPageObject(PageObject):
 
         def mult(tm: List[float], cm: List[float]) -> List[float]:
             """ Does matrix multiplication with the shortened forms of matrices tm, cm.
-                If we don't want to use numpy, can instead copy the mult function from
-                pypdf._page.PageObject._extract_text
                 See 9.4.2 Tm operator for description of shortened matrix
                 """
+            # If we don't want to use numpy, can instead copy the mult function from
+            # pypdf._page.PageObject._extract_text
             mat1 = [[tm[0], tm[1], 0],
                     [tm[2], tm[3], 0],
                     [tm[4], tm[5], 1]]
@@ -164,10 +192,10 @@ class DocketPageObject(PageObject):
                     [cm[2], cm[3], 0],
                     [cm[4], cm[5], 1]]
             result = matmul(mat1, mat2)
-            return [result[0,0], result[0,1], result[1,0], result[1,1], result[2,0], result[2,1], result[2,2]]
+            return [result[0, 0], result[0, 1], result[1, 0], result[1, 1], result[2, 0], result[2, 1], result[2, 2]]
 
         def get_content_and_displacement(bs: bytes) -> Tuple[str, float]:
-            """Decode byte-string to unicode str and calculate horizontal displacement."""
+            """Decode byte-string to unicode str and calculate horizontal displacement. No side effects."""
             content = ''
             displacement = 0.0
             for byte in bs:
@@ -177,18 +205,17 @@ class DocketPageObject(PageObject):
             return content, displacement
 
         def terminate_segment() -> None:
-            """End the current text segment, adding it to extracted_segments."""
+            """End the current text segment, adding a copy to extracted_segments.
+             Resets segment and cur_displacement"""
             nonlocal text_state, cur_displacement
             if segment.content != '':
                 segment.font_name = self.font_output_names[text_state.f_name]
-                # segment = TextSegment(segment.content, x, y, font_output_name)
                 extracted_segments.append(copy(segment))
             segment.reset()
             cur_displacement = 0.0
 
-        def operand_visitor(operator, args, cm, tm) -> None:
-            """ Visitor function which keeps track of current font being used, and translates pdf text instructions
-            to unicode text without inserting any extraneous whitespace.
+        def operation_visitor(operator, args, cm, tm) -> None:
+            """Visitor function to process all important text-related operations in pdf content stream.
             """
             nonlocal text_state, cur_displacement
 
@@ -213,13 +240,13 @@ class DocketPageObject(PageObject):
                 terminate_segment()
                 text_state = text_state_stack.pop()
             elif operator == b'ET':
-                # End text block operator
+                # End text block. See 9.4.1
                 terminate_segment()
             elif operator == b'Td':
                 # Move text position
                 x_transform, y_transform = args
-                if abs(y_transform) >= 1:
-                    # The 1 here is arbitrary. Every case I've seen with +-<1 unit change is on the same logical line,
+                if abs(y_transform) >= y_tolerance:
+                    # Every case I've seen with +-<1 unit change is on the same logical line,
                     # but that might not always be true.
                     terminate_segment()
                 elif x_transform < 0 and segment.content != '':
@@ -233,13 +260,18 @@ class DocketPageObject(PageObject):
                     # no/irrelevant space, or it could move it past the end of last shown text, which would be
                     # meaningful spacing. We keep track of displacement of last shown text to determine this.
                     units_of_spacing = x_transform - cur_displacement
-                    if units_of_spacing > space_threshold * text_state.size:
+                    if units_of_spacing > x_tolerance * text_state.size:
                         segment.content += self.reader.tab
-                        # logger.debug(segment.content + f'{{{units_of_spacing:.1f}>{text_state.size}*{space_threshold:.1f}}}')
+                        # for debugging x_tolerance value:
+                        # logger.debug(segment.content + f'{{{units_of_spacing:.1f}>{text_state.size}*{x_tolerance:.1f}}}')
+                    elif units_of_spacing < -.1:
+                        # -.1 because 0 catches float rounding errors.
+                        logger.debug(f"Potentially overlapping text after: '{segment.content}'.")
                 cur_displacement = 0
 
             elif operator == b'TJ':
-                # args will have exactly one element: a list of assorted byte-strings and ints for individual spacing
+                # args will have exactly one element: a list of alternating byte-strings and ints for individual spacing
+                # See 9.4.3
                 for item in args[0]:
                     if isinstance(item, bytes):
                         # add_bytes_to_segment(item)
@@ -249,24 +281,26 @@ class DocketPageObject(PageObject):
                     else:
                         cur_displacement -= item * text_state.size / 1000
             elif operator == b'Tj':
-                # args will have exactly one element, a byte-string
+                # args will have exactly one element, a byte-string. See 9.4.3
                 content, displacement = get_content_and_displacement(args[0])
                 cur_displacement += displacement
                 segment.content += content
-            elif operator in (b"'", b'"',):
+            elif operator in (b"'", b'"'):
                 # These are text showing operators that aren't used in dockets. If we find docket that does use them,
-                # will have to implement to catch all text.
+                # will have to implement to catch all text. See 9.4.3
                 logger.warning(f"Found unexpected text showing operator: {operator}")
-            elif operator in (b'Tc', b'Tw', b'Tz', b'TL', b'Ts', b'T'):
-                # These are text state operators that aren't used in dockets. If we find docket that does use them,
-                # will have to implement to calculate correct displacement. See 9.3.1
+            elif operator in (b'Tc', b'Tw', b'Tz', b'TL', b'Ts', b'gs'):
+                # These are operators affecting text state that aren't used in dockets.
+                # If we find docket that does use them, will have to implement to calculate correct displacement.
+                # See 9.3.1
                 logger.warning(f"Found unexpected text spacing operator: {operator}")
-
-
+            elif operator in (b'T*', b'TD'):
+                # See 9.4.2
+                logger.warning(f"Found unexpected text positioning operator: {operator}")
 
         def visitor(operator, args, cm, tm) -> None:
             """Visitor function that calls our visitor and also a visitor_operand_before if we were passed one."""
-            operand_visitor(operator, args, cm, tm)
+            operation_visitor(operator, args, cm, tm)
             if kwargs.get('visitor_operand_before') is not None:
                 kwargs['visitor_operand_before'](operator, args, cm, tm)
 
@@ -280,27 +314,27 @@ class DocketPageObject(PageObject):
 
     def segment_to_str(self, segment: TextSegment) -> str:
         """Take a TextSegment and return the content of segment plus formatted expression of its properties.
-        Terminates with newline character from reader."""
-        rounded_coordinates = (round(coordinate,2) for coordinate in segment.coordinates)
+        Terminates with terminator character from reader."""
+        rounded_coordinates = (round(coordinate, 2) for coordinate in segment.coordinates)
         # The grammar currently expects this exact format, so it will need to change if this does.
         properties = ''.join(f'{n:06.2f},' for n in rounded_coordinates)
         properties += segment.font_name
         properties = self.reader.properties_open + properties + self.reader.properties_close
-        segment_as_string = segment.content + properties + self.reader.newline
+        segment_as_string = segment.content + properties + self.reader.terminator
         return segment_as_string
 
 
-
-if __name__ == "__main__":
-    test_paths = Path(r"platform/docket_parser/tests/data").glob('*.pdf')
-    logger.setLevel('INFO')
-    for test_path in test_paths:
-        _reader = DocketReader(test_path)
-        _extracted_text = _reader.extract_text().replace(_reader.newline, '\n')
-        out_file_path = Path('scratch/data').joinpath(test_path.name.replace('.pdf', '.txt'))
-        with open(out_file_path, 'w', encoding='utf-8') as out_file:
-            out_file.write(_extracted_text)
-        out_file_path = Path('scratch/data').joinpath(test_path.name.replace('.pdf', '.operations'))
-        with open(out_file_path, 'w') as out_file:
-            for operator, operand in _reader._debug_get_all_operations():
-                print(f"{operator} : {operand}", file=out_file)
+# what I used for debugging:
+# if __name__ == "__main__":
+#     test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
+#     logger.setLevel('INFO')
+#     for test_path in test_paths:
+#         _reader = DocketReader(test_path)
+#         _extracted_text = _reader.extract_text()
+#         out_file_path = Path('../scratch/data').joinpath(test_path.name.replace('.pdf', '.txt'))
+#         with open(out_file_path, 'w', encoding='utf-8') as out_file:
+#             out_file.write(_extracted_text)
+#         out_file_path = Path('../scratch/data').joinpath(test_path.name.replace('.pdf', '.operations'))
+#         with open(out_file_path, 'w') as out_file:
+#             for operator, operand in _reader._debug_get_all_operations():
+#                 print(f"{operator} : {operand}", file=out_file)

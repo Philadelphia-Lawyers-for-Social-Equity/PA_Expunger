@@ -16,12 +16,12 @@ page_header =
     )+
     end_of_page_header
 
-section_docket_header = header_content properties_72y_bold newline
+section_docket_header = header_content properties_72y_bold terminator
 
 # [xxx.xx,72y.yy,bold]. header is always the only thing with this y coordinate range on every page
 properties_72y_bold = props_open coordinate comma &'72' coordinate comma bold props_close
 
-docket_number_segment = "Docket Number: " docket_number properties_bold newline
+docket_number_segment = "Docket Number: " docket_number properties_bold terminator
 docket_number = content_char+
 
 
@@ -35,17 +35,17 @@ section_case_information =
     / (page_break case_information_header)
     / (!generic_header junk_segment)
     )+
-case_information_header = "CASE INFORMATION" properties_bold newline
-judge_segment = "Judge Assigned:" space* judge properties_normal newline
+case_information_header = "CASE INFORMATION" properties_bold terminator
+judge_segment = "Judge Assigned:" space* judge properties_normal terminator
 judge = content_char*
 
-otn_segment = "OTN:" space* otn properties_normal newline
+otn_segment = "OTN:" space* otn properties_normal terminator
 otn = content_char+
 
-originating_docket_segment = "Originating Docket No:" space* originating_docket_number properties_normal newline
+originating_docket_segment = "Originating Docket No:" space* originating_docket_number properties_normal terminator
 originating_docket_number = content_char+
 # It says docket Nos so there might be dockets that have more than one. Will need an example to parse correctly.
-cross_court_docket_segment = "Cross Court Docket Nos:" space* cross_court_docket_numbers properties_normal newline
+cross_court_docket_segment = "Cross Court Docket Nos:" space* cross_court_docket_numbers properties_normal terminator
 cross_court_docket_numbers = content_char+
 
 
@@ -56,8 +56,8 @@ section_status_information =
     / (!generic_header junk_segment)
     )+
 
-complaint_date_segment = complaint_date comes_before "Complaint Date:" properties_normal newline
-status_information_header = "STATUS INFORMATION" properties_bold newline
+complaint_date_segment = complaint_date comes_before "Complaint Date:" properties_normal terminator
+status_information_header = "STATUS INFORMATION" properties_bold terminator
 complaint_date = content_char+
 
 section_defendant_information =
@@ -68,67 +68,80 @@ section_defendant_information =
     / (!generic_header junk_segment)
     )+
 
-defendant_information_header = "DEFENDANT INFORMATION" properties_bold newline
-dob_lines = ~r"Date of Birth"i content_char* properties_normal newline
-            dob (tab content_char+)* properties_normal newline
-dob = content_char+
+defendant_information_header = "DEFENDANT INFORMATION" properties_bold terminator
+dob_lines = ~r"Date of Birth"i content_char* properties_normal terminator
+            dob (tab content_char+)* properties_normal terminator
+# dob can't just be "date" because parsimonious optimization would eliminate the dob symbol.
+dob = date{1}
 
-# If necessary, can use fact that aliases have x coordinate < 100
+# If necessary, could use fact that aliases have x coordinate < 100
 aliases =
     aliases_start
     ( alias_segment
     / (!generic_header junk_segment)
     )+
-aliases_start = "Alias Name" properties_normal newline
+aliases_start = "Alias Name" properties_normal terminator
 # Sometimes there are multiple columns for aliases (separated by tab)
-alias_segment = alias (tab content_char+)* properties_03x_normal newline
+alias_segment = alias (tab content_char+)* properties_03x_normal terminator
 alias = content_char+
 
 properties_03x_normal = props_open &'03' coordinates normal props_close
 
 # We get defendant name from case participants section
-defendant_name_segment = "Defendant" tab defendant_name properties_normal newline
+defendant_name_segment = "Defendant" tab defendant_name properties_normal terminator
 defendant_name = content_char+
 
 section_disposition =
     disposition_full_header
-    ( (event_disposition_segment
-        (!case_event_date_finality_segment junk_segment)*
-        case_event_date_finality_segment
-            ( charge_info
-            / mid_disposition_page_break
-            / (!generic_header !event_disposition_segment junk_segment)
-            )+)
+    (
+        (event_disposition_segment
+            (!case_event_date_finality_segment junk_segment)*
+            case_event_date_finality_segment
+                ( charge_info
+                / mid_disposition_page_break
+                / (!generic_header !event_disposition_segment junk_segment)
+                )*
+        )
     / mid_disposition_page_break
     / (!generic_header !event_disposition_segment junk_segment)
     )+
 
 # Assuming the bold "Disposition" line always starts with x coord ~= 36 so [03x.xx,yyy.yy,bold]
-event_disposition_segment = event_disposition properties_03x_bold newline
-case_event_date_finality_segment = content_char+ tab disposition_finality comes_before case_event properties_normal newline
+event_disposition_segment = event_disposition properties_03x_bold terminator
+case_event_date_finality_segment = disposition_date tab disposition_finality comes_before case_event properties_normal terminator
 properties_03x_bold = props_open &'03' coordinates bold props_close
 event_disposition = content_char+
 case_event = content_char+
 disposition_finality = content_char+
+disposition_date = date{1}
 
 # Assuming Sequence/Description segments always have x coordinate 05x.xx
 charge_info = charge_info_oneline / charge_info_multiline
-charge_info_oneline = sequence_description_start tab disposition_grade_statute properties_05x_normal newline
+charge_info_oneline = sequence_description_start tab disposition_grade_statute properties_05x_normal terminator
 charge_info_multiline =
-    sequence_description_start properties_05x_normal newline
+    sequence_description_start properties_05x_normal terminator
     ( mid_disposition_page_break
     / continued_description_segment
     )+
     # To avoid confusion, using "statute" to refer to the thing with § instead of "section"
-    disposition_grade_statute properties_normal newline
+    disposition_grade_statute properties_normal terminator
 
 sequence_description_start = sequence space slash space charge_description
-continued_description_segment = charge_description properties_05x_normal newline
+continued_description_segment = charge_description properties_05x_normal terminator
 properties_05x_normal = props_open &'05' coordinates normal props_close
 sequence = (digit / comma)+
 charge_description = content_char+
 
-disposition_grade_statute = offense_disposition tab statute (comes_before grade)?
+disposition_grade_statute =
+    ((offense_disposition tab)
+    / offense_disposition_line{2,}
+    / mid_disposition_page_break
+    )
+    statute
+    (comes_before grade)?
+
+offense_disposition_line = offense_disposition properties_2xx_normal terminator
+properties_2xx_normal = props_open &'2' coordinates normal props_close
 offense_disposition = content_char+
 statute = content_char+
 grade = content_char{,3}
@@ -141,8 +154,8 @@ disposition_full_header =
     (!sentence_conditions junk_segment)+
     sentence_conditions
 
-disposition_header = "DISPOSITION SENTENCING/PENALTIES" properties_bold newline
-sentence_conditions = "Sentence Conditions" properties_0xx_normal newline
+disposition_header = "DISPOSITION SENTENCING/PENALTIES" properties_bold terminator
+sentence_conditions = "Sentence Conditions" properties_0xx_normal terminator
 properties_0xx_normal = props_open &'0' coordinates normal props_close
 
 
@@ -152,12 +165,12 @@ section_financial_information =
     / (!generic_header junk_segment)
     )+
 
-financial_information_header = "CASE FINANCIAL INFORMATION" properties_bold newline
+financial_information_header = "CASE FINANCIAL INFORMATION" properties_bold terminator
 
 # Anticipating possibility of "Grand Totals:" on same line as the amounts, because they're very close y coordinates.
 grand_totals =
-    "Grand Totals:" ((properties_normal newline) / space*)
-    assessment tab total comes_before non_monetary comes_before adjustments comes_before payments properties_normal newline
+    "Grand Totals:" ((properties_normal terminator) / space*)
+    assessment tab total comes_before non_monetary comes_before adjustments comes_before payments properties_normal terminator
 assessment = content_char+
 total = content_char+
 non_monetary = content_char+
@@ -167,11 +180,10 @@ payments = content_char+
 # How can we know an all caps, bold segment is a section header and not a page header?
 # If it has y coord > 700 is part of page header. that's definitely true. (top of page is 792)
 # guess: if it has 700 > y coord > 600 and comes immediately after a bold segment, it is part of page header
-# and if it comes after a normal segment it's a (non docket) section header
+# and if it comes after a normal segment it's a section header (not "DOCKET" page header)
 
-generic_header = (header_content generic_header_properties1 newline) /
-                 (&(properties_normal newline) header_content generic_header_properties2 newline)
-
+generic_header = (header_content generic_header_properties1 terminator) /
+                 (&(properties_normal terminator) header_content generic_header_properties2 terminator)
 
 # y coord < 600:
 generic_header_properties1 = props_open coordinate comma !('7'/'6') coordinate comma bold props_close
@@ -186,16 +198,16 @@ page_break =
     (!end_of_page_header junk_segment)+
     end_of_page_header
 
-printed_on_segment = "Printed:" space* date space* properties_normal newline
+printed_on_segment = "Printed:" space* unimportant_date space* properties_normal terminator
 
-end_of_page_header = "v" dot space* properties_normal newline
+end_of_page_header = "v" dot space* properties_normal terminator
                      junk_segment # This is defendant name, but it's more convenient for parsing to get name from unique place
 
 
 junk_segment =
     (content_char / tab / comes_before)*
     (properties_bold / properties_normal)
-    newline
+    terminator
 
 
 # bold, normal are the only two fonts used.
@@ -207,6 +219,8 @@ coordinate = digit{3} dot digit{2}
 
 
 date = digit{2} slash digit{2} slash digit{4}
+# same thing except we don't want it to show up in visited results
+unimportant_date = digit{2} slash digit{2} slash digit{4}
 
 font = bold / normal
 bold = "bold"
@@ -215,7 +229,7 @@ normal = "normal"
 content_char = ~r"NOT_INSERTED_CHARACTER_REGEX"
 props_open = "INSERTED_PROPS_OPEN"
 props_close = "INSERTED_PROPS_CLOSE"
-newline = 'INSERTED_NEWLINE'
+terminator = 'INSERTED_TERMINATOR'
 tab = 'INSERTED_TAB'
 comes_before = "INSERTED_COMES_BEFORE"
 

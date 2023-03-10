@@ -1,5 +1,9 @@
+import datetime
 import logging
 import os
+import traceback
+from typing import List, Tuple
+
 import jinja2
 from docxtpl import DocxTemplate
 
@@ -86,10 +90,11 @@ class DocketParserAPIView(APIView):
 
         try:
             parsed = docket_parser.parse_pdf(df)
-        except Exception as err:
-            msg = "Parse error %s" % str(err)
-            logger.warn(msg)
-            return Response({"error": msg})
+        except Exception as exception:
+            tb = traceback.format_exc()
+            short_msg = f"Parse error {exception}"
+            logger.warning(tb)
+            return Response({"error": short_msg})
 
         ratio, charges = charges_from_parser(parsed)
         content = {
@@ -107,121 +112,112 @@ class DocketParserAPIView(APIView):
 # Helpers
 
 
-def petitioner_from_parser(parsed):
+def petitioner_from_parser(parsed: dict) -> dict:
     """
-    Produce the petioner data based on the docket parser output.
+    Produce the petitioner data based on the docket parser output.
     """
-    petitioner = {
-        "name": None,
-        "aliases": None,
-        "dob": None,
-    }
+    petitioner = {"name": parsed.get("defendant_name"),
+                  "aliases": parsed.get("aliases"),
+                  "dob": None}
 
-    if "section_docket" in parsed:
-        petitioner["name"] = parsed["section_docket"].get("defendant", None)
-
-    if "section_defendant_information" in parsed:
-        petitioner["aliases"] = parsed["section_defendant_information"].get(
-            "aliases", None
-        )
-
-        dob = parsed["section_defendant_information"].get("dob", None)
-
-        if dob is not None:
-            petitioner["dob"] = dob.isoformat()
+    dob = parsed.get("dob")
+    if dob is not None:
+        petitioner["dob"] = dob.isoformat()
 
     return petitioner
 
 
-def petition_from_parser(parsed, ratio):
+def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
     """
     Produce the petition data based on the docket parser output.
     """
-    if "section_status_information" in parsed:
-        status_info = parsed["section_status_information"]
-    else:
-        status_info = {}
-
-    if "section_case_information" in parsed:
-        case_info = parsed["section_case_information"]
-    else:
-        case_info = {}
-
     return {
-        "otn": case_info.get("otn"),
-        "complaint_date": status_info.get("complaint_date"),
-        "judge": case_info.get("judge"),
+        "otn": parsed.get("otn"),
+        "complaint_date": parsed.get("complaint_date"),
+        "judge": parsed.get("judge"),
         "ratio": ratio.name,
     }
 
 
-def dockets_from_parser(parsed):
+def dockets_from_parser(parsed: dict) -> List[str]:
     """
     Produce the docket numbers based on the docket parser output.
     """
     dockets = []
+    primary = parsed.get("docket_number")
+    if primary is not None:
+        dockets.append(primary)
 
-    if "section_docket" in parsed:
-        primary = parsed["section_docket"].get("docket", None)
+    originating = parsed.get("originating_docket_number")
+    if originating is not None:
+        dockets.append(originating)
 
-        if primary is not None:
-            dockets.append(primary)
-
-    if "section_case_information" in parsed:
-        originating = parsed["section_case_information"].get("originating_docket", None)
-
-        if originating is not None:
-            dockets.append(originating)
+    cross_court = parsed.get("cross_court_docket_numbers")
+    if cross_court is not None:
+        cross_court = cross_court.split(',')
+        for cross_court_number in cross_court:
+            dockets.append(cross_court_number.strip())
 
     return dockets
 
 
-def charges_from_parser(parsed):
+def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]:
     """
     Produces the ratio, charges based on the docket parser output.
     """
+    expungeable_dispositions = [
+        "Nolle Prossed",
+        "ARD - County",
+        "Not Guilty",
+        "Dismissed",
+        "Withdrawn",
+    ]
 
-    def include_charge(disp):
-        """Return True if the charge should be included."""
-        if "offense_disposition" not in disp:
-            raise ValueError("Charge must include a disposition, got: %s" % disp)
+    def is_expungeable(offense_disposition) -> bool:
+        for expungeable_disposition in expungeable_dispositions:
+            if expungeable_disposition.lower() in offense_disposition.lower():
+                return True
+        return False
 
-        return disp["is_final"] and disp["offense_disposition"] in [
-            "Nolle Prossed",
-            "ARD - County",
-            "Not Guilty",
-            "Dismissed",
-            "Withdrawn",
-        ]
-
+    expungeable_charges = []
+    case_events = parsed.get("section_disposition", {})
     ratio = models.PetitionRatio.full
-    charges = []
+    if not any(case_event.get("disposition_finality") == "Final Disposition" for case_event in case_events):
+        logger.error("No final disposition found.")
+        # raise ValueError("No final disposition found.")
 
-    if "section_disposition" in parsed:
-        for disp in parsed["section_disposition"]:
-            if include_charge(disp):
-                charges.append(disposition_to_charge(disp))
-            elif disp["is_final"]:
+    for case_event in case_events:
+        if case_event.get("disposition_finality") != "Final Disposition":
+            continue
+
+        if "charges" not in case_event:
+            logger.error(f"No charges found for {case_event.get('case_event')} (Final Disposition)")
+            # raise ValueError(f"No charges found for {case_event.get('case_event')} (Final Disposition)")
+
+        disposition_date = case_event.get("disposition_date")
+        for charge in case_event["charges"]:
+            if "offense_disposition" not in charge:
+                logger.error(f"Charge must include a disposition, got: {charge}")
+                # raise ValueError(f"Charge must include a disposition, got: {charge}")
+
+            if is_expungeable(charge["offense_disposition"]):
+                adapted_charge = adapt_charge(charge, disposition_date)
+                expungeable_charges.append(adapted_charge)
+            else:
                 ratio = models.PetitionRatio.partial
 
-    return (ratio, charges)
+    return ratio, expungeable_charges
 
 
-def restitution_from_parser(parsed):
+def restitution_from_parser(parsed: dict) -> dict:
     """Produce restitution data based on the docket parser output."""
-
-    if "section_financial_information" not in parsed:
-        return {}
-
-    data = parsed["section_financial_information"]
-
-    if not data:
-        return {}
-
-    total = data.get("assessment", 0)
-    paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
-
-    return {"total": total, "paid": paid}
+    assessment = parsed.get("assessment")
+    payments = parsed.get("payments")
+    adjustments = parsed.get("adjustments")
+    paid = None
+    if payments is not None and adjustments is not None:
+        paid = -payments - adjustments
+    return {"total": assessment, "paid": paid}
 
 
 def date_string(d):
@@ -232,24 +228,25 @@ def date_string(d):
         return ""
 
 
-def disposition_to_charge(disp):
+def adapt_charge(charge: dict, disposition_date: datetime.date) -> dict:
     """
-    Convert a parsed dispositions to a dict of a charge.
-
-    Arg:
-        A single disposition dict, as delivered by the parser
+    Convert a parsed charge to what api expects
+    Args:
+        charge:
+            A single charge dict, as delivered by the parser
+        disposition_date:
+            Date of dispositional event, as delivered by the parser
     Return:
         A charge dict, per the api doc
     """
-    charge_date = disp.get("date", None)
 
-    if charge_date is not None:
-        charge_date = charge_date.isoformat()
+    if disposition_date is not None:
+        disposition_date = disposition_date.isoformat()
 
     return {
-        "statute": disp.get("statute", None),
-        "description": disp.get("charge_description", None),
-        "grade": disp.get("grade", None),
-        "date": charge_date,
-        "disposition": disp.get("offense_disposition", None),
+        "statute": charge.get("statute"),
+        "description": charge.get("charge_description"),
+        "grade": charge.get("grade"),
+        "date": disposition_date,
+        "disposition": charge.get("offense_disposition"),
     }

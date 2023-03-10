@@ -1,9 +1,0 @@
-setup.py
-docket_parser/__init__.py
-docket_parser/__main__.py
-docket_parser/core.py
-docket_parser.egg-info/PKG-INFO
-docket_parser.egg-info/SOURCES.txt
-docket_parser.egg-info/dependency_links.txt
-docket_parser.egg-info/entry_points.txt
-docket_parser.egg-info/top_level.txt
