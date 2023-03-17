@@ -82,7 +82,9 @@ aliases =
     )+
 aliases_start = "Alias Name" properties_normal terminator
 # Sometimes there are multiple columns for aliases (separated by tab)
-alias_segment = alias (tab content_char+)* properties_03x_normal terminator
+# Need to find an example with multiple columns to correct grammar.
+#alias_segment = alias (tab content_char+)* properties_03x_normal terminator
+alias_segment = alias (box_wrap alias)* (tab content_char+)* properties_03x_normal terminator
 alias = content_char+
 
 properties_03x_normal = props_open &'03' coordinates normal props_close
@@ -116,33 +118,15 @@ disposition_finality = content_char+
 disposition_date = date{1}
 
 # Assuming Sequence/Description segments always have x coordinate 05x.xx
-charge_info = charge_info_oneline / charge_info_multiline
-charge_info_oneline = sequence_description_start tab disposition_grade_statute properties_05x_normal terminator
-charge_info_multiline =
-    sequence_description_start properties_05x_normal terminator
-    ( mid_disposition_page_break
-    / continued_description_segment
-    )+
-    # To avoid confusion, using "statute" to refer to the thing with § instead of "section"
-    disposition_grade_statute properties_normal terminator
-
-sequence_description_start = sequence space slash space charge_description
-continued_description_segment = charge_description properties_05x_normal terminator
+# The dockets refer to the thing with §'s as "section". To avoid confusion, we call this "statute" instead.
+charge_info = sequence_description_start (box_wrap charge_description_part)* tab disposition_grade_statute properties_05x_normal terminator
+sequence_description_start = sequence space slash space charge_description_part
 properties_05x_normal = props_open &'05' coordinates normal props_close
 sequence = (digit / comma)+
-charge_description = content_char+
+charge_description_part = content_char+
 
-disposition_grade_statute =
-    ((offense_disposition tab)
-    / offense_disposition_line{2,}
-    / mid_disposition_page_break
-    )
-    statute
-    (comes_before grade)?
-
-offense_disposition_line = offense_disposition properties_2xx_normal terminator
-properties_2xx_normal = props_open &'2' coordinates normal props_close
-offense_disposition = content_char+
+disposition_grade_statute = offense_disposition_part (box_wrap offense_disposition_part)* tab statute (comes_before grade)?
+offense_disposition_part = content_char+
 statute = content_char+
 grade = content_char{,3}
 
@@ -198,14 +182,14 @@ page_break =
     (!end_of_page_header junk_segment)+
     end_of_page_header
 
-printed_on_segment = "Printed:" space* unimportant_date space* properties_normal terminator
+printed_on_segment = "Printed:" space* junk_date space* properties_normal terminator
 
 end_of_page_header = "v" dot space* properties_normal terminator
                      junk_segment # This is defendant name, but it's more convenient for parsing to get name from unique place
 
 
 junk_segment =
-    (content_char / tab / comes_before)*
+    (content_char / tab / comes_before / box_wrap)*
     (properties_bold / properties_normal)
     terminator
 
@@ -220,7 +204,7 @@ coordinate = digit{3} dot digit{2}
 
 date = digit{2} slash digit{2} slash digit{4}
 # same thing except we don't want it to show up in visited results
-unimportant_date = digit{2} slash digit{2} slash digit{4}
+junk_date = digit{2} slash digit{2} slash digit{4}
 
 font = bold / normal
 bold = "bold"
@@ -229,9 +213,10 @@ normal = "normal"
 content_char = ~r"NOT_INSERTED_CHARACTER_REGEX"
 props_open = "INSERTED_PROPS_OPEN"
 props_close = "INSERTED_PROPS_CLOSE"
-terminator = 'INSERTED_TERMINATOR'
-tab = 'INSERTED_TAB'
+terminator = "INSERTED_TERMINATOR"
+tab = "INSERTED_TAB"
 comes_before = "INSERTED_COMES_BEFORE"
+box_wrap = "INSERTED_BOX_WRAP"
 
 digit = ~r"[0-9]"
 comma = ','

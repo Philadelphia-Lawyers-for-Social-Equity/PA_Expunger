@@ -15,10 +15,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass()
 class TextSegment:
-    """ Stores content of a text segment as well as coordinates in user space units and font name. """
+    """ Stores text segment properties.
+    Attributes:
+        content (str): The text contained in the segment
+        coordinates (tuple[float, float]): (x, y) coordinates of the point where segment started,
+                                           in pdf user space units
+        font_name (str): Shortened name of the font used for the segment
+        x_transform (float): Sum of x transformation... #TODO explain better
+        y_transform (float): Sum of y transformation... #TODO explain better
+    """
     content: str = ''
     coordinates: tuple[float, float] = None
     font_name: str = None
+    x_transform: float = 0
+    y_transform: float = 0
 
     def reset(self):
         self.__init__()
@@ -44,6 +54,7 @@ class DocketReader(PdfReader):
     comes_before = '|'
     properties_open = '['
     properties_close = ']'
+    box_wrap = '^'
 
     def __init__(self, stream: Union[str, IO, Path]):
         super().__init__(stream)
@@ -63,7 +74,8 @@ class DocketReader(PdfReader):
         for page in self.pages:
             page.extract_text(**kwargs)
 
-    def extract_text(self, **kwargs) -> str:
+    def extract_text(self, debug_log_operations=False, **kwargs) -> str:
+        kwargs["debug_log_operations"] = debug_log_operations
         extracted_text = ''
         for page in self.pages:
             extracted_text += page.extract_text(**kwargs)
@@ -72,7 +84,7 @@ class DocketReader(PdfReader):
     @classmethod
     def get_special_characters(cls) -> List[str]:
         """Return a list of each special character used by this reader."""
-        return [cls.tab, cls.terminator, cls.properties_open, cls.properties_close, cls.comes_before]
+        return [cls.tab, cls.terminator, cls.properties_open, cls.properties_close, cls.comes_before, cls.box_wrap]
 
     @classmethod
     def generate_content_regex(cls) -> str:
@@ -153,7 +165,7 @@ class DocketPageObject(PageObject):
             else:
                 self.font_output_names[font_resource_name] = 'normal'
 
-    def extract_text(self, x_tolerance=.3, y_tolerance=1, **kwargs) -> str:
+    def extract_text(self, x_tolerance=.3, y_tolerance=1, debug_log_operations=False, **kwargs) -> str:
         """ Extract text from a docket, with coordinates and font name.
         Text will be ordered as it is in pdf content stream. Text that is in the same block in pdf content stream, has
         the same font, and is on the same horizontal line will be considered a "segment".
@@ -209,6 +221,9 @@ class DocketPageObject(PageObject):
              Resets segment and cur_displacement"""
             nonlocal text_state, cur_displacement
             if segment.content != '':
+                if segment.content[-1] == self.reader.box_wrap:
+                    # Having this character at the end of a segment is irrelevant for our purposes.
+                    segment.content = segment.content[:-1]
                 segment.font_name = self.font_output_names[text_state.f_name]
                 extracted_segments.append(copy(segment))
             segment.reset()
@@ -233,7 +248,7 @@ class DocketPageObject(PageObject):
             elif operator == b'q':
                 # push to graphics state stack. See 8.4.2
                 # text state is a subset of graphics state, see 9.3.1
-                # font, font size are included in graphics state.
+                # font, font size are included in text state.
                 text_state_stack.append(text_state)
             elif operator == b'Q':
                 # pop from graphics state stack
@@ -245,7 +260,23 @@ class DocketPageObject(PageObject):
             elif operator == b'Td':
                 # Move text position
                 x_transform, y_transform = args
-                if abs(y_transform) >= y_tolerance:
+                if y_transform < 0 and abs(x_transform + segment.x_transform) < x_tolerance:
+                    # This happens when content of a left-justified text box(?) wraps to next line.
+                    # Might happen in other situations that we don't care about?
+                    # TODO: find example where a text box is interrupted by page break and handle it
+                    segment.content += self.reader.box_wrap
+                    segment.x_transform = 0
+                    segment.y_transform += y_transform
+                elif y_transform > 0 and abs(y_transform + segment.y_transform) < y_tolerance:
+                    # This happens when text box ends and cursor goes back up to current line.
+                    segment.y_transform = 0
+                    segment.x_transform = 0
+                    if x_transform < 0:
+                        segment.content += self.reader.comes_before
+                    else:
+                        # could check spacing/overlap here, but probably not necessary
+                        segment.content += self.reader.tab
+                elif abs(y_transform) >= y_tolerance:
                     # Every case I've seen with +-<1 unit change is on the same logical line,
                     # but that might not always be true.
                     terminate_segment()
@@ -265,8 +296,11 @@ class DocketPageObject(PageObject):
                         # for debugging x_tolerance value:
                         # logger.debug(segment.content + f'{{{units_of_spacing:.1f}>{text_state.size}*{x_tolerance:.1f}}}')
                     elif units_of_spacing < -.1:
-                        # -.1 because 0 catches float rounding errors.
+                        # -.1 because < 0 catches float rounding errors.
                         logger.debug(f"Potentially overlapping text after: '{segment.content}'.")
+                    else:
+                        # This is for detecting newline in textbox vs segment termination
+                        segment.x_transform += x_transform
                 cur_displacement = 0
 
             elif operator == b'TJ':
@@ -298,16 +332,34 @@ class DocketPageObject(PageObject):
                 # See 9.4.2
                 logger.warning(f"Found unexpected text positioning operator: {operator}")
 
+        operations = []
+
         def visitor(operator, args, cm, tm) -> None:
             """Visitor function that calls our visitor and also a visitor_operand_before if we were passed one."""
             operation_visitor(operator, args, cm, tm)
             if kwargs.get('visitor_operand_before') is not None:
                 kwargs['visitor_operand_before'](operator, args, cm, tm)
+            if debug_log_operations:
+                if operator == b'Tj':
+                    content, displacement = get_content_and_displacement(args[0])
+                    operations.append([operator, content])
+                elif operator == b'TJ':
+                    for item in args[0]:
+                        if isinstance(item, bytes):
+                            # add_bytes_to_segment(item)
+                            content, displacement = get_content_and_displacement(item)
+                            operations.append([operator, content])
+                else:
+                    operations.append([operator, args])
 
         # avoid infinite recursion
         super_kwargs = copy(kwargs)
         super_kwargs['visitor_operand_before'] = visitor
         super().extract_text(**super_kwargs)
+
+        if debug_log_operations:
+            for operator, operand in operations:
+                logger.debug(f"{operator}: {operand}")
 
         formatted_segments = [self.segment_to_str(seg) for seg in extracted_segments]
         return ''.join(formatted_segments)
@@ -325,16 +377,20 @@ class DocketPageObject(PageObject):
 
 
 # what I used for debugging:
-# if __name__ == "__main__":
-#     test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
-#     logger.setLevel('INFO')
-#     for test_path in test_paths:
-#         _reader = DocketReader(test_path)
-#         _extracted_text = _reader.extract_text()
-#         out_file_path = Path('../scratch/data').joinpath(test_path.name.replace('.pdf', '.txt'))
-#         with open(out_file_path, 'w', encoding='utf-8') as out_file:
-#             out_file.write(_extracted_text)
-#         out_file_path = Path('../scratch/data').joinpath(test_path.name.replace('.pdf', '.operations'))
-#         with open(out_file_path, 'w') as out_file:
-#             for operator, operand in _reader._debug_get_all_operations():
-#                 print(f"{operator} : {operand}", file=out_file)
+if __name__ == "__main__":
+    test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
+    out_dir_path = Path(__file__).parent.parent.parent.parent.parent.joinpath('scratch/data')
+    logger.setLevel('DEBUG')
+    for test_path in test_paths:
+        _reader = DocketReader(test_path)
+        _extracted_text = _reader.extract_text()
+        out_file_path = out_dir_path.joinpath(test_path.name.replace('.pdf', '.txt'))
+        with open(out_file_path, 'w', encoding='utf-8') as out_file:
+            out_file.write(_extracted_text)
+        out_file_path = out_dir_path.joinpath(test_path.name.replace('.pdf', '.operations'))
+        with open(out_file_path, 'w') as out_file:
+            # for operator, operand in _reader._debug_get_all_operations():
+            stream_handler = logging.StreamHandler(out_file)
+            logger.addHandler(stream_handler)
+            _reader.extract_text(debug_log_operations=True)
+            logger.removeHandler(stream_handler)

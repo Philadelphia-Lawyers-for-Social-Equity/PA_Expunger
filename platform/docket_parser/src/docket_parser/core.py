@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
+import re
 import traceback
 from collections.abc import Iterable
 from datetime import date
@@ -10,7 +12,12 @@ from parsimonious.exceptions import ParseError, VisitationError
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import Node, NodeVisitor
 
-from .extraction import DocketReader
+try:
+    # For normal usage, part of docket_parser package
+    from .extraction import DocketReader
+except ImportError:
+    # For running this file as a python script
+    from extraction import DocketReader
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +26,9 @@ REPLACEMENTS = {"NOT_INSERTED_CHARACTER_REGEX": DocketReader.generate_content_re
                 "INSERTED_PROPS_CLOSE": DocketReader.properties_close,
                 "INSERTED_TERMINATOR": DocketReader.terminator,
                 "INSERTED_TAB": DocketReader.tab,
-                "INSERTED_COMES_BEFORE": DocketReader.comes_before}
+                "INSERTED_COMES_BEFORE": DocketReader.comes_before,
+                "INSERTED_BOX_WRAP": DocketReader.box_wrap}
+
 
 # noinspection PyMethodMayBeStatic, PyUnusedLocal
 class DocketVisitor(NodeVisitor):
@@ -28,7 +37,7 @@ class DocketVisitor(NodeVisitor):
     # These terms should be treated as leaves in the parse tree.
     leaves = ["defendant_name", "docket_number", "judge", "otn", "originating_docket_number",
               "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
-              "sequence", "charge_description", "grade", "statute", "offense_disposition"
+              "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
               ]
     dates = ["dob", "disposition_date", "complaint_date"]
     money_terms = ["assessment", "total", "non_monetary", "adjustments", "payments"]
@@ -107,7 +116,6 @@ class DocketVisitor(NodeVisitor):
         for child in flatten(visited_children):
             if "alias" in child:
                 aliases.append(child["alias"])
-        logger.debug(f"aliases: {aliases}")
         return {"aliases": aliases}
 
     def visit_section_disposition(self, node, visited_children):
@@ -127,33 +135,59 @@ class DocketVisitor(NodeVisitor):
 
     def visit_charge_info(self, node, visited_children):
         charge_info = {}
-        charge_description_lines = []
+        charge_description_parts = []
         for child in flatten(visited_children):
-            if "charge_description" in child:
-                charge_description_lines.append(child.pop("charge_description"))
+            if "charge_description_part" in child:
+                charge_description_parts.append(child.pop("charge_description_part"))
             charge_info.update(child)
 
-        charge_info["charge_description"] = ' '.join(charge_description_lines).strip()
+        charge_info["charge_description"] = ' '.join(charge_description_parts).strip()
         return {"charge_info": charge_info}
 
     def visit_disposition_grade_statute(self, node, visited_children):
-        visited_offense_disposition, *visited_other_children = visited_children
-        offense_disposition_lines = []
-        result = {}
-        for child in flatten(visited_offense_disposition):
-            if "offense_disposition" in child:
-                offense_disposition_lines.append(child["offense_disposition"])
+        # This is exactly the same as visit_charge_info. Wonder if there's a way to refactor...
+        disposition_grade_statute = {}
+        offense_disposition_parts = []
+        for child in flatten(visited_children):
+            if "offense_disposition_part" in child:
+                offense_disposition_parts.append(child.pop("offense_disposition_part"))
+            disposition_grade_statute.update(child)
 
-        result = {"offense_disposition":
-                  ' '.join(offense_disposition_lines).strip()}
-
-        for child in flatten(visited_other_children):
-            if isinstance(child, dict):
-                result.update(child)
-        return result
+        disposition_grade_statute["offense_disposition"] = ' '.join(offense_disposition_parts).strip()
+        return disposition_grade_statute
 
 
 # Helpers
+
+
+def remove_page_breaks(extracted_text: str) -> str:
+    """Remove all page breaks from extracted text.
+    This allows us to simplify grammar by not needing to check for page breaks everywhere"""
+    # Not sure how to write a good test for this fn
+    input_lines = extracted_text.split(DocketReader.terminator)
+    output_lines = [input_lines[0]]
+    in_page_break = False
+    props_open = re.escape(DocketReader.properties_open)
+    not_props_open = '[^' + props_open + ']*'
+    props_close = re.escape(DocketReader.properties_close)
+    not_props_close = '[^' + props_close + ']*'
+    properties_regex = props_open + not_props_close + props_close
+    versus_line_regex = r"v\. *" + properties_regex
+    printed_date_line_regex = "Printed:" + not_props_open + properties_regex
+
+    for index, line in enumerate(input_lines[1:], start=1):
+        if in_page_break:
+            if re.match(versus_line_regex, input_lines[index - 1]):
+                logger.debug(f"end pbreak matched: {input_lines[index - 1]}")
+                in_page_break = False
+        elif re.match(printed_date_line_regex, line):
+            logger.debug(f"begin pbreak matched: {line}")
+            in_page_break = True
+        else:
+            output_lines.append(line)
+
+    return DocketReader.terminator.join(output_lines) + DocketReader.terminator
+
 
 def flatten(visited_children):
     """Recursively flatten a list of iterables, removing all non-visited nodes."""
@@ -210,6 +244,7 @@ def get_cause_without_context(exc: VisitationError) -> str:
 def parse_pdf(file: Union[str, IO, Path]) -> dict[str, Union[str, List[Union[str, dict]]]]:
     """From a PDF, return information necessary for generating expungement petitions."""
     text = text_from_pdf(file)
+    # text_without_page_breaks = remove_page_breaks(text)
     ppeg_file_path = Path(__file__).parent.joinpath("docket_grammar.ppeg")
 
     docket_grammar = get_grammar_from_file(ppeg_file_path)
@@ -229,3 +264,14 @@ def parse_pdf(file: Union[str, IO, Path]) -> dict[str, Union[str, List[Union[str
         logger.error(msg)
     # convert to json?
     return parsed
+
+
+# what I used for debugging:
+if __name__ == "__main__":
+    test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
+    out_dir_path = Path(__file__).parent.parent.parent.parent.parent.joinpath('scratch/data/json')
+    logger.setLevel('DEBUG')
+    for test_path in test_paths:
+        _parsed = parse_pdf(test_path)
+        with open(out_dir_path.joinpath(test_path.name.replace('.pdf', '.json')), 'w') as out_file:
+            json.dump(_parsed, out_file, indent=2, default=repr)
