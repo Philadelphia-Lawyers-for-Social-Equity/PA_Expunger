@@ -7,7 +7,7 @@ name = "docket_parser"
 requires-python = ">=3.7"
 version = "0.2.0"
 dynamic = ["dependencies"]
-#dependencies = ["parsimonious >= 0.8.1", "pypdf >= 3.2.1", "numpy >= 1.24.2", "pytest >= "]
+#dependencies = ["parsimonious >= 0.8.1", "pypdf >= 3.2.1", "numpy >= 1.24.2", "pytest >= 7.2"]
 
 [project.scripts]
 debug_docket_parser = 'docket_parser.__main__:main'
@@ -20,7 +20,9 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 docket_parser = ["*.ppeg"]
-"docket_parser.tests.data" = ["*.pdf"]
+# might want to reorganize this when we start using court summaries.
+"docket_parser.tests.data.dockets" = ["dockets/*.pdf"]
+"docket_parser.tests.data.json" =  ["*.json"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}

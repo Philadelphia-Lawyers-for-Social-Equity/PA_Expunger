@@ -7,7 +7,9 @@ from typing import Union, IO, List, Dict, Tuple
 
 from numpy import matmul
 from pypdf import PdfReader, PageObject
-from pypdf._cmap import parse_to_unicode
+from pypdf.generic import DictionaryObject
+
+from .font import get_unicode_map, get_widths_dict
 from pypdf.errors import PdfReadError
 
 logger = logging.getLogger(__name__)
@@ -134,7 +136,7 @@ class DocketPageObject(PageObject):
         self.update(page)
 
         # Set up font dictionaries. Assumes TrueType font with /ToUnicode, see 9.6
-        self.font_map_dicts: Dict[str, Dict[str, str]] = {}
+        self.font_unicode_maps: Dict[str, Dict[str, str]] = {}
         self.font_width_dicts: Dict[str, Dict[str, int]] = {}
         self.font_output_names: Dict[str, str] = {}
         fonts = self['/Resources']['/Font']
@@ -143,27 +145,47 @@ class DocketPageObject(PageObject):
             logger.warning("There are more than two fonts in this docket, which is unexpected.")
 
         for font_resource_name in fonts:
-            font_dict = fonts[font_resource_name]
-            map_dict, space_code, int_entry = parse_to_unicode(font_dict, 0)
-            self.font_map_dicts[font_resource_name] = map_dict
+            # NB: iterating through fonts.items() would give indirect references instead of actual font objects
+            font: DictionaryObject = fonts[font_resource_name]
+            unicode_map = get_unicode_map(font)
+            self.font_unicode_maps[font_resource_name] = unicode_map
+            self.font_width_dicts[font_resource_name] = get_widths_dict(font)
 
-            for char in map_dict.values():
+            for char in unicode_map.values():
                 if char in reader.get_special_characters():
                     raise PdfReadError(f"Special character '{char}' was found in pdf's fonts. "
                                        "Please use a different special character.")
 
-            widths_dict = {}
-            for i in range(font_dict['/FirstChar'], font_dict['/LastChar'] + 1):
-                char = chr(i)
-                if char in map_dict:
-                    widths_dict[chr(i)] = font_dict['/Widths'][i - font_dict['/FirstChar']]
-
-            self.font_width_dicts[font_resource_name] = widths_dict
-
-            if 'bold' in font_dict['/BaseFont'].lower():
+            if 'bold' in font['/BaseFont'].lower():
                 self.font_output_names[font_resource_name] = 'bold'
             else:
                 self.font_output_names[font_resource_name] = 'normal'
+
+    def get_content_and_displacement(self, text_state: TextState, bs: bytes) -> Tuple[str, float]:
+        """Decode byte-string to unicode str and calculate horizontal displacement."""
+        content = ''
+        displacement = 0.0
+        for byte in bs:
+            char = chr(byte)
+            content += self.font_unicode_maps[text_state.f_name][char]
+            displacement += self.font_width_dicts[text_state.f_name][char] / 1000 * text_state.size
+        return content, displacement
+
+    @staticmethod
+    def mult(tm: List[float], cm: List[float]) -> List[float]:
+        """ Does matrix multiplication with the shortened forms of matrices tm, cm.
+            See 9.4.2 Tm operator for description of shortened matrix
+            """
+        # If we don't want to use numpy, can instead copy the mult function from
+        # pypdf._page.PageObject._extract_text
+        mat1 = [[tm[0], tm[1], 0],
+                [tm[2], tm[3], 0],
+                [tm[4], tm[5], 1]]
+        mat2 = [[cm[0], cm[1], 0],
+                [cm[2], cm[3], 0],
+                [cm[4], cm[5], 1]]
+        result = matmul(mat1, mat2)
+        return [result[0, 0], result[0, 1], result[1, 0], result[1, 1], result[2, 0], result[2, 1], result[2, 2]]
 
     def extract_text(self, x_tolerance=.3, y_tolerance=1, debug_log_operations=False, **kwargs) -> str:
         """ Extract text from a docket, with coordinates and font name.
@@ -191,31 +213,6 @@ class DocketPageObject(PageObject):
         # See handling for 'Td' operator for how/why this is used.
         cur_displacement: float = 0.0
 
-        def mult(tm: List[float], cm: List[float]) -> List[float]:
-            """ Does matrix multiplication with the shortened forms of matrices tm, cm.
-                See 9.4.2 Tm operator for description of shortened matrix
-                """
-            # If we don't want to use numpy, can instead copy the mult function from
-            # pypdf._page.PageObject._extract_text
-            mat1 = [[tm[0], tm[1], 0],
-                    [tm[2], tm[3], 0],
-                    [tm[4], tm[5], 1]]
-            mat2 = [[cm[0], cm[1], 0],
-                    [cm[2], cm[3], 0],
-                    [cm[4], cm[5], 1]]
-            result = matmul(mat1, mat2)
-            return [result[0, 0], result[0, 1], result[1, 0], result[1, 1], result[2, 0], result[2, 1], result[2, 2]]
-
-        def get_content_and_displacement(bs: bytes) -> Tuple[str, float]:
-            """Decode byte-string to unicode str and calculate horizontal displacement. No side effects."""
-            content = ''
-            displacement = 0.0
-            for byte in bs:
-                char = chr(byte)
-                content += self.font_map_dicts[text_state.f_name][char]
-                displacement += self.font_width_dicts[text_state.f_name][char] / 1000 * text_state.size
-            return content, displacement
-
         def terminate_segment() -> None:
             """End the current text segment, adding a copy to extracted_segments.
              Resets segment and cur_displacement"""
@@ -236,7 +233,7 @@ class DocketPageObject(PageObject):
 
             if operator in (b'TJ', b'Tj') and segment.coordinates is None:
                 # We want the output coordinates to be where the segment started, not get updated by 'Td' operations
-                m = mult(tm, cm)
+                m = self.mult(tm, cm)
                 segment.coordinates = m[4], m[5]
 
             if operator == b'Tf':
@@ -309,14 +306,14 @@ class DocketPageObject(PageObject):
                 for item in args[0]:
                     if isinstance(item, bytes):
                         # add_bytes_to_segment(item)
-                        content, displacement = get_content_and_displacement(item)
+                        content, displacement = self.get_content_and_displacement(text_state, item)
                         cur_displacement += displacement
                         segment.content += content
                     else:
                         cur_displacement -= item * text_state.size / 1000
             elif operator == b'Tj':
                 # args will have exactly one element, a byte-string. See 9.4.3
-                content, displacement = get_content_and_displacement(args[0])
+                content, displacement = self.get_content_and_displacement(text_state, args[0])
                 cur_displacement += displacement
                 segment.content += content
             elif operator in (b"'", b'"'):
@@ -341,13 +338,12 @@ class DocketPageObject(PageObject):
                 kwargs['visitor_operand_before'](operator, args, cm, tm)
             if debug_log_operations:
                 if operator == b'Tj':
-                    content, displacement = get_content_and_displacement(args[0])
+                    content, displacement = self.get_content_and_displacement(text_state, args[0])
                     operations.append([operator, content])
                 elif operator == b'TJ':
                     for item in args[0]:
                         if isinstance(item, bytes):
-                            # add_bytes_to_segment(item)
-                            content, displacement = get_content_and_displacement(item)
+                            content, displacement = self.get_content_and_displacement(text_state, item)
                             operations.append([operator, content])
                 else:
                     operations.append([operator, args])
