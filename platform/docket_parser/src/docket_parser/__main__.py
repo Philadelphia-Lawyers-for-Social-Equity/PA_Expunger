@@ -3,7 +3,7 @@
 import argparse
 import logging
 from pathlib import Path
-from .core import parse_pdf, logger
+from .parsing import parse_pdf, logger
 import sys
 
 # Command Line

@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import json
 from pathlib import Path
 
 import pytest
 from deepdiff import DeepDiff
-from docket_parser.core import flatten, parse_pdf
+from docket_parser.parsing import flatten, parse_extracted_text, parse_pdf
 
 DATA_PATH = Path(__file__).parent.joinpath("data")
 
@@ -14,8 +12,8 @@ def check_expect(check, expected, msg=''):
     """Assert that two given items are the same. If they differ, gives description of differences"""
     # If it ever becomes an issue, can use ignore_order=True here.
     diff = DeepDiff(expected, check)
-    message = msg + '\nDifference from checked to expected:\n' + diff.pretty()
     if diff != {}:
+        message = msg + '\nDifference from checked to expected:\n' + diff.pretty()
         pytest.fail(message)
 
 
@@ -36,27 +34,26 @@ class TestParsing:
 
     def test_all_dockets(self):
         # Consider using pytest-regtest or pytest-canonical-data plugins in future
-        test_docket_paths = tuple(DATA_PATH.glob("dockets/*.pdf"))
+        test_extracted_paths = tuple(DATA_PATH.glob("extracted/*.txt"))
         expected_results_dir = DATA_PATH.joinpath("json")
-        # expected_result_paths = DATA_PATH.glob("json/*.json")
         expected_result_paths = []
-        for test_docket_path in test_docket_paths:
-            if 'not_crystal' in test_docket_path.name:
-                continue
-            expected_result_filename = test_docket_path.name.replace('.pdf', '.json')
+        for test_extracted_path in test_extracted_paths:
+            expected_result_filename = test_extracted_path.name.replace('.txt', '.json')
             expected_result_path = expected_results_dir.joinpath(expected_result_filename)
             expected_result_paths.append(expected_result_path)
 
-        test_expect_pairs = tuple(zip(test_docket_paths, expected_result_paths))
-        assert len(test_expect_pairs) > 0, "Didn't find any test pdf/json result pairs"
-        for test_docket_path, expected_result_path in test_expect_pairs:
-            result = parse_pdf(test_docket_path)
+        test_expect_pairs = tuple(zip(test_extracted_paths, expected_result_paths))
+        assert len(test_expect_pairs) > 0, "Didn't find any test extracted txt/json result pairs"
+        for test_extracted_path, expected_result_path in test_expect_pairs:
+            with open(test_extracted_path, 'r', encoding='utf-8') as file:
+                extracted_text = file.read()
+            result = parse_extracted_text(extracted_text)
             # Convert for comparison
             result = json.loads(json.dumps(result, default=repr))
             with open(expected_result_path, 'rb') as expected_result_file:
                 expected = json.load(expected_result_file)
 
-            failure_msg = f"Parsed result from {test_docket_path.name} not equal to expected result" \
+            failure_msg = f"Parsed result from {test_extracted_path.name} not equal to expected result" \
                           f" from {expected_result_path.name}"
             check_expect(result, expected, failure_msg)
 

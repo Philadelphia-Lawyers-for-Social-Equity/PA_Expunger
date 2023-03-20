@@ -7,10 +7,10 @@ from typing import Union, IO, List, Dict, Tuple
 
 from numpy import matmul
 from pypdf import PdfReader, PageObject
+from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject
 
 from .font import get_unicode_map, get_widths_dict
-from pypdf.errors import PdfReadError
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +40,10 @@ class TextSegment:
 class TextState:
     """ Contains variables of pdf text state.
      Attributes:
-         f_name (str): Font name
+         font_name (str): Font name
          size (float): Font size
          """
-    f_name: str
+    font_name: str
     size: float
 
 
@@ -60,10 +60,10 @@ class DocketReader(PdfReader):
 
     def __init__(self, stream: Union[str, IO, Path]):
         super().__init__(stream)
-        if self.metadata['/Creator'] != 'Crystal Reports':
+        if self.metadata.get('/Creator') != 'Crystal Reports':
             # This warning should get passed along to person using our app (end user).
             logger.warning(f"{self.__class__.__name__} is only designed to read pdfs by Crystal Reports.\n"
-                           f"Instead found: {self.metadata['/Producer']}, {self.metadata['/Creator']}")
+                           f"Instead found: {self.metadata.get('/Producer')}, {self.metadata.get('/Creator')}")
         self.font_map_dicts = {}
         self._pages = [DocketPageObject(self, page) for page in super().pages]
 
@@ -103,6 +103,7 @@ class DocketReader(PdfReader):
         # noinspection PyUnusedLocal
         def visitor(operator, operand, cm, tm):
             operations.append([operator, operand])
+
         self.visit(visitor_operand_before=visitor)
         return operations
 
@@ -136,8 +137,8 @@ class DocketPageObject(PageObject):
         self.update(page)
 
         # Set up font dictionaries. Assumes TrueType font with /ToUnicode, see 9.6
-        self.font_unicode_maps: Dict[str, Dict[str, str]] = {}
-        self.font_width_dicts: Dict[str, Dict[str, int]] = {}
+        self.font_unicode_maps: Dict[str, Dict[int, str]] = {}
+        self.font_width_dicts: Dict[str, Dict[int, int]] = {}
         self.font_output_names: Dict[str, str] = {}
         fonts = self['/Resources']['/Font']
 
@@ -161,15 +162,14 @@ class DocketPageObject(PageObject):
             else:
                 self.font_output_names[font_resource_name] = 'normal'
 
-    def get_content_and_displacement(self, text_state: TextState, bs: bytes) -> Tuple[str, float]:
-        """Decode byte-string to unicode str and calculate horizontal displacement."""
+    def get_content_and_width(self, font_name: str, bs: bytes) -> Tuple[str, int]:
+        """Decode byte-string to unicode str and calculate horizontal width."""
         content = ''
-        displacement = 0.0
-        for byte in bs:
-            char = chr(byte)
-            content += self.font_unicode_maps[text_state.f_name][char]
-            displacement += self.font_width_dicts[text_state.f_name][char] / 1000 * text_state.size
-        return content, displacement
+        width = 0
+        for character_id in bs:
+            content += self.font_unicode_maps[font_name][character_id]
+            width += self.font_width_dicts[font_name][character_id]
+        return content, width
 
     @staticmethod
     def mult(tm: List[float], cm: List[float]) -> List[float]:
@@ -221,7 +221,7 @@ class DocketPageObject(PageObject):
                 if segment.content[-1] == self.reader.box_wrap:
                     # Having this character at the end of a segment is irrelevant for our purposes.
                     segment.content = segment.content[:-1]
-                segment.font_name = self.font_output_names[text_state.f_name]
+                segment.font_name = self.font_output_names[text_state.font_name]
                 extracted_segments.append(copy(segment))
             segment.reset()
             cur_displacement = 0.0
@@ -306,14 +306,16 @@ class DocketPageObject(PageObject):
                 for item in args[0]:
                     if isinstance(item, bytes):
                         # add_bytes_to_segment(item)
-                        content, displacement = self.get_content_and_displacement(text_state, item)
+                        content, width = self.get_content_and_width(text_state.font_name, item)
+                        displacement = width / 1000 * text_state.size
                         cur_displacement += displacement
                         segment.content += content
                     else:
                         cur_displacement -= item * text_state.size / 1000
             elif operator == b'Tj':
-                # args will have exactly one element, a byte-string. See 9.4.3
-                content, displacement = self.get_content_and_displacement(text_state, args[0])
+                # args will have exactly one element, a bytes instance. See 9.4.3
+                content, width = self.get_content_and_width(text_state.font_name, args[0])
+                displacement = width / 1000 * text_state.size
                 cur_displacement += displacement
                 segment.content += content
             elif operator in (b"'", b'"'):
@@ -338,12 +340,12 @@ class DocketPageObject(PageObject):
                 kwargs['visitor_operand_before'](operator, args, cm, tm)
             if debug_log_operations:
                 if operator == b'Tj':
-                    content, displacement = self.get_content_and_displacement(text_state, args[0])
+                    content, width = self.get_content_and_width(text_state.font_name, args[0])
                     operations.append([operator, content])
                 elif operator == b'TJ':
                     for item in args[0]:
                         if isinstance(item, bytes):
-                            content, displacement = self.get_content_and_displacement(text_state, item)
+                            content, width = self.get_content_and_width(text_state.font_name, item)
                             operations.append([operator, content])
                 else:
                     operations.append([operator, args])
@@ -370,23 +372,3 @@ class DocketPageObject(PageObject):
         properties = self.reader.properties_open + properties + self.reader.properties_close
         segment_as_string = segment.content + properties + self.reader.terminator
         return segment_as_string
-
-
-# what I used for debugging:
-if __name__ == "__main__":
-    test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
-    out_dir_path = Path(__file__).parent.parent.parent.parent.parent.joinpath('scratch/data')
-    logger.setLevel('DEBUG')
-    for test_path in test_paths:
-        _reader = DocketReader(test_path)
-        _extracted_text = _reader.extract_text()
-        out_file_path = out_dir_path.joinpath(test_path.name.replace('.pdf', '.txt'))
-        with open(out_file_path, 'w', encoding='utf-8') as out_file:
-            out_file.write(_extracted_text)
-        out_file_path = out_dir_path.joinpath(test_path.name.replace('.pdf', '.operations'))
-        with open(out_file_path, 'w') as out_file:
-            # for operator, operand in _reader._debug_get_all_operations():
-            stream_handler = logging.StreamHandler(out_file)
-            logger.addHandler(stream_handler)
-            _reader.extract_text(debug_log_operations=True)
-            logger.removeHandler(stream_handler)

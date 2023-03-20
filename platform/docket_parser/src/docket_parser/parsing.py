@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
-import json
+import datetime
 import logging
 import re
 import traceback
 from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
-from typing import IO, Union, List
+from typing import IO, List, Any
 
 from parsimonious.exceptions import ParseError, VisitationError
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import Node, NodeVisitor
 
-try:
-    # For normal usage, part of docket_parser package
-    from .extraction import DocketReader
-except ImportError:
-    # For running this file as a python script
-    from extraction import DocketReader
+from .extraction import DocketReader
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +29,23 @@ REPLACEMENTS = {"NOT_INSERTED_CHARACTER_REGEX": DocketReader.generate_content_re
 class DocketVisitor(NodeVisitor):
     """NodeVisitor to go through a parse tree and get the relevant information for expungement petitions"""
 
-    # These terms should be treated as leaves in the parse tree.
-    leaves = ["defendant_name", "docket_number", "judge", "otn", "originating_docket_number",
-              "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
-              "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
-              ]
-    dates = ["dob", "disposition_date", "complaint_date"]
-    money_terms = ["assessment", "total", "non_monetary", "adjustments", "payments"]
+    # These are terms which don't have any children that we care about.
+    # They should be leaves in the *visited* tree, i.e. they should have no visited children.
+    # The leaves of the (not visited) parse tree are string literals.
+    string_leaves = ["defendant_name", "docket_number", "judge", "otn", "originating_docket_number",
+                     "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
+                     "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
+                     ]
+    date_leaves = ["dob", "disposition_date", "complaint_date"]
+    money_leaves = ["assessment", "total", "non_monetary", "adjustments", "payments"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        for leaf_name in self.leaves:
+        for leaf_name in self.string_leaves:
             self.add_leaf_visitor(leaf_name)
-        for date_name in self.dates:
+        for date_name in self.date_leaves:
             self.add_date_visitor(date_name)
-        for money_name in self.money_terms:
+        for money_name in self.money_leaves:
             self.add_money_visitor(money_name)
 
     @classmethod
@@ -57,7 +54,7 @@ class DocketVisitor(NodeVisitor):
         and the stripped text of node as value.
         """
 
-        def visit_leaf(self, node, visited_children):
+        def visit_leaf(self, node, visited_children) -> dict[str, str]:
             return {leaf_name: node.text.strip()}
 
         method_name = "visit_" + leaf_name
@@ -69,7 +66,7 @@ class DocketVisitor(NodeVisitor):
         and a date object as value.
         """
 
-        def visit_date(self, node, visited_children):
+        def visit_date(self, node, visited_children) -> dict[str, datetime.date]:
             date_string = node.text.strip()
             month, day, year = date_string.split("/")
             return {date_name: date(int(year), int(month), int(day))}
@@ -79,11 +76,11 @@ class DocketVisitor(NodeVisitor):
 
     @classmethod
     def add_money_visitor(cls, money_term: str):
-        """Add a visit method for a given money term, which returns a dictionary containing only the money term as key
+        """Add a visit method for a given money name, which returns a dictionary containing only the money name as key
         and a float as value.
         """
 
-        def visit_money(self, node, visited_children):
+        def visit_money(self, node, visited_children) -> dict[str, float]:
             money = node.text.strip()
             money = money.replace(',', '')
             money_float = 0.0
@@ -103,22 +100,21 @@ class DocketVisitor(NodeVisitor):
         """Default behavior is to go further down the tree."""
         return visited_children or node
 
-    def visit_whole_docket(self, node, visited_children):
+    def visit_whole_docket(self, node, visited_children) -> dict[str, str | list[dict] | float | datetime.date]:
         docket_info = {}
-        # page_header, *visited_children = visited_children
         for visited_child in flatten(visited_children):
             if isinstance(visited_child, dict):
                 docket_info.update(visited_child)
         return docket_info
 
-    def visit_aliases(self, node, visited_children):
+    def visit_aliases(self, node, visited_children) -> dict[str, list[str]]:
         aliases = []
         for child in flatten(visited_children):
             if "alias" in child:
                 aliases.append(child["alias"])
         return {"aliases": aliases}
 
-    def visit_section_disposition(self, node, visited_children):
+    def visit_section_disposition(self, node, visited_children) -> dict[str, list[dict[str, Any]]]:
         case_events = []
         header, visited_case_events = visited_children
         for visited_case_event in visited_case_events:
@@ -126,14 +122,13 @@ class DocketVisitor(NodeVisitor):
             charges = []
             for child in flatten(visited_case_event):
                 if 'charge_info' in child:
-                    charges.append(child['charge_info'])
-                elif isinstance(child, dict):
-                    case_event.update(child)
+                    charges.append(child.pop('charge_info'))
+                case_event.update(child)
             case_event["charges"] = charges
             case_events.append(case_event)
         return {"section_disposition": case_events}
 
-    def visit_charge_info(self, node, visited_children):
+    def visit_charge_info(self, node, visited_children) -> dict[str, dict[str, str]]:
         charge_info = {}
         charge_description_parts = []
         for child in flatten(visited_children):
@@ -144,8 +139,9 @@ class DocketVisitor(NodeVisitor):
         charge_info["charge_description"] = ' '.join(charge_description_parts).strip()
         return {"charge_info": charge_info}
 
-    def visit_disposition_grade_statute(self, node, visited_children):
-        # This is exactly the same as visit_charge_info. Wonder if there's a way to refactor...
+    def visit_disposition_grade_statute(self, node, visited_children) -> dict[str, str]:
+        # This is almost the same as visit_charge_info, except for what it returns.
+        # Wonder if there's a way to refactor...
         disposition_grade_statute = {}
         offense_disposition_parts = []
         for child in flatten(visited_children):
@@ -164,6 +160,7 @@ def remove_page_breaks(extracted_text: str) -> str:
     """Remove all page breaks from extracted text.
     This allows us to simplify grammar by not needing to check for page breaks everywhere"""
     # Not sure how to write a good test for this fn
+    # This function may be useful in the future but is not currently used.
     input_lines = extracted_text.split(DocketReader.terminator)
     output_lines = [input_lines[0]]
     in_page_break = False
@@ -207,8 +204,8 @@ def flatten(visited_children):
             yield from flatten(item)
 
 
-def get_grammar_from_file(ppeg_file_or_path: Union[str, Path, IO]) -> Grammar:
-    """Return a parsimonious Grammar object from given file or path"""
+def get_grammar_from_file(ppeg_file_or_path: str | Path | IO) -> Grammar:
+    """Return a parsimonious Grammar object from given file or path."""
     if isinstance(ppeg_file_or_path, IO):
         rules_text = ppeg_file_or_path.read()
     else:
@@ -216,12 +213,13 @@ def get_grammar_from_file(ppeg_file_or_path: Union[str, Path, IO]) -> Grammar:
             rules_text = grammar_file.read()
     for key, value in REPLACEMENTS.items():
         if "REGEX" not in key.upper():
+            # the regex will already be properly escaped, this escapes the other characters.
             value = repr(value)[1:-1]
         rules_text = rules_text.replace(key, value)
     return Grammar(rules_text)
 
 
-def text_from_pdf(file: Union[str, IO, Path], human_readable=False) -> str:
+def text_from_pdf(file: str | IO | Path, human_readable=False) -> str:
     """Get text from a PDF file or path"""
     reader = DocketReader(file)
     extracted_text = reader.extract_text()
@@ -232,6 +230,8 @@ def text_from_pdf(file: Union[str, IO, Path], human_readable=False) -> str:
 
 def get_cause_without_context(exc: VisitationError) -> str:
     """Get the cause of a VisitationError as a string, without the parse tree context."""
+    # Because the parse trees for dockets are very large, the full context of where in the parse tree an error occurred
+    # can be thousands of lines long, which is usually not helpful in debugging.
     tb = traceback.format_exception(exc)
     original_traceback_string = ''
     for line in tb:
@@ -241,10 +241,13 @@ def get_cause_without_context(exc: VisitationError) -> str:
     return original_traceback_string
 
 
-def parse_pdf(file: Union[str, IO, Path]) -> dict[str, Union[str, List[Union[str, dict]]]]:
+def parse_pdf(file: str | IO | Path) -> dict[str, str | List[str | dict]]:
     """From a PDF, return information necessary for generating expungement petitions."""
     text = text_from_pdf(file)
-    # text_without_page_breaks = remove_page_breaks(text)
+    return parse_extracted_text(text)
+
+
+def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | datetime.date]:
     ppeg_file_path = Path(__file__).parent.joinpath("docket_grammar.ppeg")
 
     docket_grammar = get_grammar_from_file(ppeg_file_path)
@@ -252,7 +255,7 @@ def parse_pdf(file: Union[str, IO, Path]) -> dict[str, Union[str, List[Union[str
     try:
         tree = docket_grammar.parse(text)
     except ParseError as err:
-        logger.error("Unable to parse pdf")
+        logger.error("Unable to parse extracted text")
         raise err
 
     visitor = DocketVisitor()
@@ -264,14 +267,3 @@ def parse_pdf(file: Union[str, IO, Path]) -> dict[str, Union[str, List[Union[str
         logger.error(msg)
     # convert to json?
     return parsed
-
-
-# what I used for debugging:
-if __name__ == "__main__":
-    test_paths = Path(__file__).parent.joinpath('tests/data').glob('*.pdf')
-    out_dir_path = Path(__file__).parent.parent.parent.parent.parent.joinpath('scratch/data/json')
-    logger.setLevel('DEBUG')
-    for test_path in test_paths:
-        _parsed = parse_pdf(test_path)
-        with open(out_dir_path.joinpath(test_path.name.replace('.pdf', '.json')), 'w') as out_file:
-            json.dump(_parsed, out_file, indent=2, default=repr)

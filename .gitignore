@@ -2,8 +2,7 @@
 __pycache__
 *pyc
 /mysql_ca_cert
-*/docket_parser/build/*
-*/docket_parser/dist/*
-**/docket_parser.egg-info
 *.swp
 mysql_cert.pem
+build
+*.egg-info

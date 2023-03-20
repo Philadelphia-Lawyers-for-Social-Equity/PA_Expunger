@@ -18,11 +18,5 @@ pythonpath = "src"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-docket_parser = ["*.ppeg"]
-# might want to reorganize this when we start using court summaries.
-"docket_parser.tests.data.dockets" = ["dockets/*.pdf"]
-"docket_parser.tests.data.json" =  ["*.json"]
-
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
