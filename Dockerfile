@@ -1,7 +1,7 @@
-FROM debian:stable
+FROM python:latest
 
 ENV INSTALL_DIR /srv/plse/install
-ENV APPDIR /srv/plse/expunger
+ENV APP_DIR /srv/plse/expunger
 
 ARG EXPUNGER_USER
 ARG EXPUNGER_PASS
@@ -23,11 +23,6 @@ RUN apt-get update -y -qq && \
     build-essential \
     git \
     pkg-config \
-    python-dev \
-    python3 \
-    python3-pip \
-    python3-dev \
-    python3-setuptools \
     libcurl4-openssl-dev \
     libpoppler-cpp-dev \
     libssl-dev \
@@ -69,8 +64,6 @@ RUN if [ ${USER_ID:-0} -ne 0 ] && [ ${GROUP_ID:-0} -ne 0 ];\
 
 RUN echo ${EXPUNGER_USER}:${EXPUNGER_PASS} | chpasswd
 
-RUN mkdir -p ${APPDIR}/static
-RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
 USER ${EXPUNGER_USER}
 
 # Library install
@@ -82,34 +75,31 @@ RUN pip3 install --user mod_wsgi
 
 # -- DEV BUILD --
 # Docket parser install
-
-WORKDIR ${INSTALL_DIR}/docket_parser
-COPY platform/docket_parser .
-# installing requirements separately is not necessary due to pyproject.toml
-RUN pip3 install ./
+COPY --chown=${EXPUNGER_USER}:${EXPUNGER_USER} platform/docket_parser ./docket_parser
+RUN pip3 install --user --editable ./docket_parser
 
 # App install
-WORKDIR ${APPDIR}
-COPY platform/src/ .
+WORKDIR ${APP_DIR}
+COPY --chown=${EXPUNGER_USER}:${EXPUNGER_USER} platform/src/ .
 
 
 #https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues/47
 # -- PROD BUILD --
 # Frontend install
 
-WORKDIR ${APPDIR}/frontend/src
+WORKDIR ${APP_DIR}/frontend/src
 COPY frontend/src/ .
+#Running the command below as root, then switch back to newly created user below
 USER root
 # prod_build.sh will only build the front end if BACKEND_ONLY == "true"
 RUN if [ "$BACKEND_ONLY" = "true" ]; then ./prod_build.sh; else echo "Dev build, frontend not compiled into django."; fi
 
-#Running the command below as root, then switch back to newly created user below
-USER root
 #Change owner of the newly created files, before running the collectstatic command
-RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APPDIR}
+RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APP_DIR}
 #Then, switch back to the newly created user - not the root user
 USER ${EXPUNGER_USER}
-WORKDIR ${APPDIR}
+
+WORKDIR ${APP_DIR}
 RUN python3 ./manage.py collectstatic --noinput
 
 ## -- FINAL BUILD --

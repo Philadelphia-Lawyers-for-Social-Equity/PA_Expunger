@@ -82,8 +82,7 @@ aliases =
     )+
 aliases_start = "Alias Name" properties_normal terminator
 # Sometimes there are multiple columns for aliases (separated by tab)
-# Need to find an example with multiple columns to correct grammar.
-#alias_segment = alias (tab content_char+)* properties_03x_normal terminator
+# Need to find an example with >1 alias and multiple columns to possibly correct grammar.
 alias_segment = alias (box_wrap alias)* (tab content_char+)* properties_03x_normal terminator
 alias = content_char+
 

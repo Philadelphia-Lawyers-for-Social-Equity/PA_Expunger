@@ -43,6 +43,7 @@ services:
             - 8000:8000
         volumes:
             - ./platform/src/:/srv/plse/expunger
+            - ./platform/docket_parser:/srv/plse/install/docket_parser
         restart: on-failure
 
     frontend:

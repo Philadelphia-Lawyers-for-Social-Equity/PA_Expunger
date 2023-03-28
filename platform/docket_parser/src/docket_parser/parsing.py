@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import logging
 import re
@@ -6,7 +5,7 @@ import traceback
 from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
-from typing import IO, List, Any
+from typing import Any, BinaryIO, TextIO
 
 from parsimonious.exceptions import ParseError, VisitationError
 from parsimonious.grammar import Grammar
@@ -29,9 +28,9 @@ REPLACEMENTS = {"NOT_INSERTED_CHARACTER_REGEX": DocketReader.generate_content_re
 class DocketVisitor(NodeVisitor):
     """NodeVisitor to go through a parse tree and get the relevant information for expungement petitions"""
 
-    # These are terms which don't have any children that we care about.
-    # They should be leaves in the *visited* tree, i.e. they should have no visited children.
-    # The leaves of the (not visited) parse tree are string literals.
+    # These are nodes which don't have any children that we care about.
+    # They are leaves in the *visited* tree, i.e. they have no visited children.
+    # Could rename to visited_leaves if this is confusing.
     string_leaves = ["defendant_name", "docket_number", "judge", "otn", "originating_docket_number",
                      "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
                      "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
@@ -49,19 +48,20 @@ class DocketVisitor(NodeVisitor):
             self.add_money_visitor(money_name)
 
     @classmethod
-    def add_leaf_visitor(cls, leaf_name: str):
+    def add_leaf_visitor(cls, leaf_name: str) -> None:
         """Add a visit method for a given leaf name, which returns a dictionary containing only the leaf name as key
         and the stripped text of node as value.
         """
 
         def visit_leaf(self, node, visited_children) -> dict[str, str]:
+            logger.debug({leaf_name: node.text.strip()})
             return {leaf_name: node.text.strip()}
 
         method_name = "visit_" + leaf_name
         setattr(cls, method_name, visit_leaf)
 
     @classmethod
-    def add_date_visitor(cls, date_name: str):
+    def add_date_visitor(cls, date_name: str) -> None:
         """Add a visit method for a given date name, which returns a dictionary containing only the date name as key
         and a date object as value.
         """
@@ -75,7 +75,7 @@ class DocketVisitor(NodeVisitor):
         setattr(cls, method_name, visit_date)
 
     @classmethod
-    def add_money_visitor(cls, money_term: str):
+    def add_money_visitor(cls, money_term: str) -> None:
         """Add a visit method for a given money name, which returns a dictionary containing only the money name as key
         and a float as value.
         """
@@ -96,7 +96,7 @@ class DocketVisitor(NodeVisitor):
         method_name = "visit_" + money_term
         setattr(cls, method_name, visit_money)
 
-    def generic_visit(self, node, visited_children):
+    def generic_visit(self, node, visited_children) -> Node | list:
         """Default behavior is to go further down the tree."""
         return visited_children or node
 
@@ -155,11 +155,9 @@ class DocketVisitor(NodeVisitor):
 
 # Helpers
 
-
 def remove_page_breaks(extracted_text: str) -> str:
     """Remove all page breaks from extracted text.
     This allows us to simplify grammar by not needing to check for page breaks everywhere"""
-    # Not sure how to write a good test for this fn
     # This function may be useful in the future but is not currently used.
     input_lines = extracted_text.split(DocketReader.terminator)
     output_lines = [input_lines[0]]
@@ -170,15 +168,16 @@ def remove_page_breaks(extracted_text: str) -> str:
     not_props_close = '[^' + props_close + ']*'
     properties_regex = props_open + not_props_close + props_close
     versus_line_regex = r"v\. *" + properties_regex
-    printed_date_line_regex = "Printed:" + not_props_open + properties_regex
+    date_regex = r"\d{2}/\d{2}/\d{4}"
+    printed_date_line_regex = re.compile(r"Printed:\s*" + date_regex + not_props_open + properties_regex)
 
     for index, line in enumerate(input_lines[1:], start=1):
         if in_page_break:
             if re.match(versus_line_regex, input_lines[index - 1]):
-                logger.debug(f"end pbreak matched: {input_lines[index - 1]}")
+                logger.debug(f"end page break matched: {input_lines[index - 1]}")
                 in_page_break = False
         elif re.match(printed_date_line_regex, line):
-            logger.debug(f"begin pbreak matched: {line}")
+            logger.debug(f"begin page break matched: {line}")
             in_page_break = True
         else:
             output_lines.append(line)
@@ -204,9 +203,9 @@ def flatten(visited_children):
             yield from flatten(item)
 
 
-def get_grammar_from_file(ppeg_file_or_path: str | Path | IO) -> Grammar:
+def get_grammar_from_file(ppeg_file_or_path: str | Path | TextIO) -> Grammar:
     """Return a parsimonious Grammar object from given file or path."""
-    if isinstance(ppeg_file_or_path, IO):
+    if isinstance(ppeg_file_or_path, TextIO):
         rules_text = ppeg_file_or_path.read()
     else:
         with open(ppeg_file_or_path, 'r', encoding='utf-8') as grammar_file:
@@ -219,12 +218,10 @@ def get_grammar_from_file(ppeg_file_or_path: str | Path | IO) -> Grammar:
     return Grammar(rules_text)
 
 
-def text_from_pdf(file: str | IO | Path, human_readable=False) -> str:
+def text_from_pdf(file: str | BinaryIO | Path) -> str:
     """Get text from a PDF file or path"""
     reader = DocketReader(file)
     extracted_text = reader.extract_text()
-    if human_readable:
-        return extracted_text.replace(reader.terminator, '\n')
     return extracted_text
 
 
@@ -241,7 +238,7 @@ def get_cause_without_context(exc: VisitationError) -> str:
     return original_traceback_string
 
 
-def parse_pdf(file: str | IO | Path) -> dict[str, str | List[str | dict]]:
+def parse_pdf(file: str | BinaryIO | Path) -> dict[str, str | list[str | dict]]:
     """From a PDF, return information necessary for generating expungement petitions."""
     text = text_from_pdf(file)
     return parse_extracted_text(text)
@@ -265,5 +262,4 @@ def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | date
     except VisitationError as e:
         msg = "VisitationError caused by:\n" + get_cause_without_context(e)
         logger.error(msg)
-    # convert to json?
     return parsed

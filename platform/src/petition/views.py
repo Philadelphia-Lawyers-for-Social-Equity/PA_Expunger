@@ -5,24 +5,21 @@ import traceback
 from typing import List, Tuple
 
 import jinja2
-from docxtpl import DocxTemplate
-
 from django.http import HttpResponse
-
 from django.utils.datastructures import MultiValueDictKeyError
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from docxtpl import DocxTemplate
 from rest_framework import status
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 import docket_parser
-
 from . import models
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger = logging.getLogger("django")
-logger.info("LogLevel is: %s" % logger.level)
-logger.info("DJANGO_LOG_LEVEL: %s" % os.environ.get("DJANGO_LOG_LEVEL"))
+logger.info(f"LogLevel is: {logger.level}")
+logger.info(f"DJANGO_LOG_LEVEL: {os.environ.get('DJANGO_LOG_LEVEL')}")
 
 
 class PetitionAPIView(APIView):
@@ -30,7 +27,7 @@ class PetitionAPIView(APIView):
         logger.debug("PetitionAPIView post")
         profile = request.user.expungerprofile
 
-        logger.debug("Profile %s found attorney %s" % (profile, profile.attorney))
+        logger.debug(f"Profile {profile} found attorney {profile.attorney}")
 
         try:
             context = {
@@ -50,11 +47,11 @@ class PetitionAPIView(APIView):
                 ],
             }
         except KeyError as err:
-            msg = "Missing field: %s" % (err)
-            logger.warn(msg)
+            msg = f"Missing field: {err}"
+            logger.warning(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        logger.debug("Petition POSTed with context: %s" % context)
+        logger.debug(f"Petition POSTed with context: {context}")
 
         docx = os.path.join(
             BASE_DIR, "petition", "templates", "petition", "petition.docx"
@@ -76,7 +73,7 @@ class PetitionAPIView(APIView):
 
 
 class DocketParserAPIView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs):
         logger.debug("DocketParserAPIView post")
 
         profile = request.user.expungerprofile
@@ -84,8 +81,8 @@ class DocketParserAPIView(APIView):
         try:
             df = request.FILES["docket_file"]
         except MultiValueDictKeyError:
-            msg = "No docket_file, got %s" % request.FILES.keys()
-            logger.warn(msg)
+            msg = f"No docket_file, got {request.FILES.keys()}"
+            logger.warning(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -100,12 +97,13 @@ class DocketParserAPIView(APIView):
         content = {
             "petitioner": petitioner_from_parser(parsed),
             "petition": petition_from_parser(parsed, ratio),
-            "dockets": dockets_from_parser(parsed),
+            "dockets": docket_numbers_from_parser(parsed),
             "charges": charges,
             "restitution": restitution_from_parser(parsed),
         }
 
-        logger.debug("Parsed: %s", content)
+        logger.debug(f"Request: {request.data}")
+        logger.debug(f"Parsed: {content}")
         return Response(content)
 
 
@@ -139,26 +137,32 @@ def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
     }
 
 
-def dockets_from_parser(parsed: dict) -> List[str]:
+def docket_numbers_from_parser(parsed: dict) -> List[str]:
     """
     Produce the docket numbers based on the docket parser output.
     """
-    dockets = []
+    # If we care about which docket number is originating/cross court/primary, should return a dictionary instead.
+    docket_numbers = []
     primary = parsed.get("docket_number")
     if primary is not None:
-        dockets.append(primary)
+        docket_numbers.append(primary)
 
     originating = parsed.get("originating_docket_number")
     if originating is not None:
-        dockets.append(originating)
+        docket_numbers.append(originating)
 
     cross_court = parsed.get("cross_court_docket_numbers")
     if cross_court is not None:
+        # This processing could be moved to parser
         cross_court = cross_court.split(',')
         for cross_court_number in cross_court:
-            dockets.append(cross_court_number.strip())
+            docket_numbers.append(cross_court_number.strip())
 
-    return dockets
+    def docket_number_filter(docket_number):
+        return docket_number[:3] in ("MC-", "CP-")
+
+    docket_numbers = list(filter(docket_number_filter, docket_numbers))
+    return docket_numbers
 
 
 def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]:
@@ -184,7 +188,6 @@ def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]
     ratio = models.PetitionRatio.full
     if not any(case_event.get("disposition_finality") == "Final Disposition" for case_event in case_events):
         logger.error("No final disposition found.")
-        # raise ValueError("No final disposition found.")
 
     for case_event in case_events:
         if case_event.get("disposition_finality") != "Final Disposition":
@@ -192,13 +195,11 @@ def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]
 
         if "charges" not in case_event:
             logger.error(f"No charges found for {case_event.get('case_event')} (Final Disposition)")
-            # raise ValueError(f"No charges found for {case_event.get('case_event')} (Final Disposition)")
 
         disposition_date = case_event.get("disposition_date")
         for charge in case_event["charges"]:
             if "offense_disposition" not in charge:
                 logger.error(f"Charge must include a disposition, got: {charge}")
-                # raise ValueError(f"Charge must include a disposition, got: {charge}")
 
             if is_expungeable(charge["offense_disposition"]):
                 adapted_charge = adapt_charge(charge, disposition_date)
@@ -222,9 +223,9 @@ def restitution_from_parser(parsed: dict) -> dict:
 
 def date_string(d):
     try:
-        return "%02d-%02d-%04d" % (d.month, d.day, d.year)
+        return f"{d.month:02d}-{d.day:02d}-{d.year:04d}"
     except AttributeError:
-        logger.warn("Invalid date object: %s" % (str(d)))
+        logger.warning(f"Invalid date object: {str(d)}")
         return ""
 
 

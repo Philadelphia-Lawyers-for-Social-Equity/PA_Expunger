@@ -1,16 +1,15 @@
 import logging
 from copy import copy
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 from re import escape
-from typing import Union, IO, List, Dict, Tuple
 
 from numpy import matmul
 from pypdf import PdfReader, PageObject
 from pypdf.errors import PdfReadError
-from pypdf.generic import DictionaryObject
 
-from .font import get_unicode_map, get_widths_dict
+from .font import PdfFontWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +19,17 @@ class TextSegment:
     """ Stores text segment properties.
     Attributes:
         content (str): The text contained in the segment
-        coordinates (tuple[float, float]): (x, y) coordinates of the point where segment started,
-                                           in pdf user space units
-        font_name (str): Shortened name of the font used for the segment
-        x_transform (float): Sum of x transformation... #TODO explain better
-        y_transform (float): Sum of y transformation... #TODO explain better
+        origin_coordinates (tuple[float, float]): (x, y) coordinates of the point where segment started,
+                                                  in pdf device space
+        font_name (str): Resource name of the font used for the segment
+        x_translation_from_origin (float): Sum of x translation from 'Td' operations since this segment started
+        y_translation_from_origin (float): Sum of y translation from 'Td' operations since this segment started
     """
     content: str = ''
-    coordinates: tuple[float, float] = None
+    origin_coordinates: tuple[float, float] = None
     font_name: str = None
-    x_transform: float = 0
-    y_transform: float = 0
+    x_translation_from_origin: float = 0
+    y_translation_from_origin: float = 0
 
     def reset(self):
         self.__init__()
@@ -40,7 +39,7 @@ class TextSegment:
 class TextState:
     """ Contains variables of pdf text state.
      Attributes:
-         font_name (str): Font name
+         font_name (str): Font resource name
          size (float): Font size
          """
     font_name: str
@@ -58,7 +57,7 @@ class DocketReader(PdfReader):
     properties_close = ']'
     box_wrap = '^'
 
-    def __init__(self, stream: Union[str, IO, Path]):
+    def __init__(self, stream: str | BytesIO | Path):
         super().__init__(stream)
         if self.metadata.get('/Creator') != 'Crystal Reports':
             # This warning should get passed along to person using our app (end user).
@@ -68,7 +67,7 @@ class DocketReader(PdfReader):
         self._pages = [DocketPageObject(self, page) for page in super().pages]
 
     @property
-    def pages(self) -> List['DocketPageObject']:
+    def pages(self) -> list['DocketPageObject']:
         return self._pages
 
     def visit(self, **kwargs) -> None:
@@ -84,19 +83,18 @@ class DocketReader(PdfReader):
         return extracted_text
 
     @classmethod
-    def get_special_characters(cls) -> List[str]:
+    def get_special_characters(cls) -> list[str]:
         """Return a list of each special character used by this reader."""
         return [cls.tab, cls.terminator, cls.properties_open, cls.properties_close, cls.comes_before, cls.box_wrap]
 
     @classmethod
     def generate_content_regex(cls) -> str:
         """Return a regular expression that will match any character that is not added by this reader."""
-        # inserted_chars = cls.tab  + cls.properties_open + cls.properties_close + cls.comes_before
         inserted_chars = ''.join(cls.get_special_characters())
         inserted_chars_expression = '[^' + escape(inserted_chars) + ']'
         return inserted_chars_expression
 
-    def _debug_get_all_operations(self) -> List[List[Union[bytes, List]]]:
+    def _debug_get_all_operations(self) -> list[list[bytes | list]]:
         """For debugging purposes, collect and return a list of all operations in the pdf's content stream"""
         operations = []
 
@@ -107,7 +105,7 @@ class DocketReader(PdfReader):
         self.visit(visitor_operand_before=visitor)
         return operations
 
-    def _debug_count_operators_used(self) -> Dict[bytes, int]:
+    def _debug_count_operators_used(self) -> dict[bytes, int]:
         """For debugging purposes, collect all operators used in pdf and return dictionary with counts for each."""
         operator_counts = {}
 
@@ -135,44 +133,29 @@ class DocketPageObject(PageObject):
         super().__init__(pdf=reader, indirect_reference=page.indirect_reference)
         self.reader = reader
         self.update(page)
-
         # Set up font dictionaries. Assumes TrueType font with /ToUnicode, see 9.6
-        self.font_unicode_maps: Dict[str, Dict[int, str]] = {}
-        self.font_width_dicts: Dict[str, Dict[int, int]] = {}
-        self.font_output_names: Dict[str, str] = {}
-        fonts = self['/Resources']['/Font']
+        self.font_unicode_maps: dict[str, dict[int, str]] = {}
+        self.font_width_dicts: dict[str, dict[int, int]] = {}
+        self.font_output_names: dict[str, str] = {}
+        _fonts = self['/Resources']['/Font']
+        self.fonts = {name: PdfFontWrapper(_fonts[name]) for name in _fonts}
 
-        if len(fonts) > 2:
+        if len(self.fonts) > 2:
             logger.warning("There are more than two fonts in this docket, which is unexpected.")
 
-        for font_resource_name in fonts:
-            # NB: iterating through fonts.items() would give indirect references instead of actual font objects
-            font: DictionaryObject = fonts[font_resource_name]
-            unicode_map = get_unicode_map(font)
-            self.font_unicode_maps[font_resource_name] = unicode_map
-            self.font_width_dicts[font_resource_name] = get_widths_dict(font)
-
-            for char in unicode_map.values():
+        for font_name, font in self.fonts.items():
+            for char in font.unicode_map.values():
                 if char in reader.get_special_characters():
                     raise PdfReadError(f"Special character '{char}' was found in pdf's fonts. "
                                        "Please use a different special character.")
 
             if 'bold' in font['/BaseFont'].lower():
-                self.font_output_names[font_resource_name] = 'bold'
+                self.font_output_names[font_name] = 'bold'
             else:
-                self.font_output_names[font_resource_name] = 'normal'
-
-    def get_content_and_width(self, font_name: str, bs: bytes) -> Tuple[str, int]:
-        """Decode byte-string to unicode str and calculate horizontal width."""
-        content = ''
-        width = 0
-        for character_id in bs:
-            content += self.font_unicode_maps[font_name][character_id]
-            width += self.font_width_dicts[font_name][character_id]
-        return content, width
+                self.font_output_names[font_name] = 'normal'
 
     @staticmethod
-    def mult(tm: List[float], cm: List[float]) -> List[float]:
+    def mult(tm: list[float], cm: list[float]) -> list[float]:
         """ Does matrix multiplication with the shortened forms of matrices tm, cm.
             See 9.4.2 Tm operator for description of shortened matrix
             """
@@ -201,15 +184,16 @@ class DocketPageObject(PageObject):
 
         # text state is a subset of graphics state, see 9.3.1
         text_state = TextState('', 0)
-        text_state_stack: List[TextState] = []
+        text_state_stack: list[TextState] = []
 
         # segment will be modified until terminate_segment() is called,
         # which adds a copy of segment to the list, and resets segment
         segment = TextSegment()
-        extracted_segments: List[TextSegment] = []
+        extracted_segments: list[TextSegment] = []
 
         # displacement calculation details in 9.4.4
-        # cur_displacement stores how much horizontal space is taken up by text, in text units, since last repositioning
+        # cur_displacement stores how much horizontal space is taken up by text,
+        # in unscaled text units, since last repositioning
         # See handling for 'Td' operator for how/why this is used.
         cur_displacement: float = 0.0
 
@@ -231,10 +215,10 @@ class DocketPageObject(PageObject):
             """
             nonlocal text_state, cur_displacement
 
-            if operator in (b'TJ', b'Tj') and segment.coordinates is None:
+            if operator in (b'TJ', b'Tj') and segment.origin_coordinates is None:
                 # We want the output coordinates to be where the segment started, not get updated by 'Td' operations
                 m = self.mult(tm, cm)
-                segment.coordinates = m[4], m[5]
+                segment.origin_coordinates = m[4], m[5]
 
             if operator == b'Tf':
                 # Sets font and size
@@ -256,48 +240,49 @@ class DocketPageObject(PageObject):
                 terminate_segment()
             elif operator == b'Td':
                 # Move text position
-                x_transform, y_transform = args
-                if y_transform < 0 and abs(x_transform + segment.x_transform) < x_tolerance:
+                x_translation, y_translation = args
+                if y_translation < 0 and abs(x_translation + segment.x_translation_from_origin) < x_tolerance:
                     # This happens when content of a left-justified text box(?) wraps to next line.
                     # Might happen in other situations that we don't care about?
                     # TODO: find example where a text box is interrupted by page break and handle it
                     segment.content += self.reader.box_wrap
-                    segment.x_transform = 0
-                    segment.y_transform += y_transform
-                elif y_transform > 0 and abs(y_transform + segment.y_transform) < y_tolerance:
+                    segment.x_translation_from_origin = 0
+                    segment.y_translation_from_origin += y_translation
+                elif y_translation > 0 and abs(y_translation + segment.y_translation_from_origin) < y_tolerance:
                     # This happens when text box ends and cursor goes back up to current line.
-                    segment.y_transform = 0
-                    segment.x_transform = 0
-                    if x_transform < 0:
+                    segment.y_translation_from_origin = 0
+                    segment.x_translation_from_origin = 0
+                    if x_translation < 0:
                         segment.content += self.reader.comes_before
                     else:
                         # could check spacing/overlap here, but probably not necessary
                         segment.content += self.reader.tab
-                elif abs(y_transform) >= y_tolerance:
+                elif abs(y_translation) >= y_tolerance:
                     # Every case I've seen with +-<1 unit change is on the same logical line,
                     # but that might not always be true.
                     terminate_segment()
-                elif x_transform < 0 and segment.content != '':
-                    # Every time there's a negative x transform in dockets, it would be correct to prepend the following
-                    # text to previous text instead of append. Could implement that, but inserting an unused character
-                    # works for parsing.
+                elif x_translation < 0 and segment.content != '':
+                    # Every time there's a negative x translation in dockets, it would be correct to prepend the
+                    # following text to previous text instead of append. Could implement that, but inserting an unused
+                    # character works for parsing.
                     segment.content += self.reader.comes_before
-                elif x_transform > 0 and segment.content != '':
-                    # Positive x transform means moving start of next text placement to the right of the *start* of
+                elif x_translation > 0 and segment.content != '':
+                    # Positive x translation means moving start of next text placement to the right of the *start* of
                     # the last one. It could be moving it right to the end of the last shown text, which would be
                     # no/irrelevant space, or it could move it past the end of last shown text, which would be
                     # meaningful spacing. We keep track of displacement of last shown text to determine this.
-                    units_of_spacing = x_transform - cur_displacement
+                    units_of_spacing = x_translation - cur_displacement
                     if units_of_spacing > x_tolerance * text_state.size:
                         segment.content += self.reader.tab
                         # for debugging x_tolerance value:
-                        # logger.debug(segment.content + f'{{{units_of_spacing:.1f}>{text_state.size}*{x_tolerance:.1f}}}')
+                        # logger.debug(
+                        #     segment.content + f'{{{units_of_spacing:.1f}>{text_state.size}*{x_tolerance:.1f}}}')
                     elif units_of_spacing < -.1:
                         # -.1 because < 0 catches float rounding errors.
                         logger.debug(f"Potentially overlapping text after: '{segment.content}'.")
                     else:
                         # This is for detecting newline in textbox vs segment termination
-                        segment.x_transform += x_transform
+                        segment.x_translation_from_origin += x_translation
                 cur_displacement = 0
 
             elif operator == b'TJ':
@@ -305,8 +290,10 @@ class DocketPageObject(PageObject):
                 # See 9.4.3
                 for item in args[0]:
                     if isinstance(item, bytes):
-                        # add_bytes_to_segment(item)
-                        content, width = self.get_content_and_width(text_state.font_name, item)
+                        content, width = self.fonts[text_state.font_name].get_content_and_width(item)
+                        # Glyph space to scaled text space conversion is always the default 1/1000 for these fonts.
+                        # The glyph width in scaled text space needs to be multiplied by the font size
+                        # to calculate displacement in unscaled text space. (the Td operator uses unscaled text space.)
                         displacement = width / 1000 * text_state.size
                         cur_displacement += displacement
                         segment.content += content
@@ -314,7 +301,7 @@ class DocketPageObject(PageObject):
                         cur_displacement -= item * text_state.size / 1000
             elif operator == b'Tj':
                 # args will have exactly one element, a bytes instance. See 9.4.3
-                content, width = self.get_content_and_width(text_state.font_name, args[0])
+                content, width = self.fonts[text_state.font_name].get_content_and_width(args[0])
                 displacement = width / 1000 * text_state.size
                 cur_displacement += displacement
                 segment.content += content
@@ -340,12 +327,12 @@ class DocketPageObject(PageObject):
                 kwargs['visitor_operand_before'](operator, args, cm, tm)
             if debug_log_operations:
                 if operator == b'Tj':
-                    content, width = self.get_content_and_width(text_state.font_name, args[0])
+                    content, width = self.fonts[text_state.font_name].get_content_and_width(args[0])
                     operations.append([operator, content])
                 elif operator == b'TJ':
                     for item in args[0]:
                         if isinstance(item, bytes):
-                            content, width = self.get_content_and_width(text_state.font_name, item)
+                            content, width = self.fonts[text_state.font_name].get_content_and_width(item)
                             operations.append([operator, content])
                 else:
                     operations.append([operator, args])
@@ -356,8 +343,8 @@ class DocketPageObject(PageObject):
         super().extract_text(**super_kwargs)
 
         if debug_log_operations:
-            for operator, operand in operations:
-                logger.debug(f"{operator}: {operand}")
+            for _operator, operand in operations:
+                logger.debug(f"{_operator}: {operand}")
 
         formatted_segments = [self.segment_to_str(seg) for seg in extracted_segments]
         return ''.join(formatted_segments)
@@ -365,7 +352,7 @@ class DocketPageObject(PageObject):
     def segment_to_str(self, segment: TextSegment) -> str:
         """Take a TextSegment and return the content of segment plus formatted expression of its properties.
         Terminates with terminator character from reader."""
-        rounded_coordinates = (round(coordinate, 2) for coordinate in segment.coordinates)
+        rounded_coordinates = (round(coordinate, 2) for coordinate in segment.origin_coordinates)
         # The grammar currently expects this exact format, so it will need to change if this does.
         properties = ''.join(f'{n:06.2f},' for n in rounded_coordinates)
         properties += segment.font_name

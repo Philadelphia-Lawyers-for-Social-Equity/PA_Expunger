@@ -1,4 +1,3 @@
-# -*- coding: utf -*-
 from datetime import date
 import factory
 import factory.fuzzy
