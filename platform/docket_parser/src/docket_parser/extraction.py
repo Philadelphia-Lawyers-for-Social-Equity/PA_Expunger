@@ -144,7 +144,7 @@ class DocketPageObject(PageObject):
             logger.warning("There are more than two fonts in this docket, which is unexpected.")
 
         for font_name, font in self.fonts.items():
-            for char in font.unicode_map.values():
+            for char in font.cid_to_unicode_map.values():
                 if char in reader.get_special_characters():
                     raise PdfReadError(f"Special character '{char}' was found in pdf's fonts. "
                                        "Please use a different special character.")
@@ -328,12 +328,16 @@ class DocketPageObject(PageObject):
             if debug_log_operations:
                 if operator == b'Tj':
                     content, width = self.fonts[text_state.font_name].get_content_and_width(args[0])
-                    operations.append([operator, content])
+                    operations.append([operator, repr(content)])
                 elif operator == b'TJ':
+                    operand_representation = []
                     for item in args[0]:
                         if isinstance(item, bytes):
                             content, width = self.fonts[text_state.font_name].get_content_and_width(item)
-                            operations.append([operator, content])
+                            operand_representation.append(content)
+                        else:
+                            operand_representation.append(item)
+                    operations.append([operator, operand_representation])
                 else:
                     operations.append([operator, args])
 

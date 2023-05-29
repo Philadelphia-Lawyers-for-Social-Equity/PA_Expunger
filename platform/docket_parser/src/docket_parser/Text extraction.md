@@ -130,6 +130,9 @@ Currently, the only operators that we look at are:
 - `ET` Ends text block.
 - `Tj` Shows a string of characters.
 - `TJ` Shows a string of characters, allowing for horizontal position adjustments between characters.
+These horizontal spacing adjustments are used for one of two reasons in these documents: 
+  - Positive adjustments (to the left) are exclusively used for [kerning], moving characters closer together when appropriate.
+  - Negative adjustments (to the right) are exclusively used for adding space between words to achieve [fully justified alignment]
 
 pypdf does some processing of the content stream before passing its contents to our visitor function. 
 For example, where the content stream has the bytes `[ (A) 35 ( COUNT) (Y) 17 (  ) ] TJ`, 
@@ -156,8 +159,8 @@ Segments
 ---
 We process the text into 'segments' which are sequences of text with the same properties usually on the same horizontal line.
 We concatenate decoded characters from `Tj` and `TJ` operations to build the segments.
-We also keep track of the horizontal displacement of the segments, so that we can tell if a `Td` operation moves the cursor 
-directly at the end of the last character shown, or far enough to insert a tab.
+We also keep track of the horizontal displacement (formal name for width) of the segments, 
+so that we can tell if a `Td` operation moves the cursor directly at the end of the last character shown, or far enough to insert a tab.
 We end one segment and start the next when one of the following occurs in the content stream:
 - `Tf` or `Q` operators, which change the font and or font size.
 - `ET` operator, which indicates the end of a text block.
@@ -185,3 +188,5 @@ User space coordinates and font type are added at the end of each segment
 
 
 [PDF]: https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
+[kerning]: https://en.wikipedia.org/wiki/Kerning
+[fully justified alignment]: https://en.wikipedia.org/wiki/Typographic_alignment#Justified

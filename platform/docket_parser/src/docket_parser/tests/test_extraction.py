@@ -4,20 +4,11 @@ from pathlib import Path
 import pytest
 from pypdf.errors import PdfReadError
 
-from docket_parser import test_data_path, document_types
+from docket_parser import test_data_path
 from docket_parser.extraction import DocketReader, logger as extraction_logger
+from docket_parser.tests import get_pdf_paths
 
-DATA_PATH = test_data_path
-MODIFIED_PDFS_PATH = DATA_PATH / "modified_pdfs"
-
-
-def get_pdf_paths() -> tuple[list[Path], list[str]]:
-    pdf_paths = []
-    for document_type in document_types:
-        paths = (DATA_PATH / document_type / 'pdfs').glob("*.pdf")
-        pdf_paths.extend(paths)
-    ids = [path.stem for path in pdf_paths]
-    return pdf_paths, ids
+MODIFIED_PDFS_PATH = test_data_path / "modified_pdfs"
 
 
 class TestExtraction:

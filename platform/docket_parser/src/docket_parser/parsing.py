@@ -154,7 +154,7 @@ class DocketVisitor(NodeVisitor):
     # These are nodes which don't have any children that we care about.
     # They are leaves in the *visited* tree, i.e. they have no visited children.
     # Could rename to visited_leaves if this is confusing.
-    string_leaves = ["defendant_name", "docket_number", "judge", "otn", "originating_docket_number",
+    string_leaves = ["defendant_name_reversed", "docket_number", "judge", "otn", "originating_docket_number",
                      "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
                      "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
                      ]
@@ -430,6 +430,15 @@ def parse_pdf(file: str | BinaryIO | Path) -> dict[str, str | list[str | dict]]:
     return parse_extracted_text(text)
 
 
+def reversed_name_to_normal(reversed_name: str) -> str:
+    """Input: a reversed name, like 'Doe, John'
+    Output: Swap names around the comma, e.g. 'John Doe'
+    """
+    # This will error if ", " doesn't appear exactly once
+    before_comma, after_comma = reversed_name.split(", ")
+    return after_comma + ' ' + before_comma
+
+
 def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | datetime.date]:
     # First determine what kind of document the extracted text is from:
     document_type = get_document_type(text)
@@ -452,4 +461,5 @@ def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | date
     except VisitationError as e:
         msg = "VisitationError caused by:\n" + get_cause_without_context(e)
         logger.error(msg)
+    parsed["defendant_name"] = reversed_name_to_normal(parsed["defendant_name_reversed"])
     return parsed
