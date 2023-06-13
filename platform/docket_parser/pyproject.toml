@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docket_parser"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 version = "0.2.0"
 dynamic = ["dependencies"]
 # To switch from requirements.txt to listing dependencies here, delete the line above and uncomment the line below.
