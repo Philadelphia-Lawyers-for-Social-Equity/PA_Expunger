@@ -38,8 +38,8 @@ RUN apt-get update -y -qq && \
 # TODO: see below about adding this to production build only
 # https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues/47
 # Install Yarn for production frontend build later
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y -qq nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash - && \
+    apt-get install -y -qq nodejs
 RUN npm install -g yarn
 
 # timezone-related fixes
