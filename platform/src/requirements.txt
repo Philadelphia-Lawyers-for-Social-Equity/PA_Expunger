@@ -10,3 +10,5 @@ factory_boy >= 2.12.0
 psycopg2 >= 2.5.4
 dateparser >= 0.7.2
 pymysql >= 0.7
+pytest >= 7.2
+pytest-django >= 4.5

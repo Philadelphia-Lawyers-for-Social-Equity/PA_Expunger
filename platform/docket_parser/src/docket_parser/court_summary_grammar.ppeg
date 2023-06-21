@@ -1,0 +1,133 @@
+whole_summary =
+    page_header
+    defendant_information
+    category_section+
+
+page_header = (content_char+ properties_7yy_bold terminator)+
+
+# Header content is bold and above y coordinate 700.
+properties_7yy_bold = props_open coordinate comma &'7' coordinate comma bold props_close
+
+defendant_information = defendant_name_segment address_and_aliases_segment? warrant_segment? dob_and_other_segment other_info_segment*
+other_info_segment = content_char* properties_6yy_normal terminator
+
+defendant_name_segment = defendant_name_reversed tab? properties_0xx_bold terminator
+defendant_name_reversed = content_char+
+
+# Don't need address
+address_and_aliases_segment = ((!"Aliases:" content_char) / box_wrap)* "Aliases:" box_wrap aliases properties_0xx_normal terminator
+# "WARRANT OUTSTANDING" can show up directly below aliases. Hopefully that's not anyone's actual alias.
+aliases = content_char+ (box_wrap content_char+)*
+
+warrant_segment = &"WARRANT" content_char+ properties_0xx_normal terminator
+
+#Note: on non-secure court summaries, only DOB appears here, not the other stuff
+dob_and_other_segment = "DOB: " dob? (box_wrap (content_char / box_wrap / tab)*)? properties_6yy_normal terminator
+dob = date{1}
+properties_6yy_normal = props_open coordinate comma &'6' coordinate comma normal props_close
+properties_0xx_normal = props_open &'0' coordinates normal props_close
+
+category_section = archived_section / (category_segment county_section+)
+# Archived dockets do not have county names like others do
+archived_section = &"Archived" category_segment archived_docket_section+
+
+category_segment = category properties_04x_bold terminator
+category = content_char+
+properties_04x_bold = props_open &'04' coordinates bold props_close
+
+# County is usually in same segment as the first docket number, so no terminator.
+# Second case is when a page break separates county from docket number
+county_section = ((county box_wrap) / county_segment) docket_section+
+county_segment = county properties_0xx_bold terminator
+county = (!digit content_char)+
+
+archived_docket_section = docket_number_segment (!docket_number_segment junk_segment)*
+
+docket_section = docket_number_segment case_information charges_section?
+
+docket_number_segment = docket_number tab properties_0xx_bold terminator
+docket_number = content_char+
+properties_0xx_bold = props_open &'0' coordinates bold props_close
+
+# It looks like there's two different formats for case info depending on whether case is closed or not.
+case_information = case_information_open / case_information_closed
+
+case_information_open =
+    otn_dcn_segment_open
+    (arrest_date_segment_open
+    / disposition_segment_open
+    / LA_segment
+    / normal_segment)*
+
+otn_dcn_segment_open = "Proc Status:" proc_status tab "DC No:" dcn tab "OTN:" otn properties_normal terminator
+arrest_date_segment_open = content_char+ comes_before "Arrest Dt: " arrest_date? tab content_char+ properties_normal terminator
+disposition_segment_open = "Disp Date: " disposition_date? tab "Disp Judge: " judge properties_normal terminator
+
+case_information_closed =
+    otn_dcn_segment_closed
+    ( dates_segment_closed
+    / LA_segment
+    / normal_segment)*
+
+otn_dcn_segment_closed = "OTN:" otn comes_before "DC No:" dcn comes_before "Proc Status:" proc_status properties_normal terminator
+otn = content_char*
+dcn = content_char*
+proc_status = content_char+
+
+dates_segment_closed = "Arrest Dt: " arrest_date? tab "Disp Date: " disposition_date? tab "Disp Judge: " judge properties_normal terminator
+arrest_date = date{1}
+disposition_date = date{1}
+judge = content_char*
+
+# Assuming that any bold segment that doesn't match LA_segment should not be part of case_information
+LA_segment = "LA" content_char+ properties_1xx_bold terminator
+properties_1xx_bold = props_open &'1' coordinates bold props_close
+
+charges_section = column_headers (column_headers / charge_segment / normal_segment)*
+
+column_headers = (charge_column_headers sentence_column_headers) / charge_column_headers
+charge_column_headers = &"Seq No" column_header_segment{5}
+sentence_column_headers = &"Sentence" column_header_segment{4}
+column_header_segment = content_char+ properties_bold terminator
+
+charge_segment = charge_description (comes_before grade)? comes_before statute comes_before sequence_number (tab disposition)? properties_28x_normal terminator
+charge_description = content_char+ (box_wrap content_char+)*
+grade = content_char{1,3} &comes_before
+statute = content_char+
+sequence_number = content_char+
+disposition = content_char+ (box_wrap content_char+)*
+properties_28x_normal = props_open &'28' coordinates normal props_close
+
+junk_segment =
+    (content_char / tab / comes_before / box_wrap)*
+    (properties_bold / properties_normal)
+    terminator
+
+normal_segment = (content_char / tab / comes_before / box_wrap)* properties_normal terminator
+
+# bold, normal are the only two fonts used.
+properties_bold = props_open coordinates bold props_close
+properties_normal = props_open coordinates normal props_close
+
+coordinates = coordinate comma coordinate comma
+coordinate = digit{3} dot digit{2}
+
+
+date = digit{2} slash digit{2} slash digit{4}
+
+bold = "bold"
+normal = "normal"
+
+content_char = ~r"NOT_INSERTED_CHARACTER_REGEX"
+props_open = "INSERTED_PROPS_OPEN"
+props_close = "INSERTED_PROPS_CLOSE"
+terminator = "INSERTED_TERMINATOR"
+tab = "INSERTED_TAB"
+comes_before = "INSERTED_COMES_BEFORE"
+box_wrap = "INSERTED_BOX_WRAP"
+
+digit = ~r"[0-9]"
+comma = ','
+dot = '.'
+slash = '/'
+space = " "

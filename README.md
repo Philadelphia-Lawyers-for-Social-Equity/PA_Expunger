@@ -27,11 +27,11 @@ forward. In order to run the tests:
 docker-compose exec -it expunger bash
 
 # Run the tests
-python3 manage.py test
+pytest
 
-# Or run an individual test
-# This command runs the test_petition test in petitions/tests/test_rest.py
-python3 manage.py test petition.tests.test_rest.TestRest.test_petition
+# Or run specific tests
+# This command runs tests with containing the string "petition" in test class or function or filename
+pytest -k parsing
 ```
 
 ## Production

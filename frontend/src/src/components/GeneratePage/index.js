@@ -34,7 +34,7 @@ const defaultPetitionFields = {
   petition: {
     otn: "",
     dc: "",
-    arrest_date: "",
+    complaint_date: "",
     arrest_officer: "",
     arrest_agency: "",
     judge: "",

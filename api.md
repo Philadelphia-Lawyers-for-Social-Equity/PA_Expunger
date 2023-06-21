@@ -17,7 +17,7 @@ containing:
                 - zipcode: string of numbers
     - petition
             - otn: string
-            - arrest_date: iso formatted date, such as "2019-10-17"
+            - complaint_date: iso formatted date, such as "2019-10-17"
             - arrest_officer: string, arresting officer's full name
             - arrest_agency: string, arresting agency
             - judge: string, full name of the judge
@@ -149,7 +149,7 @@ parsing. This is where the real work gets done.
         expunged, or "partial" if some charges are excluded.
       - otn: string
       - dc: string
-      - arrest_date: iso formatted date, such as "2019-10-17"
+      - complaint_date: iso formatted date, such as "2019-10-17"
       - arrest_officer: string, arresting officer's full name
       - disposition: string
       - judge: string, full name of the judge

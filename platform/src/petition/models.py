@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import dateparser
 import enum
 
@@ -173,7 +171,7 @@ class PetitionRatio(enum.Enum):
 
 class Petition:
     """The petition data"""
-    def __init__(self, date, ratio, otn, dc, arrest_agency, arrest_date,
+    def __init__(self, date, ratio, otn, dc, arrest_agency, complaint_date,
                  arrest_officer, judge):
 
         if not isinstance(ratio, PetitionRatio):
@@ -184,25 +182,25 @@ class Petition:
         self.otn = otn
         self.dc = dc
         self.arrest_agency = arrest_agency
-        self.arrest_date = arrest_date
+        self.complaint_date = complaint_date
         self.arrest_officer = arrest_officer
         self.judge = judge
 
     @staticmethod
     def from_dict(data):
-        """Produce a petition from it's dict representation"""
+        """Produce a petition from its dict representation"""
         return Petition(
             dateparser.parse(data["date"]),
             PetitionRatio[data["ratio"]],
             data["otn"], data["dc"], data["arrest_agency"],
-            dateparser.parse(data["arrest_date"]),
+            dateparser.parse(data["complaint_date"]),
             data["arrest_officer"], data["judge"]
         )
 
     def __repr__(self):
         return "Petition(%s, %s, '%s', '%s', %s, '%s', '%s', '%s')" % (
             repr(self.date), self.ratio, self.otn, self.dc,
-            self.arrest_agency, repr(self.arrest_date), self.arrest_officer,
+            self.arrest_agency, repr(self.complaint_date), self.arrest_officer,
             self.judge)
 
 

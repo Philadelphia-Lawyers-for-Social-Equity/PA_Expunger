@@ -27,7 +27,7 @@ class CaseToPetitionFieldsSerializer(serializers.Serializer):
     def get_petition(self, obj):
         return {
             "otn": obj.otn,
-            "arrest_date": None,
+            "complaint_date": None,
             "arrest_officer": None,
             "arrest_agency": None,
             "judge": obj.disposing_judge,

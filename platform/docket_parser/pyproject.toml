@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+# If pip install is run without the --editable option, it will leave a bunch of junk in project dir.
+# https://pip.pypa.io/en/stable/topics/local-project-installs/#build-artifacts
+# To install non-editable version without clutter, we can use build (https://github.com/pypa/build), but it is slower.
+
+[project]
+name = "docket_parser"
+requires-python = ">=3.11"
+version = "0.2.0"
+dynamic = ["dependencies"]
+# To switch from requirements.txt to listing dependencies here, delete the line above and uncomment the line below.
+#dependencies = ["parsimonious >= 0.8.1", "pypdf >= 3.2.1", "numpy >= 1.24.2", "pytest >= 7.2"]
+
+[project.scripts]
+debug_docket_parser = 'docket_parser.__main__:main'
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+# If we stop using requirements.txt, delete this line too.
+dependencies = {file = "requirements.txt"}
