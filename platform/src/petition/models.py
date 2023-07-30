@@ -208,3 +208,6 @@ class Fines:
         return Fines(
             data["total"],
             data["paid"])
+
+    def to_dict(self):
+        return {"total": self.total, "paid": self.paid}

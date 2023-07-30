@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import traceback
+from numbers import Number
 from typing import List, Tuple
 
 import jinja2
