@@ -4,6 +4,7 @@ import Petition from "./components/Petition";
 import Dockets from "./components/Dockets";
 import Charges from "./components/Charges";
 import Restitution from "./components/Restitution";
+import { validateSubmission } from './helpers/validatorUtils';
 
 import "./style.css";
 import axios from "axios";
@@ -87,7 +88,7 @@ export default function GeneratePage(props) {
     mergeReduce,
     petitionFields.restitution
   );
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState(null);
 
   function postGeneratorRequest() {
     let petitionFields = {
@@ -134,38 +135,53 @@ export default function GeneratePage(props) {
   }
 
   function handleSubmit() {
-    setError("");
-
-    const ssn = petitioner.ssn;
-    const hasDashes = /(-)/.test(ssn);
-
-    if (!petitioner.name) {
-      setError("Please enter a name.");
-    } else if (!petitioner.dob) {
-      setError("Please enter a valid birth date.");
-    } else if (
-      (hasDashes && ssn.length !== 11) ||
-      (!hasDashes && ssn.length !== 9)
-    ) {
-      setError("Please enter a valid Social Security number.");
-    } else if (
-      !petitioner.address ||
-      !petitioner.address.street1 ||
-      !petitioner.address.city ||
-      !petitioner.address.state ||
-      !petitioner.address.zipcode
-    ) {
-      setError("Please enter a valid address.");
-    } else if (!petition.dc) {
-      setError("Please enter a DC number.");
+    setErrors(null);
+    /**
+     * Let's build an array of errors per section.
+     * 
+     * The validateSubmissions utility function will return:
+     *  A.  an empty array if the section's inputs are valid
+     *              OR
+     *  B.  an array of the following structure:
+     *      [ { sectionName: [ array of invalid input descriptions ] }]
+     *      Example: [ { petitioner: ['date of birth', 'Social Security number'] } ]
+     *      
+     *      NOTE: The invalid input descriptions are displayed to the user which is why
+     *      using the object's key (dob, ssn) was decided against.
+     */
+    const tempErrors = [
+      ...validateSubmission('petitioner', petitioner),
+      ...validateSubmission('petition', petition),
+      ...validateSubmission('dockets', dockets),
+      ...validateSubmission('charges', charges),
+      ...validateSubmission('restitution', restitution),
+    ];
+    if (tempErrors.length) {
+      setErrors(tempErrors)
     } else {
       postGeneratorRequest();
       successfulSubmit();
     }
   }
 
-  function ErrorSection({ error }) {
-    return <p className="invalid-warning">{error}</p>;
+  function ErrorSection({errors}) {
+    return (
+      <div className="invalid-warning">
+        <h5>Please correct the following missing or invalid inputs:</h5>
+        {errors && errors.map(error => {
+          const key = Object.keys(error);
+          const sectionHeading = key[0][0].toUpperCase() + key[0].slice(1);
+          return (
+            <div key={key} className='invalid-input-section'>
+              {sectionHeading}
+              <ul>
+                {error[key].map(invalidEntry => <li key={invalidEntry}>{invalidEntry}</li>)}
+              </ul>
+            </div>
+          )
+        })}
+      </div>
+    );
   }
 
   return (
@@ -175,7 +191,7 @@ export default function GeneratePage(props) {
       <Dockets dockets={dockets} handleChange={setDockets} />
       <Charges charges={charges} handleChange={setCharges} />
       <Restitution {...restitution} handleChange={setRestitution} />
-      {error && <ErrorSection error={error} />}
+      {errors && <ErrorSection errors={errors} />}
       <Button onClick={handleSubmit} className="generate-button">
         Generate Petition
       </Button>

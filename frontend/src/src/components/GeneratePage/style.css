@@ -10,6 +10,10 @@ form.generator {
     border-radius: 4px;
 }
 
+.invalid-input-section {
+    margin-left: 16px;
+}
+
 .generate-button {
     margin-top: 16px;
     margin-bottom: 28px;
