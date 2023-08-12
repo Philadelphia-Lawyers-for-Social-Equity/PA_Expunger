@@ -1,6 +1,7 @@
 import React from 'react';
-import GeneratorInput from './GeneratorInput'
+import GeneratorInput from './GeneratorInput';
 import { Col, Form, Row } from 'react-bootstrap';
+import { addressValidators } from './validatorUtils';
 
 export default function Address(props) {
     /*
@@ -28,6 +29,8 @@ export default function Address(props) {
             name="street1"
             value={props.street1 || ""}
             handleChange={handleChange}
+            required={true}
+            validator={addressValidators['street1'].validator}
         />
 
         <GeneratorInput
@@ -41,21 +44,42 @@ export default function Address(props) {
         <Form.Group as={Row}>
             <Col sm={2}/>
             <Col sm={4}>
-                <Form.Control placeholder="City" value={props.city || ""} onChange={e => {
-                    handleChange({"city": e.target.value});
-                }} />
+                <Form.Control
+                    placeholder="City"
+                    value={props.city || ""}
+                    onChange={e => {
+                        handleChange({"city": e.target.value});
+                    }}
+                    required={true}
+                    isValid={addressValidators['city'].validator(props.city)}
+                    isInvalid={!addressValidators['city'].validator(props.city)}
+                />
             </Col>
 
             <Col sm={2}>
-                <Form.Control placeholder="State (2-Letter)" value={props.state || ""} onChange={e => {
-                    handleChange({"state": e.target.value});
-                }} />
+                <Form.Control
+                    placeholder="State (2-Letter)"
+                    value={props.state || ""}
+                    onChange={e => {
+                        handleChange({"state": e.target.value});
+                    }}
+                    required={true}
+                    isValid={addressValidators['state'].validator(props.state)}
+                    isInvalid={!addressValidators['state'].validator(props.state)}
+                />
             </Col>
 
             <Col sm={2}>
-                <Form.Control placeholder="Zip" value={props.zipcode || ""} onChange={e => {
-                    handleChange({"zipcode": e.target.value});
-                }} />
+                <Form.Control
+                    placeholder="Zip"
+                    value={props.zipcode || ""}
+                    onChange={e => {
+                        handleChange({"zipcode": e.target.value});
+                    }}
+                    required={true}
+                    isValid={addressValidators['zipcode'].validator(props.zipcode)}
+                    isInvalid={!addressValidators['zipcode'].validator(props.zipcode)}
+                />
             </Col>
         </Form.Group>
         </>

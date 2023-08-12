@@ -11,6 +11,10 @@ export default function GeneratorInput(props) {
         - name
         - value
         - handleChange
+
+        optional props:
+        - required (boolean)
+        - validator (function)
     */
 
     if (!props.name) {
@@ -18,6 +22,10 @@ export default function GeneratorInput(props) {
     }
 
     let keyName = props.name;
+    const optionalValidationProps =
+        props.required && props.validator ?
+            { required: true, isValid: props.validator(props.value), isInvalid: !props.validator(props.value) } :
+            {};
 
     return (
         <Form.Group as={Row}>
@@ -33,6 +41,7 @@ export default function GeneratorInput(props) {
                         let res = {[keyName]: e.target.value};
                         props.handleChange(res);
                     }}
+                    {...optionalValidationProps}
                 />
             </Col>
         </Form.Group>

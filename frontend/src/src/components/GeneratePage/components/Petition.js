@@ -1,6 +1,9 @@
 import React from 'react';
 import GeneratorInput from '../helpers/GeneratorInput';
 import Radio from '../helpers/Radio';
+import { requiredInputValidators } from '../helpers/validatorUtils';
+
+const sectionKey = 'petition';
 
 export default function Petition(props) {
     /* props expects:
@@ -24,7 +27,9 @@ export default function Petition(props) {
             name="otn"
             value={props.otn}
             handleChange={props.handleChange}
-        />
+            required={true}
+            validator={requiredInputValidators[sectionKey]['otn'].validator}
+            />
 
         <GeneratorInput
             label="DC"
@@ -33,7 +38,7 @@ export default function Petition(props) {
             name="dc"
             value={props.dc}
             handleChange={props.handleChange}
-        />
+            />
 
         <GeneratorInput
             label="Complaint Date"
@@ -41,7 +46,9 @@ export default function Petition(props) {
             name="complaint_date"
             value={props.complaint_date}
             handleChange={props.handleChange}
-        />
+            required={true}    
+            validator={requiredInputValidators[sectionKey]['complaint_date'].validator}
+            />
 
         <GeneratorInput
             label="Arrest Agency"
@@ -50,7 +57,9 @@ export default function Petition(props) {
             name="arrest_agency"
             value={props.arrest_agency}
             handleChange={props.handleChange}
-        />
+            required={true}    
+            validator={requiredInputValidators[sectionKey]['arrest_agency'].validator}
+            />
 
         <GeneratorInput
             label="Arresting Officer"
@@ -59,7 +68,7 @@ export default function Petition(props) {
             name="arrest_officer"
             value={props.arrest_officer}
             handleChange={props.handleChange}
-        />
+            />
 
         <GeneratorInput
             label="Judge"
@@ -68,6 +77,8 @@ export default function Petition(props) {
             name="judge"
             value={props.judge}
             handleChange={props.handleChange}
+            required={true}    
+            validator={requiredInputValidators[sectionKey]['judge'].validator}
         />
         <Radio
             label="Is this a full or partial expungement?"

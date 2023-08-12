@@ -3,6 +3,9 @@ import GeneratorInput from '../helpers/GeneratorInput';
 import EditableList from '../helpers/EditableList';
 import Address from '../helpers/Address';
 import RemovableTextField from '../helpers/RemovableTextField';
+import { requiredInputValidators } from '../helpers/validatorUtils';
+
+const sectionKey = 'petitioner';
 
 export default function Petitioner(props) {
     /* Props expects:
@@ -42,6 +45,7 @@ export default function Petitioner(props) {
                 value={props.name}
                 handleChange={props.handleChange}
                 required={true}
+                validator={requiredInputValidators[sectionKey]['name'].validator}
             />
 
             <GeneratorInput
@@ -51,6 +55,7 @@ export default function Petitioner(props) {
                 value={props.dob}
                 handleChange={props.handleChange}
                 required={true}
+                validator={requiredInputValidators[sectionKey]['dob'].validator}
             />
 
             <GeneratorInput
@@ -61,6 +66,7 @@ export default function Petitioner(props) {
                 value={props.ssn}
                 handleChange={props.handleChange}
                 required={true}
+                validator={requiredInputValidators[sectionKey]['ssn'].validator}
             />
 
             <EditableList
