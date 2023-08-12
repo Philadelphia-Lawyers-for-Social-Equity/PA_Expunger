@@ -93,6 +93,7 @@ export default function RemovableCharge(props) {
                     value={description}
                     onChange={(e) => {setDescription(e.target.value);}}
                     readOnly={!editing}
+                    placeholder="Description"    
                 />
             </Col>
         </Row>
