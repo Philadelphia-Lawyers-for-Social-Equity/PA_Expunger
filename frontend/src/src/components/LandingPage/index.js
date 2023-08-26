@@ -74,9 +74,9 @@ export default function LandingPage() {
             'headers': { 'Authorization': token }
         };
 
-        axios.post(profileurl, profiledata, config)
+        axios.put(profileurl, profiledata, config)
             .then(res => {
-                if (res.status === 201) {
+                if (res.status === 200) {
                     setProfileGenerated(true);
                 }
             })
