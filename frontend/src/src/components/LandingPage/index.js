@@ -3,8 +3,7 @@ import { Redirect } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
 import { Button, ButtonGroup, Modal, Col } from 'react-bootstrap';
-// import { useAuth } from '../../context/auth';
-
+import { useAuth } from "../../context/auth";
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
@@ -12,12 +11,11 @@ export default function LandingPage() {
     const [isAttorneyChosen, setAttorneyChosen] = useState(false);
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
+    const { authTokens } = useAuth();
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
-
-        const bearer = "Bearer ";
-        const token = bearer.concat(localStorage.getItem("access_token"));
+        const token = `Bearer ${authTokens.access}`;
         var config = {
             'headers': { 'Authorization': token }
         };
@@ -33,7 +31,7 @@ export default function LandingPage() {
                     }
                 }
             )
-    }, []); // empty array as the second argument will limit to one get call
+    }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
 
     // On click for the cancel button
@@ -68,15 +66,14 @@ export default function LandingPage() {
 
         // post to generate profile
         const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-        const bearer = "Bearer ";
-        const token = bearer.concat(localStorage.getItem("access_token"));
+        const token = `Bearer ${authTokens.access}`;
         var config = {
             'headers': { 'Authorization': token }
         };
 
-        axios.post(profileurl, profiledata, config)
+        axios.put(profileurl, profiledata, config)
             .then(res => {
-                if (res.status === 201) {
+                if (res.status === 200) {
                     setProfileGenerated(true);
                 }
             })

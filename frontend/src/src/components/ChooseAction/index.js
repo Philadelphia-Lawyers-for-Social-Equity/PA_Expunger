@@ -3,11 +3,9 @@ import { useHistory } from 'react-router-dom';
 import "./style.css";
 //import axios from 'axios';
 import { Button, Modal, Row, Col } from 'react-bootstrap';
-// import { useAuth } from '../../context/auth';
 
 
 export default function ChooseAction() {
-
     const history = useHistory();
 
     // On click to search module

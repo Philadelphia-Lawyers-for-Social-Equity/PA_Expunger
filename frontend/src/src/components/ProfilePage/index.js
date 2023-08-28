@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import "./style.css";
 import axios from 'axios';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
+import { useAuth } from "../../context/auth";
 
 export default function ProfilePage() {
   const [myUsername, setMyUsername] = useState("");
@@ -23,12 +24,12 @@ export default function ProfilePage() {
   const [orgPhone, setOrgPhone] = useState("");
   const [orgURL, setOrgURL] = useState("");
   const [isEdit, setIsEdit] = useState(false);
+  const { authTokens } = useAuth();
 
   // useEffect is the React Hook equivalent to ComponentDidMount
   useEffect(() => {
 
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
+    const token = `Bearer ${authTokens.access}`;
     var config = {
       'headers': { 'Authorization': token }
     };
@@ -62,7 +63,7 @@ export default function ProfilePage() {
           }
         }
       )
-  }, []); // empty array as the second argument will limit to one get call
+  }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
   // onclick for Edit button
   function editProfile() {
@@ -121,8 +122,7 @@ export default function ProfilePage() {
     console.log(sendData);
     console.log(shortData);
 
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
+    const token = `Bearer ${authTokens.access}`;
     var config = {
       'headers': { 'Authorization': token }
     };

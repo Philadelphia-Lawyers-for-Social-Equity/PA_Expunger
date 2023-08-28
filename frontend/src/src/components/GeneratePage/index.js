@@ -4,6 +4,7 @@ import Petition from "./components/Petition";
 import Dockets from "./components/Dockets";
 import Charges from "./components/Charges";
 import Restitution from "./components/Restitution";
+import { useAuth } from "../../context/auth";
 
 import "./style.css";
 import axios from "axios";
@@ -48,15 +49,6 @@ const defaultPetitionFields = {
   },
 };
 
-function postRequestConfig() {
-  let bearer = "Bearer ";
-  let token = bearer.concat(localStorage.getItem("access_token"));
-  return {
-    responseType: "arraybuffer",
-    headers: { Authorization: token },
-  };
-}
-
 function mergeReduce(initial, changes) {
   return { ...initial, ...changes };
 }
@@ -65,6 +57,7 @@ export default function GeneratePage(props) {
   /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
+  const { authTokens } = useAuth();
 
   const fieldsFromRouterState =
     props.location && props.location.state
@@ -100,6 +93,14 @@ export default function GeneratePage(props) {
 
     if (!petitionFields.petition.ratio) {
       petitionFields.petition.ratio = "full";
+    }
+
+    function postRequestConfig() {
+      const token = `Bearer ${authTokens.access}`;
+      return {
+        responseType: "arraybuffer",
+        headers: { Authorization: token },
+      };
     }
 
     console.info(petitionFields);
@@ -143,6 +144,8 @@ export default function GeneratePage(props) {
       setError("Please enter a name.");
     } else if (!petitioner.dob) {
       setError("Please enter a valid birth date.");
+    } else if (!ssn) {
+      setError("Please enter a valid Social Security number.");
     } else if (
       (hasDashes && ssn.length !== 11) ||
       (!hasDashes && ssn.length !== 9)

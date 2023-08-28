@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Redirect } from "react-router-dom";
 import "./style.css";
 import axios from "axios";
@@ -6,13 +6,13 @@ import { Button, Form, Row, Col } from "react-bootstrap";
 import { useAuth } from "../../context/auth";
 
 export default function LoginForm() {
-  const [isLoggedIn, setLoggedIn] = useState(false);
   const [isError, setIsError] = useState(false);
   const [is404, setIs404] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const { setAuthTokens } = useAuth();
+  const { authTokens, setAuthTokens } = useAuth();
+  const isMounted = useRef(true);
 
   function onKeyUp(e) {
     if (e.key === 'Enter') {
@@ -32,45 +32,50 @@ export default function LoginForm() {
         password: password
       })
       .then(res => {
-        if (res.status === 200) {
-          setAuthTokens(res.data);
-          localStorage.setItem("access_token", res.data.access);
-          setLoggedIn(true);
-        } else {
-          setIsError(true);
+        if (isMounted.current) {
+          if (res.status === 200) {
+            setAuthTokens(res.data);
+          } else {
+            setIsError(true);
+          }
         }
       })
       .catch(err => {
-        console.error(err);
-        setIsError(true);
+        if (isMounted.current) {
+          console.error(err);
+          setIsError(true);
+        }
       });
   }
 
-  if (isLoggedIn) {
-    const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
-    var config = {
-      'headers': { 'Authorization': token }
-    };
+  useEffect(() => {
+    if (authTokens && isMounted.current) {
+      const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
+      const token = `Bearer ${authTokens.access}`;
 
-    axios.get(profileurl, config)
-      .then(
-        res => {
-          if (res.status === 200) {
-            setHasProfile(true);
-          }
-        })      
-        .catch(
-          err => {
-            if (err.response.status === 404) {
-              setIs404(true);
+      var config = {
+        'headers': { 'Authorization': token }
+      };
+  
+      axios.get(profileurl, config)
+        .then(
+          res => {
+            if (res.status === 200) {
+              setHasProfile(true);
             }
-        });
-  }
+          })      
+          .catch(
+            err => {
+              if (err.response.status === 404) {
+                setIs404(true);
+              }
+      });
+    }
+    return () => { isMounted.current  = false };
+  }, [authTokens]);
 
-  if (hasProfile) {
-    return <Redirect to="/action" />;
+  if (hasProfile || authTokens) {
+    return <Redirect to="/" />;
   }
 
   if (is404) {

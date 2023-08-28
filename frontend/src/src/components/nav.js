@@ -1,8 +1,11 @@
 import React from "react";
 import { Navbar, Nav } from "react-bootstrap";
+import { useAuth } from "../context/auth";
 
-const nav = () => (
-  <Navbar 
+const Navigation = () => {
+  const { logout, authTokens } = useAuth();
+
+  return <Navbar 
     collapseOnSelect 
     expand="lg" 
     bg="light" 
@@ -26,13 +29,11 @@ const nav = () => (
           Sign up
         </Nav.Link>
 
-        {localStorage.getItem("access_token") && <Nav.Link href="/">Log in</Nav.Link>}
-
-        {!localStorage.getItem("access_token") && <Nav.Link href="/">Log out</Nav.Link>}
+        {authTokens ? <Nav.Link onClick={logout}>Log out</Nav.Link> : <Nav.Link href="/login">Log in</Nav.Link>}
 
       </Nav>
     </Navbar.Collapse>
   </Navbar>
-);
+};
 
-export default nav;
+export default Navigation;

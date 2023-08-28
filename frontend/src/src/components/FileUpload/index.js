@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import "./style.css";
 import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
-
+import { useAuth } from "../../context/auth";
 
 export default function FileUpload() {
 
@@ -11,10 +11,11 @@ export default function FileUpload() {
 
     const [fileName, setFileName] = useState(undefined);
     const [isError, setIsError] = useState(false);
+    const { authTokens } = useAuth();
 
     // On click for the cancel button
     function returnToChooseAction() {
-        history.push("/action");
+        history.push("/");
     }
 
     // On change for getting file
@@ -36,8 +37,7 @@ export default function FileUpload() {
 
             // post to generate profile
             const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/parse-docket/";
-            const bearer = "Bearer ";
-            const token = bearer.concat(localStorage.getItem("access_token"));
+            const token = `Bearer ${authTokens.access}`;
             var config = {
                 'headers': { 'Authorization': token }
             };
