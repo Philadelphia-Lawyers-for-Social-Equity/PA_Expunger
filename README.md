@@ -17,7 +17,7 @@ Refer to our [setup guide](./platform/SETUP.md) for instructions and troubleshoo
 ## Testing
 
 The backend includes some tests, and is expected to follow TDD practices going
-forward. In order to run the tests:
+forward. Some test files are not yet fully anonymized and therefore not currently saved in the repo; ask in the slack channel and someone will share them with you. In order to run the tests:
 
 1. Spin up a build per the Dev Setup.
 2. While it is running, open a new terminal tab and execute:
