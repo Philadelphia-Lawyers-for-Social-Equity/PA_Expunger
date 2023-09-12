@@ -64,9 +64,6 @@ class TestPaCourtArchive(TestCase):
         self.assertEqual(
             serializer.data["petition"],
             {"otn": case.otn,
-             "complaint_date": None,
-             "arrest_officer": None,
-             "arrest_agency": None,
              "judge": case.disposing_judge,
              "ratio": None})
 

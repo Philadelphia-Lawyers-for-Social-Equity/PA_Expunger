@@ -1,7 +1,7 @@
 import React from 'react';
 import GeneratorInput from '../helpers/GeneratorInput';
 
-export default function Restitution(props) {
+export default function Fines(props) {
     /* props expects:
         - total: decimal number
         - paid: decimal number
@@ -10,7 +10,7 @@ export default function Restitution(props) {
 
     return (
         <>
-            <h2>Restitution</h2>
+            <h2>Fines & Fees</h2>
             <GeneratorInput
                 label="Total"
                 placeholder="Decimal Number"
