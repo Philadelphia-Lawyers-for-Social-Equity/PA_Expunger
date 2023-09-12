@@ -8,23 +8,23 @@ export default function Fines(props) {
         - handleChange
     */
 
-    return (
-        <>
-            <h2>Fines & Fees</h2>
-            <GeneratorInput
+        return (
+            <>
+              <h2>Fines & Fees</h2>
+              <GeneratorCurrencyInput
                 label="Total"
-                placeholder="Decimal Number"
+                placeholder="Total fines and fees"
                 name="total"
-                value={props.total || 0}
+                value={props.total}
                 handleChange={props.handleChange}
-            />
-            <GeneratorInput
+              />
+              <GeneratorCurrencyInput
                 label="Paid"
-                placeholder="Decimal Number"
+                placeholder="Amount paid"
                 name="paid"
-                value={props.paid || 0}
+                value={props.paid}
                 handleChange={props.handleChange}
-            />
-        </>
-    );
+              />
+            </>
+          );
 }

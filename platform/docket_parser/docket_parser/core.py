@@ -46,10 +46,7 @@ docket_decoder = Grammar(
         "CASE INFORMATION"
         ( judge
         / otn
-<<<<<<< HEAD
         / date_filed
-=======
->>>>>>> 46412e4 (Fix template to change restitution > fines)
         / originating_docket
         / (!section_head junk)
         )+
@@ -59,13 +56,9 @@ docket_decoder = Grammar(
 
     otn = "OTN" colon otn_id
     otn_id = ~"\w" space ~"\d\d\d\d\d\d" "-" ~"\d"
-<<<<<<< HEAD
 
     date_filed = "Date Filed" colon date
 
-=======
-    
->>>>>>> 46412e4 (Fix template to change restitution > fines)
     originating_docket = "Originating Docket No" colon space* docket_id
 
     section_defendant_information =
@@ -86,8 +79,8 @@ docket_decoder = Grammar(
         / (!section_head junk)
         )+
 
-    disposition_state = "Sentence Condition" next_line 
-                        (word+ next_line)? 
+    disposition_state = "Sentence Condition" next_line
+                        (word+ next_line)?
                         date space+ disposition_state_value
     disposition_state_value = "Final Disposition" / "Not Final"
 
@@ -136,11 +129,11 @@ docket_decoder = Grammar(
         / case_financial_information
         / "ENTRIES"
         )
-    defendant_information = 
+    defendant_information =
         ( "DEFENDANT INFORMA TION"
-        / "DEFENDANT INFROMATION" 
+        / "DEFENDANT INFROMATION"
         )
-    case_financial_information = 
+    case_financial_information =
         ( "CASE FINANCIAL INFORMA TION"
         / "CASE FINANCIAL INFORMATION"
         )
