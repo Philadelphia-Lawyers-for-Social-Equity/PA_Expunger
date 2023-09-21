@@ -1,5 +1,5 @@
 import React from 'react';
-import GeneratorInput from '../helpers/GeneratorInput';
+import GeneratorCurrencyInput from '../helpers/GeneratorCurrencyInput';
 
 export default function Fines(props) {
     /* props expects:
