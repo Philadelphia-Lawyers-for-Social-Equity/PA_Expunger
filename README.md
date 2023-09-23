@@ -51,3 +51,20 @@ Build with your desired settings, then:
 1. `docker-compose run --entrypoint bash expunger`
 2. `python3 ./manage.py import pa_records`
 3. Wait a bit.
+
+## Copyright Information
+
+Copyright (C) 2023 Code for Philly #plse-expungment team (Individual contributors listed by commit and in [our repository](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard))
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
