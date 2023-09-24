@@ -118,6 +118,8 @@ class MyProfileView(APIView):
             profile, context={"request": request})
         return Response(serializer.data)
 
+    # Users are all created in admin. Do we need a post view for this model?
+    # granted we are creating the profile object here, but functionally we are updating the user. 
     def post(self, request, *args, **kwargs):
         """Allow user to create a new profile"""
         profile = getattr(request.user, "expungerprofile", None)
@@ -153,11 +155,6 @@ class MyProfileView(APIView):
         """Allow the user to update their profile"""
         profile = getattr(request.user, "expungerprofile", None)
 
-        if profile is None:
-            return Response(
-                {"detail": "User has no profile, use POST to create"},
-                status=404)
-
         attorney_id = request.data.get("attorney", None)
 
         if attorney_id is not None:
@@ -165,8 +162,8 @@ class MyProfileView(APIView):
                 attorney = models.Attorney.objects.get(pk=attorney_id)
             except models.Attorney.DoesNotExist:
                 return Response({"detail": "No such attorney"}, status=403)
-
-            profile.attorney = attorney
+        else:
+            return Response({"detail": "Must supply attorney"}, status=403)
 
         organization_id = request.data.get("organization", None)
 
@@ -176,7 +173,16 @@ class MyProfileView(APIView):
                     pk=organization_id)
             except models.Organization.DoesNotExist:
                 return Response({"detail": "No such organization"}, status=403)
+        else:
+            return Response({"detail": "Must supply organization"}, status=403)
 
+        if profile is None:
+            # Create a new profile if one does not exist for this user
+            profile = models.ExpungerProfile(
+                user=request.user, attorney=attorney, organization=organization
+            )
+        else:
+            profile.attorney = attorney
             profile.organization = organization
 
         profile.save()
