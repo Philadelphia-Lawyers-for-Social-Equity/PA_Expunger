@@ -81,9 +81,9 @@ export default function LoginForm() {
 
   return (
     <div style={{width: "100%", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center"}}>
-      <Form style={{width: "50%"}}>
-        <Form.Group as={Row}>
-          <Form.Label column sm={2}>
+      <Form style={{width: "25em"}}>
+        <Form.Group className="mb-1">
+          <Form.Label column>
             Username
           </Form.Label>
           <Col>
@@ -97,8 +97,8 @@ export default function LoginForm() {
             />
           </Col>
         </Form.Group>
-        <Form.Group as={Row}>
-          <Form.Label column sm={2}>
+        <Form.Group className="mb-4">
+          <Form.Label column>
             Password
           </Form.Label>
           <Col>
@@ -113,21 +113,22 @@ export default function LoginForm() {
             />
           </Col>
         </Form.Group>
-      <Form.Group as={Row}>
-        <Col sm={{ offset: 2 }}>
+      <Form.Group>
+        <Col>
           <Button
             id="SubmitButton"
             onClick={postLogin}
             name="action"
+            className="w-100"
           >
             Submit
           </Button>
         </Col>
       </Form.Group>
-      <Form.Group as={Row}>
+      <Form.Group>
         <Col>
           {isError && (
-            <Alert variant="warning">The username or password provided were incorrect</Alert>
+            <Alert variant="warning">The username or password provided were incorrect.</Alert>
           )}
         </Col>
       </Form.Group>
