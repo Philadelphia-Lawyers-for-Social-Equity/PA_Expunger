@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import "./style.css";
 import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
@@ -71,7 +70,7 @@ export default function FileUpload() {
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="returnToLoginButton" onClick={returnToChooseAction}>Cancel</Button>
+                    <Button id="returnToLoginButton" variant="outline-secondary" onClick={returnToChooseAction}>Cancel</Button>
                     <Button id="fileButton" onClick={chooseFile}>Submit</Button>
                     {isError && <div>Please select a file</div>}
                 </Modal.Footer>

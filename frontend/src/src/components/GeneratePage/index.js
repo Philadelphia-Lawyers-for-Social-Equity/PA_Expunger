@@ -1,4 +1,5 @@
 import React, { useState, useReducer } from "react";
+import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
 import Dockets from "./components/Dockets";
@@ -158,10 +159,6 @@ export default function GeneratePage(props) {
         }
     }
 
-    function ErrorSection({ error }) {
-        return <p className="invalid-warning">{error}</p>;
-    }
-
     return (
         <Form className="generator">
             <Petitioner {...petitioner} handleChange={setPetitioner} />
@@ -169,8 +166,8 @@ export default function GeneratePage(props) {
             <Dockets dockets={dockets} handleChange={setDockets} />
             <Charges charges={charges} handleChange={setCharges} />
             <Fines {...fines} handleChange={setFines} />
-            {error && <ErrorSection error={error} />}
-            <Button onClick={handleSubmit} className="generate-button">
+            {error && <Alert variant="warning">{error}</Alert>}
+            <Button onClick={handleSubmit}>
                 Generate Petition
             </Button>
         </Form>

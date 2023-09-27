@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Redirect } from "react-router-dom";
-import "./style.css";
 import axios from "axios";
 import { Button, Form, Row, Col } from "react-bootstrap";
 import { useAuth } from "../../context/auth";
@@ -128,7 +127,6 @@ export default function LoginForm() {
           <Col md={2}>
             <Button
               id="SubmitButton"
-              variant="info"
               onClick={postLogin}
               name="action"
             >
