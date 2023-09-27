@@ -7,10 +7,15 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [authTokens, setAuthTokens] = useState(null);
+  const [authTokens, setTokens] = useState(JSON.parse(localStorage.getItem("tokens")) || null);
 
-  function logout () {
-    setAuthTokens(null);
+  function setAuthTokens(tokens) {
+    setTokens(tokens)
+    localStorage.setItem("tokens", JSON.stringify(tokens));
+  }
+  function logout() {
+    setTokens(null);
+    localStorage.removeItem("tokens");
   };
 
   const value = {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar, Nav } from 'react-bootstrap';
 import { useAuth } from '../context/auth';
 
@@ -28,7 +29,7 @@ const Navigation = () => {
         <Nav className="ml-auto">
           {authTokens ? (
             <>
-              <Nav.Link href="/profile">Profile</Nav.Link>
+              <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
               <Nav.Link onClick={logout}>Log out</Nav.Link>
             </>
           ) : (
