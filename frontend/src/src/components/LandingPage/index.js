@@ -4,6 +4,7 @@ import "./style.css";
 import axios from 'axios';
 import { Button, ButtonGroup, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
@@ -12,6 +13,7 @@ export default function LandingPage() {
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
+    const { user } = useUser();
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
@@ -57,10 +59,10 @@ export default function LandingPage() {
             "attorney" : attorneyKey,
             "organization" : 1,
             "user" : {
-                "first_name" : localStorage.getItem("firstName"),
-                "last_name" : localStorage.getItem("lastName"),
-                "email" : localStorage.getItem("email"),
-                "username" : localStorage.getItem("username")            
+                "first_name" : user.firstName,
+                "last_name" : user.lastName,
+                "email" : user.email,
+                "username" : user.username            
             }
         };
 

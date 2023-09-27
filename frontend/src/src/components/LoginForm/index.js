@@ -21,9 +21,6 @@ export default function LoginForm() {
   }
 
   function postLogin() {
-
-    localStorage.clear();
-
     const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/auth/token/";
     console.debug("Login url: " + url);
     axios

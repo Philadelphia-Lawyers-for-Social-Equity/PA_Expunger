@@ -17,6 +17,7 @@ import BodyBackgroundColor from "react-body-backgroundcolor";
 
 import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
+import { UserProvider } from "./context/user";
 
 function App(props) {
   const [authTokens, setAuthTokens] = useState(JSON.parse(localStorage.getItem("tokens") || null));
@@ -33,40 +34,42 @@ function App(props) {
 
   return (
     <AuthContext.Provider value={{ authTokens, setAuthTokens: setTokens, logout }}>
-      <Router>
-        <Nav />
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <Route path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-        </BodyBackgroundColor>
+      <UserProvider>
+        <Router>
+          <Nav />
+          <BodyBackgroundColor backgroundColor="#d9ecf9">
+            <Route path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <Route path="/signup" component={SignUp} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="#d9ecf9">
+            <Route path="/signup" component={SignUp} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="gray">
-          <PrivateRoute exact path="/" component={LandingPage} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="gray">
+            <PrivateRoute exact path="/" component={LandingPage} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="gray">
-          <PrivateRoute path="/action" component={ChooseAction} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="gray">
+            <PrivateRoute path="/action" component={ChooseAction} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <PrivateRoute path="/search" component={SearchPage} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="#d9ecf9">
+            <PrivateRoute path="/search" component={SearchPage} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="gray">
-          <PrivateRoute path="/upload" component={FileUpload} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="gray">
+            <PrivateRoute path="/upload" component={FileUpload} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <PrivateRoute path="/generate" component={GeneratePage} />
-        </BodyBackgroundColor>
+          <BodyBackgroundColor backgroundColor="#d9ecf9">
+            <PrivateRoute path="/generate" component={GeneratePage} />
+          </BodyBackgroundColor>
 
-        <BodyBackgroundColor backgroundColor="#d9ecf9">
-          <PrivateRoute path="/profile" component={ProfilePage} />
-        </BodyBackgroundColor>
-      </Router>
+          <BodyBackgroundColor backgroundColor="#d9ecf9">
+            <PrivateRoute path="/profile" component={ProfilePage} />
+          </BodyBackgroundColor>
+        </Router>
+      </UserProvider>
     </AuthContext.Provider>
   );
 }
