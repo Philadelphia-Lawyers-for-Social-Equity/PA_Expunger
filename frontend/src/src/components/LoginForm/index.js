@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Redirect } from "react-router-dom";
 import axios from "axios";
-import { Button, Form, Row, Col } from "react-bootstrap";
+import Alert from "react-bootstrap/Alert";
+import { Button, Col, Form, Row } from "react-bootstrap";
 import { useAuth } from "../../context/auth";
 
 export default function LoginForm() {
@@ -79,65 +80,57 @@ export default function LoginForm() {
   }
 
   return (
-    <div>
-      <Form style={{ margin: `80px` }}>
-        <Row>
-          <Col md={4}></Col>
-          <Col md={1}>
-            <p>Username</p>
-          </Col>
-          <Col md={3}>
-            <input
+    <div style={{width: "100%", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center"}}>
+      <Form style={{width: "50%"}}>
+        <Form.Group as={Row}>
+          <Form.Label column sm={2}>
+            Username
+          </Form.Label>
+          <Col>
+            <Form.Control
               type="text"
-              name="username"
               id="username"
+              name="username"
+              placeholder="Username"
               value={userName}
-              onChange={e => {
-                setUserName(e.target.value);
-              }}
-            ></input>
+              onChange={e => setUserName(e.target.value)}
+            />
           </Col>
-          <Col md={4}></Col>
-        </Row>
-
-        <Row>
-          <Col md={4}></Col>
-          <Col md={1}>
-            <p>Password</p>
-          </Col>
-          <Col md={3}>
-            <input
+        </Form.Group>
+        <Form.Group as={Row}>
+          <Form.Label column sm={2}>
+            Password
+          </Form.Label>
+          <Col>
+            <Form.Control
               type="password"
-              name="password"
               id="password"
+              name="password"
+              placeholder="Password"
               value={password}
-              onKeyDown={e => {onKeyUp(e)}}
-              onChange={e => {
-                setPassword(e.target.value);
-              }}
-            ></input>
+              onKeyDown={e => onKeyUp(e)}
+              onChange={e => setPassword(e.target.value)}
+            />
           </Col>
-          <Col md={4}></Col>
-        </Row>
-        <Row>
-          <Col></Col>
-        </Row>
-        <Row>
-          <Col md={5}></Col>
-          <Col md={2}>
-            <Button
-              id="SubmitButton"
-              onClick={postLogin}
-              name="action"
-            >
-              Submit
-            </Button>
-            {isError && (
-              <div>The username or password provided were incorrect</div>
-            )}
-          </Col>
-          <Col md={5}></Col>
-        </Row>
+        </Form.Group>
+      <Form.Group as={Row}>
+        <Col sm={{ offset: 2 }}>
+          <Button
+            id="SubmitButton"
+            onClick={postLogin}
+            name="action"
+          >
+            Submit
+          </Button>
+        </Col>
+      </Form.Group>
+      <Form.Group as={Row}>
+        <Col>
+          {isError && (
+            <Alert variant="warning">The username or password provided were incorrect</Alert>
+          )}
+        </Col>
+      </Form.Group>
       </Form>
     </div>
   );
