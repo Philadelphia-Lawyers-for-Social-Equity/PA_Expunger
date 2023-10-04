@@ -19,7 +19,7 @@ Closes ###
 - [ ] Have the guidelines detiled in the contribuitng.m been followed
 - [ ] Can someone who new to the project read the overview and come away with what the problem os and how its being solved
 - [ ] Can the code handle exceptions and errors if design by contract is violated
--[ ]Make sure reviewers know to review this by assigning either the team lead or two team members in the 'reviewers' tab in the sidebar or under the PR text depending on your view.
+-[ ] Make sure reviewers know to review this by assigning either the team lead or two team members in the 'reviewers' tab in the sidebar or under the PR text depending on your view.
 
 
 ### Before merging
