@@ -12,14 +12,14 @@ The _fastest_ route to a local install should be:
 
 1. Clone and enter this repository directory.
 
-```
-git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
-```
+    ```
+    git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
+    ```
 
-2. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](docker-compose.yml) while it builds!)
+1. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](../docker-compose.yml) while it builds!)
 
-3. Run `docker-compose up` to initialize the containers.
-4. Confirm the application is running by visiting the [User Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
+1. Run `docker-compose up` to initialize the containers.
+1. Confirm the application is running by visiting the [User Portal](http://localhost:3000) and [Admin Portal](http://localhost:8000/admin)
    User Portal: `http://localhost:3000`
    Admin Portal: `http://localhost:8000/admin`
 
@@ -43,21 +43,21 @@ git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard
 1. Login to the [Admin Portal](http://localhost:8000/admin)
    - Username: `plse`
    - Password: `defaultTestPassword`
-2. Under **Authentication and Authorization**, select `Add` next to "Users"
+1. Under **Authentication and Authorization**, select `Add` next to "Users"
 
    ![](https://i.gyazo.com/41fd84642f9a67653e6e0de6822fba3c.png)
-   
+
    All Users need to be created via the `Add` button here, then can later be assigned to `Attorney`.
-3. Create a User profile and select `SAVE`
+1. Create a User profile (including name) and select `SAVE`
 
    ![](https://i.gyazo.com/1aa19c350713795d5a197ddfeddec9c2.png)
-   
-4. Under **Expunger**, select `Add` next to "Attorneys"
-5. Choose your User profile from the dropdown and select `SAVE` 
+
+1. Under **Expunger**, select `Add` next to "Attorneys"
+1. Choose your User profile from the dropdown, write something for "Bar", and select `SAVE`
 
    ![](https://i.gyazo.com/1d4c3cfb0bdc74f099ce5c1453e3fe7f.png)
 
-6. You should now see your User profile listed under "Attorneys"
+1. You should now see your User profile listed under "Attorneys"
 
 That is all of the back end setup needed. Now onto the front end~
 
@@ -72,9 +72,9 @@ The Frontend Portal allows users to sign up and associate their account with an 
 3. Select the attorney you created on the backend
 
    ![](https://i.gyazo.com/c6835ea9b7c87e5e8c81326ad4b0febe.png)
-   
-4. Upload [this docket](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/platform/docket_parser/tests/data/test-01.pdf)
-5. You should see a JSON Object in your terminal running Docker
+
+4. Upload [this docket](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/platform/docket_parser/src/docket_parser/tests/data/dockets/pdfs/2023-docket.pdf))
+5. You should see a Generate form to submit a petition
 
 ## Settings
 
@@ -106,4 +106,3 @@ Failed to execute script docker-compose
 Close and restart Docker Desktop
 
 Confirm Docker CLI is installed via `docker --help`
-
