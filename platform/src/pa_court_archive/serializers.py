@@ -77,7 +77,6 @@ def merge_statute(title, section, subsection):
         return str(title).strip()
 
     if subsection is None or subsection == "0" or subsection == 0:
-        return "%s § %s" % (str(title).strip(), str(section).strip())
+        return f"{str(title).strip()} § {str(section).strip()}"
 
-    return "%s § %s §§ %s" % (
-        str(title).strip(), str(section).strip(), str(subsection).strip())
+    return f"{str(title).strip()} § {str(section).strip()} §§ {str(subsection).strip()}"

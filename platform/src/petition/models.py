@@ -17,18 +17,15 @@ class Address:
             street2=data.get("street2", None))
 
     def __repr__(self):
-        return "Address('%s', '%s', '%s', '%s', street2='%s')" % (
-            self.street1, self.city, self.state, self.zipcode, self.street2)
+        return f"Address('{self.street1}', '{self.city}', '{self.state}', '{self.zipcode}', street2='{self.street2}')"
 
     def __str__(self):
         """Provide string representation"""
 
         if self.street2 is None or self.street2.strip() == "":
-            return "%s\n %s, %s %s" % (
-                self.street1, self.city, self.state, self.zipcode)
+            return f"{self.street1}\n {self.city}, {self.state} {self.zipcode}"
 
-        return "%s\n%s\n%s, %s %s" % (
-            self.street1, self.street2, self.city, self.state, self.zipcode)
+        return f"{self.street1}\n{self.street2}\n{self.city}, {self.state} {self.zipcode}"
 
 
 class Charge:
@@ -40,9 +37,7 @@ class Charge:
         self.disposition = disposition
 
     def __repr__(self):
-        return "Charge('%s', '%s', '%s' '%s', '%s')" % (
-            repr(self.date), self.statute, self.grade, self.description,
-            self.disposition)
+        return f"Charge('{repr(self.date)}', '{self.statute}', '{self.grade}' '{self.description}', '{self.disposition}')"
 
     @staticmethod
     def from_dict(data):
@@ -83,9 +78,7 @@ class Petitioner:
             data["ssn"], Address.from_dict(data["address"]))
 
     def __repr__(self):
-        return "Petitioner('%s', '%s', %s, '%s', %s)" % (
-            self.name, str(self.aliases), repr(self.dob), self.ssn,
-            repr(self.address))
+        return f"Petitioner('{self.name}', '{str(self.aliases)}', {repr(self.dob)}, '{self.ssn}', {repr(self.address)})"
 
 
 # Dockets
@@ -124,13 +117,10 @@ class DocketId:
 
     def __str__(self):
         """Provide string representation"""
-        return "%s-%d-%s-%07d-%d" % (
-            self.court.name, self.county_code, self.case_type.name,
-            self.number, self.year)
+        return f"{self.court.name}-{self.county_code:d}-{self.case_type.name}-{self.number:07d}-{self.year:d}"
 
     def __repr__(self):
-        return "DocketId(%s, %s, %d, %d)" % (
-            self.court, self.case_type, self.number, self.year)
+        return f"DocketId({self.court}, {self.case_type}, {self.number:d}, {self.year:d})"
 
     def __eq__(self, other):
 
@@ -192,9 +182,7 @@ class Petition:
         )
 
     def __repr__(self):
-        return "Petition(%s, %s, %s, %s, %s)" % (
-            repr(self.date), self.ratio, self.otn,
-            self.complaint_date, self.judge)
+        return f"Petition({repr(self.date)}, {self.ratio}, {self.otn}, {self.complaint_date}, {self.judge})"
 
 
 class Fines:

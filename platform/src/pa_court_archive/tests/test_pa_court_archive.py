@@ -141,4 +141,4 @@ class TestApi(Authenticated, TestCase):
         data = {"first_name": "Harry", "last_name": "Potter"}
         url = reverse("pa_court_archive:search")
         res = self.authenticated_client.get(url, data, content_type="application/json")
-        self.assertEqual(res.status_code, 200, msg="bad response: %s" % res.content)
+        self.assertEqual(res.status_code, 200, msg=f"bad response: {res.content}")

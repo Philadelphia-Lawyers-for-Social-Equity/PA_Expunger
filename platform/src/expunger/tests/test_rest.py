@@ -59,8 +59,7 @@ class TestRest(Authenticated, TestCase):
         res = self.authenticated_client.get(url)
         jsr = res.json()
 
-        self.assertEqual(jsr["name"], "%s %s" % (
-            attorney.user.first_name, attorney.user.last_name))
+        self.assertEqual(jsr["name"], f"{attorney.user.first_name} {attorney.user.last_name}")
         self.assertEqual(jsr["bar"], attorney.bar)
 
     def test_my_profile(self):
