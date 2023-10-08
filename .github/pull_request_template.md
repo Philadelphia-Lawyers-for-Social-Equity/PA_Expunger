@@ -12,15 +12,8 @@ Closes ###
 - Provide instructions to test the changes
 - Bullet lists are helpful
 - [ ] Checkboxes also  help for specific tasks
-- Create tests for your contribuition. These tests should demonstrate functionality, and tests that fail intenionally should be added. 
+- Include some tests that intentionally won't work
 - The "happy path" is helpful, but knowing how the changes respond to errors is extra helpful
-
-### Self check
-- [ ] Have the guidelines detiled in the contribuitng.m been followed
-- [ ] Can someone who new to the project read the overview and come away with what the problem os and how its being solved
-- [ ] Can the code handle exceptions and errors if design by contract is violated
--[ ]make sure reviewers know to review this by assigning either the team lead or two team members in the 'reviewers' tab in the sidebar or under the PR text depending on your view.
-
 
 ### Before merging
 
