@@ -87,7 +87,7 @@ class ArchiveQueue:
             try:
                 gender_code = m.GenderCode(row["GenderCode"][0])
             except ValueError:
-                logger.warning("Invalid gender code: %s", row["GenderCode"])
+                logger.warning(f"Invalid gender code: {row['GenderCode']}")
                 gender_code = None
 
         if row["RaceCode"] is None:
@@ -96,7 +96,7 @@ class ArchiveQueue:
             try:
                 race_code = reverse_race_code[row["RaceCode"]]
             except ValueError:
-                logger.warning("Invalid race code: %s", row["RowCode"])
+                logger.warning(f"Invalid race code: {row['RowCode']}")
                 race_code = None
 
         self.arrestee_inserts.append("(%s, %s, %s, %s, %s, %s)")
@@ -182,7 +182,7 @@ class ArchiveQueue:
             try:
                 statute_type = m.StatuteType(row["StatuteType"][0])
             except ValueError:
-                logger.warn("Invalid StatuteType %s", row["StatuteType"])
+                logger.warning(f"Invalid StatuteType {row['StatuteType']}")
                 statute_type = None
 
         self.offense_inserts.append(
@@ -217,7 +217,7 @@ class ArchiveQueue:
         self.clear_docket_queue()
         self.clear_offense_queue()
 
-        logger.debug("Queue cleared, total %d rows so far.", self.total)
+        logger.debug(f"Queue cleared, total {self.total} rows so far.")
         self._initialize_queues()
 
     def clear_arrestee_queue(self):
@@ -335,12 +335,12 @@ def get_connection():
         "ssl_verify_cert": True
     }
 
-    logger.debug("connection arguments: %s", connection_args)
+    logger.debug(f"connection arguments: {connection_args}")
 
     try:
         cnx = pymysql.connect(**connection_args)
     except pymysql.Error as err:
-        logger.error("Failed to connect to %s, %s", host, str(err))
+        logger.error(f"Failed to connect to {host}, {str(err)}")
         sys.exit(1)
 
     return cnx
@@ -372,7 +372,7 @@ def fix_zip_code(zc):
         zc = str(int(zc))
 
     if len(zc) < 4 or len(zc) > 10:
-        logger.warn("Invalid zipcode %s", zc)
+        logger.warning(f"Invalid zipcode {zc}")
         return
 
     if len(zc) == 4:
@@ -405,11 +405,10 @@ def retrieve_all_rows(cursor):
             count += 1
 
             if row is None:
-                logger.warn("expected %d results, but finished with %d",
-                            cursor.rowcount, count)
+                logger.warning(f"expected {cursor.rowcount} results, but finished with {count}")
                 return
 
             yield row
-        logger.debug("retrieved %d rows so far", count)
+        logger.debug(f"retrieved {count} rows so far")
 
-    logger.debug("finished retrieving %d rows", count)
+    logger.debug(f"finished retrieving {count} rows")
