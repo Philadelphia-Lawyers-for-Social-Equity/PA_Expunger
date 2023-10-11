@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 import traceback
-from numbers import Number
 from typing import List, Tuple
 
 import jinja2
@@ -96,8 +95,8 @@ class DocketParserAPIView(APIView):
             "petitioner": petitioner_from_parser(parsed),
             "petition": petition_from_parser(parsed),
             "dockets": docket_numbers_from_parser(parsed),
-            "charges": charges_from_parser(parsed),
-            "fines": fines_from_parser(parsed)
+            "charges": charges,
+            "fines": models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
         }
 
         logger.debug(f"Request: {request.data}")
