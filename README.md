@@ -30,7 +30,7 @@ docker-compose exec -it expunger bash
 pytest
 
 # Or run specific tests
-# This command runs tests with containing the string "petition" in test class or function or filename
+# This command runs tests with containing the string "parsing" in test class or function or filename
 pytest -k parsing
 ```
 

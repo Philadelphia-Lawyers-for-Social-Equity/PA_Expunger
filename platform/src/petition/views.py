@@ -92,12 +92,11 @@ class DocketParserAPIView(APIView):
             logger.warning(tb)
             return Response({"error": short_msg})
 
-        ratio, charges = charges_from_parser(parsed)
         content = {
             "petitioner": petitioner_from_parser(parsed),
-            "petition": petition_from_parser(parsed, ratio),
+            "petition": petition_from_parser(parsed),
             "dockets": docket_numbers_from_parser(parsed),
-            "charges": charges,
+            "charges": charges_from_parser(parsed),
             "fines": fines_from_parser(parsed)
         }
 
@@ -124,7 +123,7 @@ def petitioner_from_parser(parsed: dict) -> dict:
     return petitioner
 
 
-def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
+def petition_from_parser(parsed: dict):
     """
     Produce the petition data based on the docket parser output.
     """
@@ -132,7 +131,7 @@ def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
         "otn": parsed.get("otn"),
         "complaint_date": parsed.get("complaint_date"),
         "judge": parsed.get("judge"),
-        "ratio": ratio.name,
+        "ratio": models.PetitionRatio.full.name
     }
 
 
@@ -161,30 +160,19 @@ def docket_numbers_from_parser(parsed: dict) -> List[str]:
         return docket_number[:3] in ("MC-", "CP-")
 
     docket_numbers = list(filter(docket_number_filter, docket_numbers))
+    # remove duplicates while preserving order
+    docket_numbers = list(dict.fromkeys(docket_numbers))
+
     return docket_numbers
 
 
-def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]:
+def charges_from_parser(parsed: dict) -> List[dict]:
     """
-    Produces the ratio, charges based on the docket parser output.
+    Produces the charges based on the docket parser output.
     """
-    expungeable_dispositions = [
-        "Nolle Prossed",
-        "ARD - County",
-        "Not Guilty",
-        "Dismissed",
-        "Withdrawn",
-    ]
 
-    def is_expungeable(offense_disposition) -> bool:
-        for expungeable_disposition in expungeable_dispositions:
-            if expungeable_disposition.lower() in offense_disposition.lower():
-                return True
-        return False
-
-    expungeable_charges = []
+    charges = []
     case_events = parsed.get("section_disposition", {})
-    ratio = models.PetitionRatio.full
     if not any(case_event.get("disposition_finality") == "Final Disposition" for case_event in case_events):
         logger.error("No final disposition found.")
 
@@ -200,13 +188,10 @@ def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]
             if "offense_disposition" not in charge:
                 logger.error(f"Charge must include a disposition, got: {charge}")
 
-            if is_expungeable(charge["offense_disposition"]):
-                adapted_charge = adapt_charge(charge, disposition_date)
-                expungeable_charges.append(adapted_charge)
-            else:
-                ratio = models.PetitionRatio.partial
+            adapted_charge = adapt_charge(charge, disposition_date)
+            charges.append(adapted_charge)
 
-    return ratio, expungeable_charges
+    return charges
 
 
 def fines_from_parser(parsed):
