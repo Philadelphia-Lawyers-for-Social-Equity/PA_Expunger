@@ -40,6 +40,7 @@ class PetitionFactory(factory.Factory):
     class Meta:
         model = Petition
 
+    complaint_date = date.today()
     date = date.today()
     ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
