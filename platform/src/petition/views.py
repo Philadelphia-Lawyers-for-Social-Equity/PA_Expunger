@@ -197,16 +197,16 @@ def charges_from_parser(parsed: dict) -> List[dict]:
 def fines_from_parser(parsed):
     """Produce fines data based on the docket parser output."""
 
-    if "section_financial_information" not in parsed:
-        return {}
+    money_sections = ["assessment", "total", "non_monetary", "adjustments", "payments"]
 
-    data = parsed["section_financial_information"]
+    for section in money_sections:
+        if parsed.get(section, None) is None:
+            return {}
+        else:
+            continue
 
-    if not data:
-        return {}
-
-    total = data.get("assessment", 0)
-    paid = abs(data.get("payments", 0)) + abs(data.get("adjustments", 0))
+    total = parsed.get("assessment", 0)
+    paid = abs(parsed.get("payments", 0)) + abs(parsed.get("adjustments", 0))
 
     return {"total": total, "paid": paid}
 
