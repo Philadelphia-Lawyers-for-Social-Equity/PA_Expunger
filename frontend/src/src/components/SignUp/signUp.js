@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Redirect } from 'react-router-dom';
 import { Container, Row, Col, Form, Button } from "react-bootstrap";
+import { useUser } from "../../context/user";
 
 export default function SignUp() {
-
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -11,6 +11,8 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [isProfileReady, setIsProfileReady] = useState(false);
   const [isError, setIsError] = useState(false);
+
+  const { setUser } = useUser();
 
   // On click to check that all fields are entered
   function saveProfile() {
@@ -21,17 +23,19 @@ export default function SignUp() {
     }
     else {
       // store profile because we can't post without attorney info
-      localStorage.setItem('firstName', firstName);
-      localStorage.setItem('lastName', lastName);
-      localStorage.setItem('email', email);
-      localStorage.setItem('username', username);
-      localStorage.setItem('password', password);
+      const currentUser = {
+        firstName,
+        lastName,
+        email,
+        username
+      };
+      setUser(currentUser);
       setIsProfileReady(true);
     }
   }
 
   if (isProfileReady) {
-    return <Redirect to="/landing" />;
+    return <Redirect to="/" />;
   }
 
   return (

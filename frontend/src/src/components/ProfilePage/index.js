@@ -4,12 +4,14 @@ import "./style.css";
 import axios from 'axios';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 
 export default function ProfilePage() {
-  const [myUsername, setMyUsername] = useState("");
-  const [myFirstName, setMyFirstName] = useState("");
-  const [myLastName, setMyLastName] = useState("");
-  const [myEmail, setMyEmail] = useState("");
+  const { user } = useUser();
+  const [myUsername, setMyUsername] = useState(user.username);
+  const [myFirstName, setMyFirstName] = useState(user.firstName);
+  const [myLastName, setMyLastName] = useState(user.lastName);
+  const [myEmail, setMyEmail] = useState(user.email);
   const [attorneypk, setAttorneypk] = useState(0);
   const [attorneyName, setAttorneyName] = useState("");
   const [attorneyBar, setAttorneyBar] = useState("");
@@ -162,10 +164,10 @@ export default function ProfilePage() {
           </Col>
             <Col>
               {!isEdit && myFirstName} {!isEdit && myLastName}
-              {isEdit && <input type="text" onChange={e => {
+              {isEdit && <input type="text" value={myFirstName} onChange={e => {
                 setMyFirstName(e.target.value);
               }} placeholder="First Name"  />}
-              {isEdit && <input type="text" onChange={e => {
+              {isEdit && <input type="text" value={myLastName} onChange={e => {
                 setMyLastName(e.target.value);
               }} placeholder="Last Name"  />}
             </Col>
@@ -176,7 +178,7 @@ export default function ProfilePage() {
           </Col>
             <Col>
               {!isEdit && myEmail}
-              {isEdit && <input type="text" onChange={e => {
+              {isEdit && <input type="text" value={myEmail} onChange={e => {
                 setMyEmail(e.target.value);
               }} placeholder="Email"  />}
             </Col>

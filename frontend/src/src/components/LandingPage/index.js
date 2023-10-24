@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
-import "./style.css";
 import axios from 'axios';
-import { Button, ButtonGroup, Modal, Col } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
+import Form from 'react-bootstrap/Form';
 import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
@@ -12,6 +13,7 @@ export default function LandingPage() {
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
+    const { user } = useUser();
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
@@ -57,10 +59,10 @@ export default function LandingPage() {
             "attorney" : attorneyKey,
             "organization" : 1,
             "user" : {
-                "first_name" : localStorage.getItem("firstName"),
-                "last_name" : localStorage.getItem("lastName"),
-                "email" : localStorage.getItem("email"),
-                "username" : localStorage.getItem("username")            
+                "first_name" : user.firstName,
+                "last_name" : user.lastName,
+                "email" : user.email,
+                "username" : user.username            
             }
         };
 
@@ -94,19 +96,18 @@ export default function LandingPage() {
                 </Modal.Header>
 
                 <Modal.Body>
-                    <Col>
-                        Please select the attorney that you will be filing for:
-                        <ButtonGroup vertical >
-                            {attorneyData.map(item => (<Button id="attorneyNames" key={item.pk} onClick={e => {
-                                setAttorneyKey(item.pk);
-                            }}>{item.name}</Button>))}
-                        </ButtonGroup>
-                    </Col>
+                    Please select the attorney that you will be filing for:
+                    <Form.Control as="select" id="attorneyNames" value={attorneyKey} onChange={(e) => setAttorneyKey(e.target.value)}>
+                        <option>Select one</option>
+                        {attorneyData.map(item => (
+                            <option value={item.pk} key={item.pk}>{item.name}</option>
+                        ))}
+                    </Form.Control>
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="cancelButton" onClick={returnLogin}>Cancel</Button>
-                    <Button id="attorneyNames" onClick={choseAttorney}>Select</Button>
+                    <Button id="cancelButton" variant="outline-secondary" onClick={returnLogin}>Cancel</Button>
+                    <Button id="submitButton" onClick={choseAttorney}>Select</Button>
                     {isError && <div>Please select an attorney</div>}
                 </Modal.Footer>
             </Modal.Dialog>

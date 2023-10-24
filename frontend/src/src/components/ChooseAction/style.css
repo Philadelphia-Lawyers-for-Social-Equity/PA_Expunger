@@ -1,13 +1,8 @@
-#searchButton {
-    background-color : #405664;
-    color : white;
-    margin-top : 10px;
-    border-color : #405664; 
-}
+@import '../../constants.css';
 
-#uploadButton {
-    background-color : #405664;
-    color : white;
-    margin-top : 10px;
-    border-color : #405664; 
+.option-btn {
+    background-color: var(--gray) !important;
+    color: white;
+    margin-top: 10px;
+    border: 0;
 }

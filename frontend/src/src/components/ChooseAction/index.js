@@ -29,10 +29,10 @@ export default function ChooseAction() {
                     <Row>
                         <Col sm={2}> </Col>
                         <Col sm={4}>   
-                            <Button id="searchButton" onClick={redirectToSearch}>Search Archive</Button>
+                            <Button disabled id="searchButton" className="option-btn" onClick={redirectToSearch}>Search Archive</Button>
                         </Col>
                         <Col sm={4}>
-                            <Button id="uploadButton" onClick={redirectToUpload}>Upload Docket</Button>
+                            <Button id="uploadButton" className="option-btn" onClick={redirectToUpload}>Upload Docket</Button>
                         </Col>
                         <Col sm={2}> </Col>
                     </Row>
