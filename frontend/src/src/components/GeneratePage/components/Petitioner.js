@@ -1,11 +1,11 @@
-import React from 'react';
-import GeneratorInput from '../helpers/GeneratorInput';
-import EditableList from '../helpers/EditableList';
-import Address from '../helpers/Address';
-import RemovableTextField from '../helpers/RemovableTextField';
+import React from "react";
+import GeneratorInput from "../helpers/GeneratorInput";
+import EditableList from "../helpers/EditableList";
+import Address from "../helpers/Address";
+import RemovableTextField from "../helpers/RemovableTextField";
 
 export default function Petitioner(props) {
-    /* Props expects:
+  /* Props expects:
         - name: string
         - aliases: array of strings
         - dob: iso formatted date string
@@ -18,60 +18,84 @@ export default function Petitioner(props) {
         - adds address via handleChange
     */
 
-    function aliasItems() {
-        if(!props.aliases) {
-            return([]);
-        }
-
-        return props.aliases.map((a) => ({"text": a, "key": a}));
+  function aliasItems() {
+    if (!props.aliases) {
+      return [];
     }
 
-    function saveAliases(items) {
-        let newAliases = items.map((a) => (a.text));
-        props.handleChange({"aliases": newAliases});
+    return props.aliases.map((a) => ({ text: a, key: a }));
+  }
+
+  function saveAliases(items) {
+    let newAliases = items.map((a) => a.text);
+    props.handleChange({ aliases: newAliases });
+  }
+
+  function updateSsn(e) {
+    if (props.ssn === undefined) {
+      props.handleChange({ ssn: e.ssn });
+      return;
+    }
+    let ssn = e.ssn;
+
+    if (ssn.length > 11) {
+      return;
     }
 
-    return(
-        <>
-            <h2>Petitioner</h2>
-            <GeneratorInput
-                label="Full Name"
-                type="text"
-                placeholder="Full Name"
-                name="name"
-                value={props.name}
-                handleChange={props.handleChange}
-                required={true}
-            />
+    if (ssn.length === 3 || ssn.length === 6) {
+      ssn += "-";
+    }
+    props.handleChange({ ssn: ssn });
+  }
 
-            <GeneratorInput
-                label="Birth Date"
-                type="date"
-                name="dob"
-                value={props.dob}
-                handleChange={props.handleChange}
-                required={true}
-            />
+  return (
+    <>
+      <h2>Petitioner</h2>
+      <GeneratorInput
+        label="Full Name"
+        type="text"
+        placeholder="Full Name"
+        name="name"
+        value={props.name}
+        handleChange={props.handleChange}
+        required={true}
+      />
 
-            <GeneratorInput
-                label="Social Security Number"
-                type="text"
-                placeholder="###-##-####"
-                name="ssn"
-                value={props.ssn}
-                handleChange={props.handleChange}
-                required={true}
-            />
+      <GeneratorInput
+        label="Birth Date"
+        type="date"
+        name="dob"
+        value={props.dob}
+        handleChange={props.handleChange}
+        required={true}
+      />
 
-            <EditableList
-                label="Aliases"
-                inner={RemovableTextField}
-                emptyItem={{"text": "", "key": ""}}
-                items={aliasItems()}
-                handleChange={(e) => {saveAliases(e)}}
-            />
+      <GeneratorInput
+        label="Social Security Number"
+        type="text"
+        placeholder="###-##-####"
+        name="ssn"
+        value={props.ssn}
+        handleChange={updateSsn}
+        required={true}
+      />
 
-            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
-        </>
-        );
+      <EditableList
+        label="Aliases"
+        inner={RemovableTextField}
+        emptyItem={{ text: "", key: "" }}
+        items={aliasItems()}
+        handleChange={(e) => {
+          saveAliases(e);
+        }}
+      />
+
+      <Address
+        {...props.address}
+        handleChange={(a) => {
+          props.handleChange({ address: a });
+        }}
+      />
+    </>
+  );
 }
