@@ -7,3 +7,4 @@ mysql_cert.pem
 build
 *.egg-info
 dist
+.DS_Store

@@ -194,8 +194,8 @@ class Fines:
     @staticmethod
     def from_dict(data):
         return Fines(
-            data["total"],
-            data["paid"])
+            data.get("total"),
+            data.get("paid"))
 
     def to_dict(self):
         return {"total": self.total, "paid": self.paid}
