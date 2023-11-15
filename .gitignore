@@ -7,4 +7,3 @@ mysql_cert.pem
 build
 *.egg-info
 dist
-.idea/
