@@ -31,6 +31,7 @@ export default function Petitioner(props) {
     props.handleChange({ aliases: newAliases });
   }
 
+<<<<<<< Updated upstream
   function updateSsn(e) {
     if (props.ssn === undefined) {
       props.handleChange({ ssn: e.ssn });
@@ -66,6 +67,58 @@ export default function Petitioner(props) {
         type="date"
         name="dob"
         value={props.dob}
+=======
+  function formatSsn(value) {
+    if (!value) return value;
+
+    const ssn = value.replace(/[^\d]/g, "");
+
+    const ssnLength = ssn.length;
+
+    if (ssnLength < 4) return ssn;
+
+    if (ssnLength < 6) {
+      return `${ssn.slice(0, 3)}-${ssn.slice(3)}`;
+    }
+
+    return `${ssn.slice(0, 3)}-${ssn.slice(3, 5)}-${ssn.slice(5, 9)}`;
+  }
+
+  function handleSsnInput(res) {
+    const formattedSsn = formatSsn(res["ssn"]);
+    props.handleChange({ ssn: formattedSsn });
+  }
+
+  return (
+    <>
+      <h2>Petitioner</h2>
+      <GeneratorInput
+        label="Full Name"
+        type="text"
+        placeholder="Full Name"
+        name="name"
+        value={props.name}
+>>>>>>> Stashed changes
+        handleChange={props.handleChange}
+        required={true}
+      />
+
+      <GeneratorInput
+<<<<<<< Updated upstream
+        label="Social Security Number"
+        type="text"
+        placeholder="###-##-####"
+        name="ssn"
+        value={props.ssn}
+        handleChange={updateSsn}
+        required={true}
+      />
+
+=======
+        label="Birth Date"
+        type="date"
+        name="dob"
+        value={props.dob}
         handleChange={props.handleChange}
         required={true}
       />
@@ -76,10 +129,11 @@ export default function Petitioner(props) {
         placeholder="###-##-####"
         name="ssn"
         value={props.ssn}
-        handleChange={updateSsn}
+        handleChange={handleSsnInput}
         required={true}
       />
 
+>>>>>>> Stashed changes
       <EditableList
         label="Aliases"
         inner={RemovableTextField}
