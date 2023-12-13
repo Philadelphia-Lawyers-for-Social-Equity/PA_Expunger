@@ -9,6 +9,7 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
   const [isProfileReady, setIsProfileReady] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -17,7 +18,7 @@ export default function SignUp() {
   // On click to check that all fields are entered
   function saveProfile() {
 
-    // check that 
+    // check that
     if (firstName === "" || lastName === "" || email === "" || username === "" || password === "") {
       setIsError(true);
     }
@@ -27,7 +28,8 @@ export default function SignUp() {
         firstName,
         lastName,
         email,
-        username
+        username,
+        role
       };
       setUser(currentUser);
       setIsProfileReady(true);
@@ -61,6 +63,18 @@ export default function SignUp() {
               }} placeholder="Last name" />
             </Col>
           </Form.Row>
+
+          <Form.Group controlId="formBasicRole">
+            <Form.Label>Role</Form.Label>
+              <Form.Control as="select" onChange={e => {
+                setRole(e.target.value);
+              }} custom>
+                <option selected="true" disabled="disabled">Select...</option>
+                <option value="Lawyer">Lawyer</option>
+                <option value="Staff">Staff</option>
+                <option value="Intern">Intern</option>
+              </Form.Control>
+          </Form.Group>
 
           <Form.Group controlId="formBasicEmail">
             <Form.Label>Email</Form.Label>
