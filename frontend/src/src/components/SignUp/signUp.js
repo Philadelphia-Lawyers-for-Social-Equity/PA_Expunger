@@ -18,7 +18,6 @@ export default function SignUp() {
   // On click to check that all fields are entered
   function saveProfile() {
 
-    // check that
     if (firstName === "" || lastName === "" || email === "" || username === "" || password === "") {
       setIsError(true);
     }
