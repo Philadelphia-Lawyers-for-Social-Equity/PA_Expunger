@@ -73,8 +73,7 @@ The Frontend Portal allows users to sign up and associate their account with an 
 
    ![](https://i.gyazo.com/c6835ea9b7c87e5e8c81326ad4b0febe.png)
 
-4. Upload [this docket](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/platform/docket_parser/src/docket_parser/tests/data/dockets/pdfs/2023-docket.pdf))
-5. You should see a Generate form to submit a petition
+4. Post in the #plse-expungement Slack channel or DM the project lead to request a test docket, and someone will send you the files. (We are keeping them out of the repo until they are properly anonymized.)
 
 ## Settings
 
