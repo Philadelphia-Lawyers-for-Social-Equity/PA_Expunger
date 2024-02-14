@@ -95,7 +95,7 @@ class DocketParserAPIView(APIView):
             "petitioner": petitioner_from_parser(parsed),
             "petition": petition_from_parser(parsed),
             "dockets": docket_numbers_from_parser(parsed),
-            "charges": charges,
+            "charges": charges_from_parser(parsed),
             "fines": models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
         }
 
