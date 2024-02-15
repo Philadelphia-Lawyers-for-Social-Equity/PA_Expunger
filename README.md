@@ -10,6 +10,8 @@ docket sheets. The app runs as small web-based dashboard.
 
 Devs should please familiarize themselves with the [guidelines for contributing](./CONTRIBUTING.md).
 
+Check the issues for the tag `good first issue` or take a look at our [multi-file upload epic](https://docs.google.com/document/d/19k4ECv_IJyz2z351AU_t8s43XkYIsl15ZMLOpR57JDY/edit?usp=sharing).
+
 ## Dev Setup
 
 Refer to our [setup guide](./platform/SETUP.md) for instructions and troubleshooting
