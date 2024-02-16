@@ -39,6 +39,7 @@ export default function ChooseAction() {
                 </Modal.Body>            
 
                 <Modal.Footer>
+                    Uploaded documents must be PDF files of Pennsylvania Court Summaries or Court Dockets
                 </Modal.Footer>
             </Modal.Dialog>
         </div>
