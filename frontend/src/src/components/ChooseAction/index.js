@@ -36,7 +36,7 @@ export default function ChooseAction() {
                         </Col>
                         <Col sm={1}> </Col>
                     </Row>
-                </Modal.Body>            
+                </Modal.Body>
 
                 <Modal.Footer>
                     Uploaded documents must be PDF files of Pennsylvania Court Summaries and Court Dockets
