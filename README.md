@@ -56,7 +56,7 @@ Build with your desired settings, then:
 
 ## Copyright Information
 
-Copyright (C) 2023 Code for Philly #plse-expungment team (Individual contributors listed by commit and in [our repository](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard))
+Copyright (C) 2023 Code for Philly #pax team (Individual contributors listed by commit and in [our repository](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard))
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
