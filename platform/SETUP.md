@@ -73,7 +73,7 @@ The Frontend Portal allows users to sign up and associate their account with an 
 
    ![](https://i.gyazo.com/c6835ea9b7c87e5e8c81326ad4b0febe.png)
 
-4. Post in the #plse-expungement Slack channel or DM the project lead to request a test docket, and someone will send you the files. (We are keeping them out of the repo until they are properly anonymized.)
+4. Post in the #pax Slack channel or DM the project lead to request a test docket, and someone will send you the files. (We are keeping them out of the repo until they are properly anonymized.)
 
 ## Settings
 

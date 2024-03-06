@@ -14,7 +14,7 @@ It is vital to this project that the developers building this value the privacy,
 
 We host biweekly meetings both in person and remotely. This is largely where we make decisions, communicate PLSE's needs, and set up collaborative pairing sessions to get large chunks of work done.
 
-The best way to find out about our meetings is joining the [#plse-expungement](https://app.slack.com/client/T03NV85SZ/CJDHS591S) channel on the [Code for Philly](https://www.codeforphilly.org/) [Slack](https://www.codeforphilly.org/chat/).
+The best way to find out about our meetings is joining the [#pax](https://app.slack.com/client/T03NV85SZ/CJDHS591S) channel on the [Code for Philly](https://www.codeforphilly.org/) [Slack](https://www.codeforphilly.org/chat/).
 
 ## Issues
 
