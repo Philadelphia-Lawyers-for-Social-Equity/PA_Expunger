@@ -20,6 +20,7 @@ export default function Petition(props) {
                 name="otn"
                 value={props.otn}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
             />
             <GeneratorInput
                 label="Judge"
@@ -28,6 +29,7 @@ export default function Petition(props) {
                 name="judge"
                 value={props.judge}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
             />
             <Radio
                 label="Is this a full or partial expungement?"
@@ -38,6 +40,7 @@ export default function Petition(props) {
                     ["partial", "Partial Expungement"],
                 ]}
                 selected={props.ratio || "full"}
+                disabled={props.disabled || false}
             />
         </>
     );

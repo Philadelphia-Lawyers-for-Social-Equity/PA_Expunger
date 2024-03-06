@@ -10,7 +10,7 @@ import { useAuth } from "../../context/auth";
 import "./style.css";
 import axios from "axios";
 
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Row, Col } from "react-bootstrap";
 
 /* TODO:
     - Include ratio.
@@ -74,6 +74,9 @@ export default function GeneratePage(props) {
     const [dockets, setDockets] = useState(petitionFields.dockets);
     const [charges, setCharges] = useState(petitionFields.charges);
     const [fines, setFines] = useReducer(mergeReduce, petitionFields.fines);
+    const [success, setSuccess] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [downloadUrl, setDownloadUrl] = useState("");
     const [error, setError] = useState("");
 
     function postGeneratorRequest() {
@@ -98,6 +101,7 @@ export default function GeneratePage(props) {
         }
 
         console.info(petitionFields);
+        setBusy(true);
         axios
             .post(url, petitionFields, postRequestConfig())
             .then((res) => {
@@ -106,30 +110,31 @@ export default function GeneratePage(props) {
                         type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     });
                     let downloadUrl = window.URL.createObjectURL(blob);
-                    let filename = "petition.docx";
-                    let a = document.createElement("a");
-
-                    if (typeof a.download === "undefined") {
-                        window.location.href = downloadUrl;
-                    } else {
-                        a.href = downloadUrl;
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                    }
+                    setDownloadUrl(downloadUrl);
+                    setSuccess(true);
+                    setError("");
+                } else {
+                    throw new Error(`${res.status}: ${res.statusText}`)
                 }
             })
             .catch((error) => {
+                setSuccess(false);
+                setError("There was an error generating the petition.");
                 console.error(error);
+            })
+            .finally(() => {
+                setBusy(false);
             });
     }
 
-    function successfulSubmit() {
-        alert("Your petition has been successfully generated.");
+    function edit() {
+        setSuccess(false);
+        setError("");
     }
 
     function handleSubmit() {
         setError("");
+        setSuccess(false);
 
         const ssn = petitioner.ssn;
         const hasDashes = /(-)/.test(ssn);
@@ -155,21 +160,48 @@ export default function GeneratePage(props) {
             setError("Please enter a valid address.");
         } else {
             postGeneratorRequest();
-            successfulSubmit();
         }
     }
 
+    const formDisabled = busy || success;
+
     return (
         <Form className="generator">
-            <Petitioner {...petitioner} handleChange={setPetitioner} />
-            <Petition {...petition} handleChange={setPetition} />
-            <Dockets dockets={dockets} handleChange={setDockets} />
-            <Charges charges={charges} handleChange={setCharges} />
-            <Fines {...fines} handleChange={setFines} />
-            {error && <Alert variant="warning">{error}</Alert>}
-            <Button onClick={handleSubmit}>
-                Generate Petition
-            </Button>
+            <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
+            <Petition {...petition} handleChange={setPetition} disabled={formDisabled} />
+            <Dockets dockets={dockets} handleChange={setDockets} disabled={formDisabled} />
+            <Charges charges={charges} handleChange={setCharges} disabled={formDisabled} />
+            <Fines {...fines} handleChange={setFines} disabled={formDisabled} />
+            {error && <Form.Group as={Row}><Col><Alert variant="warning">{error}</Alert></Col></Form.Group>}
+            <Form.Group as={Row}>
+                <Col>
+                    <Button onClick={handleSubmit} disabled={formDisabled}>
+                        Generate Petition
+                    </Button>
+                </Col>
+            </Form.Group>
+            {success && (
+                <>
+                    <Form.Group as={Row}>
+                        <Col><Alert variant="success">
+                            Your petition has been generated. Please ensure that it is correct!
+                        </Alert></Col>
+                    </Form.Group>
+                    <Form.Group as={Row} >
+                        <Col>
+                            <div class="mr-2 d-inline">
+                                <a class="btn btn-primary" href={downloadUrl} download="petition.docx">Download</a>
+                            </div>
+                            <div class="mr-2 d-inline">
+                                <Button onClick={edit}>Edit Petition</Button>
+                            </div>
+                            <div class="mr-2 d-inline">
+                                <Button href="/action">New Petition</Button>
+                            </div>
+                        </Col>
+                    </Form.Group>
+                </>
+            )}
         </Form>
     );
 }

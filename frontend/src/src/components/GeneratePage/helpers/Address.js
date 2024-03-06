@@ -28,6 +28,7 @@ export default function Address(props) {
             name="street1"
             value={props.street1 || ""}
             handleChange={handleChange}
+            disabled={props.disabled || false}
         />
 
         <GeneratorInput
@@ -36,6 +37,7 @@ export default function Address(props) {
             name="street2"
             value={props.street2 || ""}
             handleChange={handleChange}
+            disabled={props.disabled || false}
         />
 
         <Form.Group as={Row}>
@@ -43,19 +45,22 @@ export default function Address(props) {
             <Col sm={4}>
                 <Form.Control placeholder="City" value={props.city || ""} onChange={e => {
                     handleChange({"city": e.target.value});
-                }} />
+                }}
+                    disabled={props.disabled || false} />
             </Col>
 
             <Col sm={2}>
                 <Form.Control placeholder="State (2-Letter)" value={props.state || ""} onChange={e => {
                     handleChange({"state": e.target.value});
-                }} />
+                }}
+                    disabled={props.disabled || false} />
             </Col>
 
             <Col sm={2}>
                 <Form.Control placeholder="Zip" value={props.zipcode || ""} onChange={e => {
                     handleChange({"zipcode": e.target.value});
-                }} />
+                }}
+                    disabled={props.disabled || false} />
             </Col>
         </Form.Group>
         </>

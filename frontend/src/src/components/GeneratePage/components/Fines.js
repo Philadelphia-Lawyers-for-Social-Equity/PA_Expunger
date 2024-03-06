@@ -17,6 +17,7 @@ export default function Fines(props) {
                 name="total"
                 value={props.total}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
               />
               <GeneratorCurrencyInput
                 label="Paid"
@@ -24,6 +25,7 @@ export default function Fines(props) {
                 name="paid"
                 value={props.paid}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
               />
             </>
           );
