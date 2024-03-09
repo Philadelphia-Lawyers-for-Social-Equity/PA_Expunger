@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useHistory } from 'react-router-dom';
 import "./style.css";
 //import axios from 'axios';
@@ -6,6 +6,10 @@ import { Button, Modal, Row, Col } from 'react-bootstrap';
 
 
 export default function ChooseAction() {
+    useEffect(() => {
+        document.body.style.backgroundColor = "var(--gray)";
+    }, []);
+
     const history = useHistory();
 
     // On click to search module
@@ -28,7 +32,7 @@ export default function ChooseAction() {
                 <Modal.Body>
                     <Row>
                         <Col sm={1}> </Col>
-                        <Col sm={5}>   
+                        <Col sm={5}>
                             <Button disabled id="searchButton" className="option-btn" onClick={redirectToSearch}>Search Archive</Button>
                         </Col>
                         <Col sm={5}>

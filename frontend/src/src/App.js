@@ -27,21 +27,10 @@ function App(props) {
           <Switch>
             <Route path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
             <Route path="/signup" component={SignUp} />
-
-            {/* <BodyBackgroundColor backgroundColor="gray"> */}
             <PrivateRoute exact path="/" component={LandingPage} />
-            {/* </BodyBackgroundColor> */}
-
-            {/* <BodyBackgroundColor backgroundColor="gray"> */}
             <PrivateRoute path="/action" component={ChooseAction} />
-            {/* </BodyBackgroundColor> */}
-
             <PrivateRoute path="/search" component={SearchPage} />
-
-            {/* <BodyBackgroundColor backgroundColor="gray"> */}
             <PrivateRoute path="/upload" component={FileUpload} />
-            {/* </BodyBackgroundColor> */}
-
             <PrivateRoute path="/generate" component={GeneratePage} />
             <PrivateRoute path="/profile" component={ProfilePage} />
             <PrivateRoute path="*" component={PageNotFound} />
