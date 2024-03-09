@@ -10,10 +10,6 @@ import LandingPage from "../src/components/LandingPage";
 import FileUpload from "../src/components/FileUpload";
 import GeneratePage from "./components/GeneratePage";
 import ProfilePage from "../src/components/ProfilePage";
-// TODO: Remove code related to BodyBackgroundColor before submitting PR.
-//  See Issue #161, "[Feature Request] 404 Page."
-
-// import BodyBackgroundColor from "react-body-backgroundcolor";
 import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
