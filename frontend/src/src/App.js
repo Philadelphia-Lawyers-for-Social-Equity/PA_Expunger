@@ -25,10 +25,7 @@ function App(props) {
         <Router>
           <Nav />
           <Switch>
-            {/* <BodyBackgroundColor backgroundColor="#d9ecf9"> */}
             <Route path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-            {/* </BodyBackgroundColor> */}
-
             <Route path="/signup" component={SignUp} />
 
             {/* <BodyBackgroundColor backgroundColor="gray"> */}
@@ -39,22 +36,14 @@ function App(props) {
             <PrivateRoute path="/action" component={ChooseAction} />
             {/* </BodyBackgroundColor> */}
 
-            {/* <BodyBackgroundColor backgroundColor="#d9ecf9"> */}
             <PrivateRoute path="/search" component={SearchPage} />
-            {/* </BodyBackgroundColor> */}
 
             {/* <BodyBackgroundColor backgroundColor="gray"> */}
             <PrivateRoute path="/upload" component={FileUpload} />
             {/* </BodyBackgroundColor> */}
 
-            {/* <BodyBackgroundColor backgroundColor="#d9ecf9"> */}
             <PrivateRoute path="/generate" component={GeneratePage} />
-            {/* </BodyBackgroundColor> */}
-
-            {/* <BodyBackgroundColor backgroundColor="#d9ecf9"> */}
             <PrivateRoute path="/profile" component={ProfilePage} />
-            {/* </BodyBackgroundColor> */}
-
             <PrivateRoute path="*" component={PageNotFound} />
           </Switch>
         </Router>

@@ -73,6 +73,10 @@ export default function LoginForm() {
     };
   }, [authTokens]);
 
+  useEffect(() => {
+    document.body.style.backgroundColor = "var(--light-blue)";
+  }, []);
+
   if (hasProfile || authTokens) {
     return <Redirect to="/" />;
   }

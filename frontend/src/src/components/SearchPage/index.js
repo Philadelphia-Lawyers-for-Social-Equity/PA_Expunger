@@ -1,12 +1,16 @@
 import axios from 'axios';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Modal, Col, Row, Table } from 'react-bootstrap';
 
 import { useAuth } from '../../context/auth';
 
 export default function SearchPage() {
+    useEffect(() => {
+        document.body.style.backgroundColor = "var(--light-blue)";
+    }, []);
+
     const { authTokens } = useAuth();
 
     // searchResults is an of Petition Fields, per the api glossary.
@@ -15,12 +19,12 @@ export default function SearchPage() {
 
     const accessToken = authTokens?.access;
     function handleSearch(firstName, lastName) {
-        const config = {"headers": { "Authorization": "Bearer " + accessToken}};
+        const config = { "headers": { "Authorization": "Bearer " + accessToken } };
         const url = process.env.REACT_APP_BACKEND_HOST
-                    + "/api/v0.2.1/pa_court_archive/search/?first_name="
-                    + firstName
-                    + "&last_name="
-                    + lastName;
+            + "/api/v0.2.1/pa_court_archive/search/?first_name="
+            + firstName
+            + "&last_name="
+            + lastName;
 
         axios.get(url, config).then(res => {
             console.debug(res);
@@ -30,10 +34,10 @@ export default function SearchPage() {
                 console.error("Search failed: ");
                 console.error(res);
             }
-        }).catch(err => {console.error(err)});
+        }).catch(err => { console.error(err) });
     }
 
-    return(
+    return (
         <div>
             <SearchForm handleSearch={handleSearch} />
             <SearchResults searchResults={searchResults} />
@@ -105,7 +109,7 @@ function SearchResults(props) {
                     <th>OTN</th>
                 </tr></thead>
                 <tbody>
-                    { props.searchResults.map((petitionFields, key) => (
+                    {props.searchResults.map((petitionFields, key) => (
                         <SearchRow petitionFields={petitionFields} key={key} />
                     ))}
                 </tbody>
@@ -118,23 +122,23 @@ function SearchResults(props) {
             - key: identifier
             - petitionFields: the petition fields.
         */
-        return(
+        return (
             <tr key={props.key}>
                 <td>{props.petitionFields.petitioner.name}</td>
                 <td>{props.petitionFields.petitioner.dob}</td>
                 <td>{props.petitionFields.petition.otn}</td>
-                <td><Link to={{"pathname": "/generate", "state": {"petitionFields": props.petitionFields} }}>Create Petition</Link></td>
+                <td><Link to={{ "pathname": "/generate", "state": { "petitionFields": props.petitionFields } }}>Create Petition</Link></td>
             </tr>
         );
     }
 
     if (!Array.isArray(props.searchResults)) {
         // null means you haven't search yet
-        return(<></>);
+        return (<></>);
     }
     else if (props.searchResults.length === 0) {
-        return( <NoResults/> );
+        return (<NoResults />);
     } else {
-        return(<SearchTable searchResults={props.searchResults} />);
+        return (<SearchTable searchResults={props.searchResults} />);
     }
 }
