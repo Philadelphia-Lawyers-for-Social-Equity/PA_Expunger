@@ -3,7 +3,7 @@ import { Modal } from 'react-bootstrap';
 
 function PageNotFound() {
     useEffect(() => {
-        document.body.style.backgroundColor = "#d9ecf9";
+        document.body.style.backgroundColor = "var(--light-blue)";
     }, []);
 
     return (
