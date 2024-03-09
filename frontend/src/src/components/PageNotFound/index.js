@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Modal } from 'react-bootstrap';
 
 function PageNotFound() {
+    useEffect(() => {
+        document.body.style.backgroundColor = "#d9ecf9";
+    }, []);
+
     return (
-        <div>
-            <h1>404: Page Not Found</h1>
-            <p>The page you're looking for doesn't exist.</p>
-            <p>Please check the URL or try navigating to a different page.</p>
-        </div>
+        <Modal.Dialog>
+            <Modal.Header>
+                <Modal.Title>404: Page Not Found</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>The page you're looking for doesn't exist.</p>
+                <p>Please check the URL or try navigating to a different page.</p>
+            </Modal.Body>
+        </Modal.Dialog>
     );
 }
 
