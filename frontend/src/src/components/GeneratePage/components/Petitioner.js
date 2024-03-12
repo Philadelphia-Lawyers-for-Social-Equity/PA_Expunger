@@ -42,6 +42,7 @@ export default function Petitioner(props) {
                 value={props.name}
                 handleChange={props.handleChange}
                 required={true}
+                disabled={props.disabled || false}
             />
 
             <GeneratorInput
@@ -51,6 +52,7 @@ export default function Petitioner(props) {
                 value={props.dob}
                 handleChange={props.handleChange}
                 required={true}
+                disabled={props.disabled || false}
             />
 
             <GeneratorInput
@@ -61,6 +63,7 @@ export default function Petitioner(props) {
                 value={props.ssn}
                 handleChange={props.handleChange}
                 required={true}
+                disabled={props.disabled || false}
             />
 
             <EditableList
@@ -69,9 +72,10 @@ export default function Petitioner(props) {
                 emptyItem={{"text": "", "key": ""}}
                 items={aliasItems()}
                 handleChange={(e) => {saveAliases(e)}}
+                disabled={props.disabled || false}
             />
 
-            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} />
+            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} disabled={props.disabled || false} />
         </>
         );
 }

@@ -54,6 +54,7 @@ export default function EditableList(props) {
             <Button
                 variant={variant}
                 onClick={onClick}
+                disabled={props.disabled || false}
             >Add { props.label }</Button>
         );
     }

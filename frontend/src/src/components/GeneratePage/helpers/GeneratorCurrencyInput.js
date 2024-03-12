@@ -40,6 +40,7 @@ export default function GeneratorCurrencyInput(props) {
           }}
           placeholder={props.placeholder}
           prefix="$"
+          disabled={props.disabled || false}
         />
       </Col>
     </Form.Group>
