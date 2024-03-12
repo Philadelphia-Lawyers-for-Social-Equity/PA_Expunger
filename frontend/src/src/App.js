@@ -21,14 +21,14 @@ function App(props) {
         <Router>
           <Nav />
           <Switch>
-            <Route path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-            <Route path="/signup" component={SignUp} />
+            <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
+            <Route exact path="/signup" component={SignUp} />
             <PrivateRoute exact path="/" component={LandingPage} />
-            <PrivateRoute path="/action" component={ChooseAction} />
-            <PrivateRoute path="/search" component={SearchPage} />
-            <PrivateRoute path="/upload" component={FileUpload} />
-            <PrivateRoute path="/generate" component={GeneratePage} />
-            <PrivateRoute path="/profile" component={ProfilePage} />
+            <PrivateRoute exact path="/action" component={ChooseAction} />
+            <PrivateRoute exact path="/search" component={SearchPage} />
+            <PrivateRoute exact path="/upload" component={FileUpload} />
+            <PrivateRoute exact path="/generate" component={GeneratePage} />
+            <PrivateRoute exact path="/profile" component={ProfilePage} />
             <PrivateRoute path="*" component={PageNotFound} />
           </Switch>
         </Router>
