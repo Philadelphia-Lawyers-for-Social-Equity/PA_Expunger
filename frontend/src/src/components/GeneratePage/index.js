@@ -113,6 +113,10 @@ export default function GeneratePage(props) {
                     setDownloadUrl(downloadUrl);
                     setSuccess(true);
                     setError("");
+                    setTimeout(() => {
+                        // needs to happen after DOM updates
+                        document.getElementById("downloadbutton").scrollIntoView({ behavior: "smooth" });
+                    });
                 } else {
                     throw new Error(`${res.status}: ${res.statusText}`)
                 }
@@ -187,9 +191,9 @@ export default function GeneratePage(props) {
                             Your petition has been generated. Please ensure that it is correct!
                         </Alert></Col>
                     </Form.Group>
-                    <Form.Group as={Row} >
+                    <Form.Group as={Row}>
                         <Col>
-                            <div class="mr-2 d-inline">
+                            <div class="mr-2 d-inline" id="downloadbutton">
                                 <a class="btn btn-primary" href={downloadUrl} download="petition.docx">Download</a>
                             </div>
                             <div class="mr-2 d-inline">
