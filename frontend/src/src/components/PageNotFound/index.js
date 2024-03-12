@@ -1,12 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
 
 function PageNotFound() {
-    useEffect(() => {
-        document.body.style.backgroundColor = "var(--light-blue)";
-    }, []);
-
     return (
         <Modal.Dialog>
             <Modal.Header>

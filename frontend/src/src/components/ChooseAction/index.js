@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useHistory } from 'react-router-dom';
 import "./style.css";
 //import axios from 'axios';
@@ -6,10 +6,6 @@ import { Button, Modal, Row, Col } from 'react-bootstrap';
 
 
 export default function ChooseAction() {
-    useEffect(() => {
-        document.body.style.backgroundColor = "var(--gray)";
-    }, []);
-
     const history = useHistory();
 
     // On click to search module

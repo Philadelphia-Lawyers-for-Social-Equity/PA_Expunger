@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Redirect } from 'react-router-dom';
 import { Container, Row, Col, Form, Button } from "react-bootstrap";
 import { useUser } from "../../context/user";
 
 export default function SignUp() {
-    useEffect(() => {
-        document.body.style.backgroundColor = "var(--light-blue)";
-    }, []);
-
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");

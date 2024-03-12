@@ -1,16 +1,12 @@
 import axios from 'axios';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Modal, Col, Row, Table } from 'react-bootstrap';
 
 import { useAuth } from '../../context/auth';
 
 export default function SearchPage() {
-    useEffect(() => {
-        document.body.style.backgroundColor = "var(--light-blue)";
-    }, []);
-
     const { authTokens } = useAuth();
 
     // searchResults is an of Petition Fields, per the api glossary.

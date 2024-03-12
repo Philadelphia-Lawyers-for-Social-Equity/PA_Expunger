@@ -67,10 +67,6 @@ export default function ProfilePage() {
       )
   }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
-  useEffect(() => {
-    document.body.style.backgroundColor = "var(--light-blue)";
-  }, []);
-
   // onclick for Edit button
   function editProfile() {
 

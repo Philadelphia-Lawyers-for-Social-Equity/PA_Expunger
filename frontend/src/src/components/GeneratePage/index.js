@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useReducer } from "react";
+import React, { useState, useReducer } from "react";
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
@@ -51,10 +51,6 @@ function mergeReduce(initial, changes) {
 }
 
 export default function GeneratePage(props) {
-    useEffect(() => {
-        document.body.style.backgroundColor = "var(--light-blue)";
-    }, []);
-
     /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
