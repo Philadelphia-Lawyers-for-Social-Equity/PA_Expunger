@@ -25,6 +25,7 @@ export default function Dockets(props) {
             emptyItem={{"text": "", "key": ""}}
             handleChange={(e) => {saveItems(e);}}
             disabled={props.disabled || false}
+            smallHeader={false}
         />
     );
 }

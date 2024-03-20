@@ -59,26 +59,67 @@ export default function EditableList(props) {
         );
     }
 
-    return (
-        <Form.Group as="div">
-            { props.label ? <h2>{props.label}</h2> : <></> }
-            { props.items.map((innerProps, idx) => {
-                    return(
-                        <Inner
-                            {...innerProps}
-                            key={uuidv4()}
-                            handleChange={(txt) => {updateItem(idx, txt);}}
-                            handleRemove={() => { dropItem(idx);}}
-                />);
-            })}
+    function ShowLabel() {
+        let result = "";
+        if (!props.label)
+            result = <></>;
+        else if (props.isSubHeader)
+            result = <div className='col-sm-2'><label className='form-label'><>{props.label}</></label></div>;
+        else
+            result = <h2>{props.label}</h2>;
 
-            <Row>
-                <Col sm={2}/>
-                <Col className="text-left" sm={8}>
-                    <AddButton />
-                </Col>
-            </Row>
-        </Form.Group>
-    );
+        return result;
+    }
 
+    if (props.smallHeader) {
+        return (
+            <Form.Group as={Row}>
+                <div className='col-sm-2'>
+                    <label className='form-label'>
+                        {props.label}
+                    </label>
+                </div>
+
+                { props.items.map((innerProps, idx) => {
+                        return(
+                            <Inner
+                                {...innerProps}
+                                key={uuidv4()}
+                                handleChange={(txt) => {updateItem(idx, txt);}}
+                                handleRemove={() => { dropItem(idx);}}
+                    />);
+                })}
+
+                <Row>
+                    <Col sm={2}/>
+                    <Col className="text-left">
+                        <AddButton />
+                    </Col>
+                </Row>
+            </Form.Group>
+        );
+    }
+    else {
+        return (
+            <Form.Group as="div">
+                {ShowLabel()}
+                { props.items.map((innerProps, idx) => {
+                        return(
+                            <Inner
+                                {...innerProps}
+                                key={uuidv4()}
+                                handleChange={(txt) => {updateItem(idx, txt);}}
+                                handleRemove={() => { dropItem(idx);}}
+                    />);
+                })}
+
+                <Row>
+                    <Col sm={2}/>
+                    <Col className="text-left" sm={8}>
+                        <AddButton />
+                    </Col>
+                </Row>
+            </Form.Group>
+        );
+    }
 }

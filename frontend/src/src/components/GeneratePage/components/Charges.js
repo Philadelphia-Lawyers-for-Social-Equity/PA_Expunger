@@ -16,6 +16,7 @@ export default function Charges(props) {
             emptyItem={{"statute": "", "description": "", "grade": "", "date": "", "disposition": "", "key": ""}}
             handleChange={props.handleChange}
             disabled={props.disabled || false}
+            smallHeader={false}
         />
     );
 }
