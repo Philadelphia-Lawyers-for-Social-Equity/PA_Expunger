@@ -8,31 +8,44 @@ export default function FileUpload() {
 
     const history = useHistory();
 
-    const [fileName, setFileName] = useState(undefined);
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
+    
+    const fileNameList = fileNames.map(name => {
+        return <li key={name}>{name}</li>
+    })
 
     // On click for the cancel button
     function returnToChooseAction() {
         history.push("/");
     }
 
-    // On change for getting file
-    function getFile(files) {
-        setFileName(files[0]);
+    // On change for getting files
+    function getFile(uploadedDocs) {
+        setFileNames([])
+        for(const file of uploadedDocs) {
+            setUploadedFiles(files => [...files, file]);
+            if (uploadedDocs.length > 1) {
+                setFileNames(nameList => [...nameList, file.name])
+            }
+        }
     }
 
     // POST to send PDF file
     function chooseFile() {
 
         // Need to check if a file is chosen
-        if (fileName === undefined) {
+        if (uploadedFiles === undefined) {
             setIsError(true);
         }
         else {
             let pdfdata = new FormData();
             pdfdata.append('name', 'docket_file');
-            pdfdata.append('docket_file', fileName);
+            for (let file of uploadedFiles) {
+                pdfdata.append('docket_file', file);
+            }
 
             // post to generate profile
             const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/parse-docket/";
@@ -55,7 +68,6 @@ export default function FileUpload() {
         }
     }
 
-
     return (
         <div className="text-center">
             <Modal.Dialog>
@@ -65,7 +77,14 @@ export default function FileUpload() {
 
                 <Modal.Body>
                     <Col>
-                        <input type="file" name="docket_file" onChange={e => { getFile(e.target.files); }} />
+                        <input 
+                            type="file" 
+                            name="docket_file" 
+                            multiple 
+                            accept=".pdf" 
+                            onChange={e => { getFile(e.target.files); }}
+                        />
+                        <ul style={{listStyleType: "none"}}>{fileNameList}</ul>
                     </Col>
                 </Modal.Body>
 

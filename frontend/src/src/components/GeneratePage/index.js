@@ -56,6 +56,8 @@ export default function GeneratePage(props) {
     */
     const { authTokens } = useAuth();
 
+    const [petitionNumber, setPetitionNumber] = useState(0)
+
     const fieldsFromRouterState =
         props.location && props.location.state
             ? props.location.state.petitionFields
@@ -69,11 +71,11 @@ export default function GeneratePage(props) {
     );
     const [petition, setPetition] = useReducer(
         mergeReduce,
-        petitionFields.petition
+        petitionFields.petitions[petitionNumber].docket_info
     );
-    const [dockets, setDockets] = useState(petitionFields.dockets);
-    const [charges, setCharges] = useState(petitionFields.charges);
-    const [fines, setFines] = useReducer(mergeReduce, petitionFields.fines);
+    const [dockets, setDockets] = useState(petitionFields.petitions[petitionNumber].docket_numbers);
+    const [charges, setCharges] = useState(petitionFields.petitions[petitionNumber].charges);
+    const [fines, setFines] = useReducer(mergeReduce, petitionFields.petitions[petitionNumber].fines);
     const [success, setSuccess] = useState(false);
     const [busy, setBusy] = useState(false);
     const [downloadUrl, setDownloadUrl] = useState("");
