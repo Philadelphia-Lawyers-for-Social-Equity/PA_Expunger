@@ -35,7 +35,6 @@ export default function LandingPage() {
             )
     }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
-
     // On click for the cancel button
     function returnLogin() {
         return <Redirect to="/login" />;

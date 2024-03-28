@@ -153,7 +153,7 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Username :
-          </Col>
+            </Col>
             <Col>
               {myUsername}
             </Col>
@@ -161,32 +161,32 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Name :
-          </Col>
+            </Col>
             <Col>
               {!isEdit && myFirstName} {!isEdit && myLastName}
               {isEdit && <input type="text" value={myFirstName} onChange={e => {
                 setMyFirstName(e.target.value);
-              }} placeholder="First Name"  />}
+              }} placeholder="First Name" />}
               {isEdit && <input type="text" value={myLastName} onChange={e => {
                 setMyLastName(e.target.value);
-              }} placeholder="Last Name"  />}
+              }} placeholder="Last Name" />}
             </Col>
           </Row>
           <Row>
             <Col>
               Email Address :
-          </Col>
+            </Col>
             <Col>
               {!isEdit && myEmail}
               {isEdit && <input type="text" value={myEmail} onChange={e => {
                 setMyEmail(e.target.value);
-              }} placeholder="Email"  />}
+              }} placeholder="Email" />}
             </Col>
           </Row>
           <Row>
             <Col>
               Header Text for Petition :
-          </Col>
+            </Col>
             <Col>
               <p className="petp">{orgName}</p>
               <p className="petp">BY: {attorneyName}</p>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Expungement Petition Signature :
-          </Col>
+            </Col>
             <Col>
               {attorneyName}, Esquire
             </Col>

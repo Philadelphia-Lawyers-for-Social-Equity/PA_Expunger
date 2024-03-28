@@ -65,35 +65,35 @@ export default function SignUp() {
 
           <Form.Group controlId="formBasicRole">
             <Form.Label>Role</Form.Label>
-              <Form.Control as="select" onChange={e => {
-                setRole(e.target.value);
-              }} custom>
-                <option selected="true" disabled="disabled">Select...</option>
-                <option value="Lawyer">Lawyer</option>
-                <option value="Staff">Staff</option>
-                <option value="Intern">Intern</option>
-              </Form.Control>
+            <Form.Control as="select" onChange={e => {
+              setRole(e.target.value);
+            }} custom>
+              <option selected="true" disabled="disabled">Select...</option>
+              <option value="Lawyer">Lawyer</option>
+              <option value="Staff">Staff</option>
+              <option value="Intern">Intern</option>
+            </Form.Control>
           </Form.Group>
 
           <Form.Group controlId="formBasicEmail">
             <Form.Label>Email</Form.Label>
             <Form.Control type="email" value={email} onChange={e => {
-                setEmail(e.target.value);
-              }} placeholder="Enter email" />
+              setEmail(e.target.value);
+            }} placeholder="Enter email" />
           </Form.Group>
 
           <Form.Group controlId="formBasic">
             <Form.Label>Username</Form.Label>
             <Form.Control type="username" value={username} onChange={e => {
-                setUsername(e.target.value);
-              }} placeholder="Enter username" />
+              setUsername(e.target.value);
+            }} placeholder="Enter username" />
           </Form.Group>
 
           <Form.Group controlId="formBasicPassword">
             <Form.Label>Password</Form.Label>
             <Form.Control type="password" value={password} onChange={e => {
-                setPassword(e.target.value);
-              }} placeholder="Password" />
+              setPassword(e.target.value);
+            }} placeholder="Password" />
           </Form.Group>
 
           <Button variant="primary" onClick={saveProfile}>Submit</Button>

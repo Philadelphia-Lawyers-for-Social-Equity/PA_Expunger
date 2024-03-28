@@ -28,7 +28,7 @@ export default function ChooseAction() {
                 <Modal.Body>
                     <Row>
                         <Col sm={1}> </Col>
-                        <Col sm={5}>   
+                        <Col sm={5}>
                             <Button disabled id="searchButton" className="option-btn" onClick={redirectToSearch}>Search Archive</Button>
                         </Col>
                         <Col sm={5}>

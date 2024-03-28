@@ -5,7 +5,6 @@ import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
 
 export default function FileUpload() {
-
     const history = useHistory();
 
     const [uploadedFiles, setUploadedFiles] = useState([]);
