@@ -44,6 +44,8 @@ class PetitionAPIView(APIView):
                 "charges": [models.Charge.from_dict(c) for c in
                             request.data.get("charges", [])]
             }
+            dispositions = set([charge.disposition for charge in context["charges"]])
+            context["dispositions"] = ', '.join(dispositions)
         except KeyError as err:
             msg = f"Missing field: {err}"
             logger.warning(msg)
