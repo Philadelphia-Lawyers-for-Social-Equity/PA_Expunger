@@ -13,6 +13,7 @@ export default function EditableList(props) {
             - emptyItem: property object template for a new item
             - items: array of property objects appropriate for Inner component
             - handleChange
+            - smallHeader: should the header be in a small font?
     */
 
     const Inner = props.inner;
@@ -43,12 +44,12 @@ export default function EditableList(props) {
     }
 
     function showLabel() {
-        if (!props.label) {
-            return <></>;
-        } else if (props.isSubHeader) {
-            return <div className='col-sm-2'><label className='form-label'><>{props.label}</></label></div>;
-        } else {
+        if (props.smallHeader) {
             return <Form.Label>{props.label}</Form.Label>;
+        } else if (!props.label) {
+            return <></>;
+        } else {
+            return <h2>{props.label}</h2>;
         }
     }
 
