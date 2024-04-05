@@ -42,6 +42,16 @@ export default function EditableList(props) {
         return(objString === emptyString);
     }
 
+    function showLabel() {
+        if (!props.label) {
+            return <></>;
+        } else if (props.isSubHeader) {
+            return <div className='col-sm-2'><label className='form-label'><>{props.label}</></label></div>;
+        } else {
+            return <Form.Label>{props.label}</Form.Label>;
+        }
+    }
+
     function AddButton() {
         let variant = "primary";
         let onClick = () => {addItem()};
@@ -59,67 +69,25 @@ export default function EditableList(props) {
         );
     }
 
-    function ShowLabel() {
-        let result = "";
-        if (!props.label)
-            result = <></>;
-        else if (props.isSubHeader)
-            result = <div className='col-sm-2'><label className='form-label'><>{props.label}</></label></div>;
-        else
-            result = <h2>{props.label}</h2>;
+    return (
+        <Form.Group as="div">
+            {showLabel()}
+            { props.items.map((innerProps, idx) => {
+                    return(
+                        <Inner
+                            {...innerProps}
+                            key={uuidv4()}
+                            handleChange={(txt) => {updateItem(idx, txt);}}
+                            handleRemove={() => { dropItem(idx);}}
+                />);
+            })}
 
-        return result;
-    }
-
-    if (props.smallHeader) {
-        return (
-            <Form.Group as={Row}>
-                <div className='col-sm-2'>
-                    <label className='form-label'>
-                        {props.label}
-                    </label>
-                </div>
-
-                { props.items.map((innerProps, idx) => {
-                        return(
-                            <Inner
-                                {...innerProps}
-                                key={uuidv4()}
-                                handleChange={(txt) => {updateItem(idx, txt);}}
-                                handleRemove={() => { dropItem(idx);}}
-                    />);
-                })}
-
-                <Row>
-                    <Col sm={2}/>
-                    <Col className="text-left">
-                        <AddButton />
-                    </Col>
-                </Row>
-            </Form.Group>
-        );
-    }
-    else {
-        return (
-            <Form.Group as="div">
-                {ShowLabel()}
-                { props.items.map((innerProps, idx) => {
-                        return(
-                            <Inner
-                                {...innerProps}
-                                key={uuidv4()}
-                                handleChange={(txt) => {updateItem(idx, txt);}}
-                                handleRemove={() => { dropItem(idx);}}
-                    />);
-                })}
-
-                <Row>
-                    <Col sm={2}/>
-                    <Col className="text-left" sm={8}>
-                        <AddButton />
-                    </Col>
-                </Row>
-            </Form.Group>
-        );
-    }
+            <Row>
+                <Col sm={2}/>
+                <Col className="text-left" sm={8}>
+                    <AddButton />
+                </Col>
+            </Row>
+        </Form.Group>
+    );
 }
