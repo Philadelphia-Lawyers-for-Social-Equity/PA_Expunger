@@ -23,7 +23,7 @@ class Address:
         """Provide string representation"""
 
         if self.street2 is None or self.street2.strip() == "":
-            return f"{self.street1}\n {self.city}, {self.state} {self.zipcode}"
+            return f"{self.street1}\n{self.city}, {self.state} {self.zipcode}"
 
         return f"{self.street1}\n{self.street2}\n{self.city}, {self.state} {self.zipcode}"
 
