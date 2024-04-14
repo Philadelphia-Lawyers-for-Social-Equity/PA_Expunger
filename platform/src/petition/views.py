@@ -311,5 +311,8 @@ def adapt_charge(charge: dict, disposition_date: datetime.date) -> dict:
 # from having to format as rtf.
 def format_address_for_template(address: models.Address) -> str:
 
-    formattedAddress = address.__str__().replace('\n', '<w:br/>')
+    if address is None:
+        return ''
+
+    formattedAddress = address.__str__().replace('\n', '<w:br/>').replace('\r', '<w:br/>')
     return formattedAddress
