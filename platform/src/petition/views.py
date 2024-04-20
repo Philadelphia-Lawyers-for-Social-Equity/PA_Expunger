@@ -314,5 +314,5 @@ def format_address_for_template(address: models.Address) -> str:
     if address is None:
         return ''
 
-    formattedAddress = address.__str__().replace('\n', '<w:br/>').replace('\r', '<w:br/>')
+    formattedAddress = re.sub(r'[\n\r]+', '<w:br/>', str(address))
     return formattedAddress
