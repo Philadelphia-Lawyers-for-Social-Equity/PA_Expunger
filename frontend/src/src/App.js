@@ -13,28 +13,38 @@ import ProfilePage from "../src/components/ProfilePage";
 import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
+import UploadPreview from "./components/UploadPreview";
 
 function App(props) {
-  return (
-    <AuthProvider>
-      <UserProvider>
-        <Router>
-          <Nav />
-          <Switch>
-            <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-            <Route exact path="/signup" component={SignUp} />
-            <PrivateRoute exact path="/" component={LandingPage} />
-            <PrivateRoute exact path="/action" component={ChooseAction} />
-            <PrivateRoute exact path="/search" component={SearchPage} />
-            <PrivateRoute exact path="/upload" component={FileUpload} />
-            <PrivateRoute exact path="/generate" component={GeneratePage} />
-            <PrivateRoute exact path="/profile" component={ProfilePage} />
-            <PrivateRoute path="*" component={PageNotFound} />
-          </Switch>
-        </Router>
-      </UserProvider>
-    </AuthProvider>
-  );
+	return (
+		<AuthProvider>
+			<UserProvider>
+				<Router>
+					<Nav />
+					<Switch>
+						<Route
+							exact
+							path='/login'
+							render={(props) => <LoginForm {...props} isAuthed={true} />}
+						/>
+						<Route exact path='/signup' component={SignUp} />
+						<PrivateRoute exact path='/' component={LandingPage} />
+						<PrivateRoute exact path='/action' component={ChooseAction} />
+						<PrivateRoute exact path='/search' component={SearchPage} />
+						<PrivateRoute exact path='/upload' component={FileUpload} />
+						<PrivateRoute
+							exact
+							path='/upload-preview'
+							component={UploadPreview}
+						/>
+						<PrivateRoute exact path='/generate' component={GeneratePage} />
+						<PrivateRoute exact path='/profile' component={ProfilePage} />
+						<PrivateRoute path='*' component={PageNotFound} />
+					</Switch>
+				</Router>
+			</UserProvider>
+		</AuthProvider>
+	);
 }
 
 export default App;
