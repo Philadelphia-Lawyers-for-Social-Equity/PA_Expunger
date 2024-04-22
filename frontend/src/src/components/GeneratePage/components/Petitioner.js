@@ -73,6 +73,7 @@ export default function Petitioner(props) {
                 items={aliasItems()}
                 handleChange={(e) => {saveAliases(e)}}
                 disabled={props.disabled || false}
+                smallHeader={true}
             />
 
             <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} disabled={props.disabled || false} />

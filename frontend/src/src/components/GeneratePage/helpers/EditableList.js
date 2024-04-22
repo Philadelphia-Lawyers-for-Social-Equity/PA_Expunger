@@ -13,6 +13,7 @@ export default function EditableList(props) {
             - emptyItem: property object template for a new item
             - items: array of property objects appropriate for Inner component
             - handleChange
+            - smallHeader: should the header be in a small font?
     */
 
     const Inner = props.inner;
@@ -42,6 +43,16 @@ export default function EditableList(props) {
         return(objString === emptyString);
     }
 
+    function showLabel() {
+        if (props.smallHeader) {
+            return <Form.Label>{props.label}</Form.Label>;
+        } else if (!props.label) {
+            return <></>;
+        } else {
+            return <h2>{props.label}</h2>;
+        }
+    }
+
     function AddButton() {
         let variant = "primary";
         let onClick = () => {addItem()};
@@ -61,7 +72,7 @@ export default function EditableList(props) {
 
     return (
         <Form.Group as="div">
-            { props.label ? <h2>{props.label}</h2> : <></> }
+            {showLabel()}
             { props.items.map((innerProps, idx) => {
                     return(
                         <Inner
@@ -80,5 +91,4 @@ export default function EditableList(props) {
             </Row>
         </Form.Group>
     );
-
 }
