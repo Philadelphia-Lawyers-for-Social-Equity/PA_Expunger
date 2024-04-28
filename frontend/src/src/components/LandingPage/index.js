@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
-import "./style.css";
 import axios from 'axios';
-import { Button, ButtonGroup, Modal, Col } from 'react-bootstrap';
-// import { useAuth } from '../../context/auth';
-
+import { Button, Modal } from 'react-bootstrap';
+import Form from 'react-bootstrap/Form';
+import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
@@ -12,12 +12,12 @@ export default function LandingPage() {
     const [isAttorneyChosen, setAttorneyChosen] = useState(false);
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
+    const { authTokens } = useAuth();
+    const { user } = useUser();
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
-
-        const bearer = "Bearer ";
-        const token = bearer.concat(localStorage.getItem("access_token"));
+        const token = `Bearer ${authTokens.access}`;
         var config = {
             'headers': { 'Authorization': token }
         };
@@ -33,8 +33,7 @@ export default function LandingPage() {
                     }
                 }
             )
-    }, []); // empty array as the second argument will limit to one get call
-
+    }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
     // On click for the cancel button
     function returnLogin() {
@@ -59,24 +58,23 @@ export default function LandingPage() {
             "attorney" : attorneyKey,
             "organization" : 1,
             "user" : {
-                "first_name" : localStorage.getItem("firstName"),
-                "last_name" : localStorage.getItem("lastName"),
-                "email" : localStorage.getItem("email"),
-                "username" : localStorage.getItem("username")            
+                "first_name" : user.firstName,
+                "last_name" : user.lastName,
+                "email" : user.email,
+                "username" : user.username            
             }
         };
 
         // post to generate profile
         const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-        const bearer = "Bearer ";
-        const token = bearer.concat(localStorage.getItem("access_token"));
+        const token = `Bearer ${authTokens.access}`;
         var config = {
             'headers': { 'Authorization': token }
         };
 
-        axios.post(profileurl, profiledata, config)
+        axios.put(profileurl, profiledata, config)
             .then(res => {
-                if (res.status === 201) {
+                if (res.status === 200) {
                     setProfileGenerated(true);
                 }
             })
@@ -97,19 +95,18 @@ export default function LandingPage() {
                 </Modal.Header>
 
                 <Modal.Body>
-                    <Col>
-                        Please select the attorney that you will be filing for:
-                        <ButtonGroup vertical >
-                            {attorneyData.map(item => (<Button id="attorneyNames" key={item.pk} onClick={e => {
-                                setAttorneyKey(item.pk);
-                            }}>{item.name}</Button>))}
-                        </ButtonGroup>
-                    </Col>
+                    Please select the attorney that you will be filing for:
+                    <Form.Control as="select" id="attorneyNames" value={attorneyKey} onChange={(e) => setAttorneyKey(e.target.value)}>
+                        <option>Select one</option>
+                        {attorneyData.map(item => (
+                            <option value={item.pk} key={item.pk}>{item.name}</option>
+                        ))}
+                    </Form.Control>
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="cancelButton" onClick={returnLogin}>Cancel</Button>
-                    <Button id="attorneyNames" onClick={choseAttorney}>Select</Button>
+                    <Button id="cancelButton" variant="outline-secondary" onClick={returnLogin}>Cancel</Button>
+                    <Button id="submitButton" onClick={choseAttorney}>Select</Button>
                     {isError && <div>Please select an attorney</div>}
                 </Modal.Footer>
             </Modal.Dialog>

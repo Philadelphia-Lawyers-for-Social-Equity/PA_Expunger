@@ -66,14 +66,6 @@ export const requiredInputValidators = {
             validator: defaultValidator,
             description: 'Offense Tracking number',
         },
-        complaint_date: {
-            validator: defaultValidator,
-            description: 'complaint date',
-        },
-        arrest_agency: {
-            validator: defaultValidator,
-            description: 'arrest agency',
-        },
         judge: {
             validator: defaultValidator,
             description: 'judge',
@@ -103,14 +95,14 @@ export const requiredInputValidators = {
             },
         description: 'charges',
     },
-    restitution: {
+    fines: {
         total: {
             validator: defaultValidator,
-            description: 'total restitution',
+            description: 'total fines and fees',
         },
         paid: {
             validator: defaultValidator,
-            description: 'paid restitution',
+            description: 'paid fines and fees',
         }
     }
 };

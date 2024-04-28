@@ -3,16 +3,12 @@ import { useAuth } from "../../context/auth";
 import { Button } from "react-bootstrap";
 
 function Admin(props) {
-  const { setAuthTokens } = useAuth();
-
-  function logOut() {
-    setAuthTokens();
-  }
+  const { logout } = useAuth();
 
   return (
     <div>
       <div>Admin Page</div>
-      <Button onClick={logOut}>Log out</Button>
+      <Button onClick={logout}>Log out</Button>
     </div>
   );
 }

@@ -64,8 +64,7 @@ class Arrestee(models.Model):
     birth_date = models.DateField(null=True)
 
     def __str__(self):
-        return "Arrestee <first_name: %s, last_name: %s>" % (
-            str(self.first_name), str(self.last_name))
+        return f"Arrestee <first_name: {str(self.first_name)}, last_name: {str(self.last_name)}>"
 
 
 class Case(models.Model):
@@ -84,7 +83,7 @@ class Case(models.Model):
     arrestees = models.ManyToManyField(Arrestee)
 
     def __str__(self):
-        return "Case <otn: %s>" % self.otn
+        return f"Case <otn: {self.otn}>"
 
 
 class Docket(models.Model):
@@ -95,7 +94,7 @@ class Docket(models.Model):
     case = models.ForeignKey(Case, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return "Docket <docket_number: %s>" % self.docket_number
+        return f"Docket <docket_number: {self.docket_number}>"
 
 
 class Offense(models.Model):
@@ -120,4 +119,4 @@ class Offense(models.Model):
     docket = models.ForeignKey(Docket, on_delete=models.CASCADE, null=False)
 
     def __str__(self):
-        return "Offense <description: %s>" % self.description
+        return f"Offense <description: {self.description}>"

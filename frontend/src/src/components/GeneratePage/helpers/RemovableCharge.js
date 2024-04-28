@@ -50,6 +50,7 @@ export default function RemovableCharge(props) {
                     value={statute}
                     onChange={(e) => {setStatute(e.target.value);}}
                     readOnly={!editing}
+                    disabled={props.disabled || false}
                 />
             </Col>
             <Col sm={1}>
@@ -58,6 +59,7 @@ export default function RemovableCharge(props) {
                     value={grade}
                     onChange={(e) => {setGrade(e.target.value);}}
                     readOnly={!editing}
+                    disabled={props.disabled || false}
                 />
             </Col>
             <Col sm={2}>
@@ -66,6 +68,7 @@ export default function RemovableCharge(props) {
                     value={date}
                     onChange={(e) => {setDate(e.target.value);}}
                     readOnly={!editing}
+                    disabled={props.disabled || false}
                 />
             </Col>
             <Col sm={2}>
@@ -74,6 +77,7 @@ export default function RemovableCharge(props) {
                     value={disposition}
                     onChange={(e) => {setDisposition(e.target.value);}}
                     readOnly={!editing}
+                    disabled={props.disabled || false}
                 />
             </Col>
             <Col sm={1}>
@@ -81,6 +85,7 @@ export default function RemovableCharge(props) {
                 variant={ hovering ? "danger" : "secondary"}
                 onClick={ props.handleRemove }
                 cursor="pointer"
+                disabled={props.disabled || false}
             >
                 X
             </Button>
@@ -94,6 +99,7 @@ export default function RemovableCharge(props) {
                     onChange={(e) => {setDescription(e.target.value);}}
                     readOnly={!editing}
                     placeholder="Description"    
+                    disabled={props.disabled || false}
                 />
             </Col>
         </Row>

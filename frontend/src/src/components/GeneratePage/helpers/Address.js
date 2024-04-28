@@ -31,6 +31,7 @@ export default function Address(props) {
             handleChange={handleChange}
             required={true}
             validator={addressValidators['street1'].validator}
+            disabled={props.disabled || false}
         />
 
         <GeneratorInput
@@ -39,6 +40,7 @@ export default function Address(props) {
             name="street2"
             value={props.street2 || ""}
             handleChange={handleChange}
+            disabled={props.disabled || false}
         />
 
         <Form.Group as={Row}>
@@ -53,6 +55,7 @@ export default function Address(props) {
                     required={true}
                     isValid={addressValidators['city'].validator(props.city)}
                     isInvalid={!addressValidators['city'].validator(props.city)}
+                    disabled={props.disabled || false}
                 />
             </Col>
 
@@ -66,6 +69,7 @@ export default function Address(props) {
                     required={true}
                     isValid={addressValidators['state'].validator(props.state)}
                     isInvalid={!addressValidators['state'].validator(props.state)}
+                    disabled={props.disabled || false}
                 />
             </Col>
 
@@ -79,6 +83,7 @@ export default function Address(props) {
                     required={true}
                     isValid={addressValidators['zipcode'].validator(props.zipcode)}
                     isInvalid={!addressValidators['zipcode'].validator(props.zipcode)}
+                    disabled={props.disabled || false}
                 />
             </Col>
         </Form.Group>

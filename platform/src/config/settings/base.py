@@ -92,7 +92,7 @@ DATABASES = {
         'HOST': os.environ.get('EXPUNGER_DB_HOST'),
         'PORT': os.environ.get('EXPUNGER_DB_PORT'),
         'TEST': {
-            'NAME': "%s_test" % os.environ.get('EXPUNGER_DB')
+            'NAME': f"{os.environ.get('EXPUNGER_DB')}_test"
         },
     }
 }

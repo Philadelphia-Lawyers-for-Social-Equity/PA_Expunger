@@ -25,7 +25,7 @@ class CaseFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Case
 
-    otn = factory.Sequence(lambda n: "N%07d" % n)
+    otn = factory.Sequence(lambda n: f"N{n:07d}")
     filed_date = factory.Faker("date")
     city = "Philadelphia"
     county = "Philadelphia"
@@ -48,7 +48,7 @@ class DocketFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Docket
 
-    docket_number = factory.Sequence(lambda n: "MC-51-CR-100%04d-2020" % n)
+    docket_number = factory.Sequence(lambda n: f"MC-51-CR-100{n:04d}-2020")
     case = factory.SubFactory("pa_court_archive.factories.CaseFactory")
 
     offenses = factory.RelatedFactoryList("pa_court_archive.factories.OffenseFactory", factory_related_name="docket", size=3)

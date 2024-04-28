@@ -11,18 +11,14 @@ class Address(models.Model):
     zipcode = models.CharField(max_length=10)
 
     def __repr__(self):
-        return "Address(street1=%s, street2=%s, city=%s, state=%s," \
-               "zipcode=%s)" % (self.street1, self.street2, self.city,
-                                self.state, self.zipcode)
+        return f"Address(street1={self.street1}, street2={self.street2}, city={self.city}," \
+               f" state={self.state}, zipcode={self.zipcode})"
 
     def __str__(self):
         if self.street2 is not None:
-            return "%s\n%s\n%s, %s %s" % (
-                self.street1, self.street2, self.city, self.state,
-                self.zipcode)
+            return f"{self.street1}\n{self.street2}\n{self.city}, {self.state} {self.zipcode}"
 
-        return "%s\n%s, %s %s" % (
-            self.street1, self.city, self.state, self.zipcode)
+        return f"{self.street1}\n{self.city}, {self.state} {self.zipcode}"
 
 
 class Organization(models.Model):
@@ -31,8 +27,7 @@ class Organization(models.Model):
     phone = models.CharField(max_length=32)
 
     def __repr__(self):
-        return "Organization(name=%s, address=%s, phone=%s" % (
-            self.name, self.address, self.phone)
+        return f"Organization(name={self.name}, address={self.address}, phone={self.phone}"
 
     def __str__(self):
         return self.name
@@ -45,10 +40,10 @@ class Attorney(models.Model):
     bar = models.CharField(max_length=32)
 
     def __repr__(self):
-        return "Attorney(user=%s, bar=%s" % (self.user, self.bar)
+        return f"Attorney(user={self.user}, bar={self.bar}"
 
     def __str__(self):
-        return "%s %s" % (self.user.first_name, self.user.last_name)
+        return f"{self.user.first_name} {self.user.last_name}"
 
 
 class ExpungerProfile(models.Model):
@@ -58,5 +53,4 @@ class ExpungerProfile(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
     def __repr__(self):
-        return "ExpungerProfile(user=%s, attorney=%s, organization=%s)" % (
-            self.user, self.attorney, self.organization)
+        return f"ExpungerProfile(user={self.user}, attorney={self.attorney}, organization={self.organization})"

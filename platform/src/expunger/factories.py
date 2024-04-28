@@ -25,7 +25,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.lazy_attribute
     def username(self):
-        return "%s-%s" % (self.first_name, self.last_name)
+        return f"{self.first_name}-{self.last_name}"
 
     @factory.post_generation
     def password(obj, created, extracted, *args, **kwargs):

@@ -1,37 +1,39 @@
 import React from 'react';
-import GeneratorInput from '../helpers/GeneratorInput';
+import GeneratorCurrencyInput from '../helpers/GeneratorCurrencyInput';
 import { requiredInputValidators } from '../helpers/validatorUtils';
 
-const sectionKey = 'restitution';
+const sectionKey = 'fees';
 
-export default function Restitution(props) {
+export default function Fines(props) {
     /* props expects:
         - total: decimal number
         - paid: decimal number
         - handleChange
     */
 
-    return (
-        <>
-            <h2>Restitution</h2>
-            <GeneratorInput
+        return (
+            <>
+              <h2>Fines & Fees</h2>
+              <GeneratorCurrencyInput
                 label="Total"
-                placeholder="Decimal Number"
+                placeholder="Total fines and fees"
                 name="total"
-                value={props.total || 0}
+                value={props.total}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
                 required={true}
                 validator={requiredInputValidators[sectionKey]['total'].validator}
-                />
-            <GeneratorInput
+              />
+              <GeneratorCurrencyInput
                 label="Paid"
-                placeholder="Decimal Number"
+                placeholder="Amount paid"
                 name="paid"
-                value={props.paid || 0}
+                value={props.paid}
                 handleChange={props.handleChange}
+                disabled={props.disabled || false}
                 required={true}
                 validator={requiredInputValidators[sectionKey]['paid'].validator}
-            />
-        </>
-    );
+              />
+            </>
+          );
 }

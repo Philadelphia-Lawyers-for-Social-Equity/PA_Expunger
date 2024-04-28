@@ -41,6 +41,7 @@ export default function GeneratorInput(props) {
                         let res = {[keyName]: e.target.value};
                         props.handleChange(res);
                     }}
+                    disabled={props.disabled || false}
                     {...optionalValidationProps}
                 />
             </Col>

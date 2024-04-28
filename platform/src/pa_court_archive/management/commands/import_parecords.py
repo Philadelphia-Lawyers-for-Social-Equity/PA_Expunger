@@ -87,7 +87,7 @@ class ArchiveQueue:
             try:
                 gender_code = m.GenderCode(row["GenderCode"][0])
             except ValueError:
-                logger.warning("Invalid gender code: %s", row["GenderCode"])
+                logger.warning(f"Invalid gender code: {row['GenderCode']}")
                 gender_code = None
 
         if row["RaceCode"] is None:
@@ -96,7 +96,7 @@ class ArchiveQueue:
             try:
                 race_code = reverse_race_code[row["RaceCode"]]
             except ValueError:
-                logger.warning("Invalid race code: %s", row["RowCode"])
+                logger.warning(f"Invalid race code: {row['RowCode']}")
                 race_code = None
 
         self.arrestee_inserts.append("(%s, %s, %s, %s, %s, %s)")
@@ -136,7 +136,7 @@ class ArchiveQueue:
         birth_date = parse_date_string(row["BirthDate"])
 
         arrestee_select = \
-            "(SELECT id FROM pa_court_archive_arrestee WHERE %s AND %s AND %s AND %s)" % (
+            "(SELECT id FROM pa_court_archive_arrestee WHERE {} AND {} AND {} AND {})".format(
                 self.value_selector("first_name", row["FirstName"]),
                 self.value_selector("middle_name", row["MiddleName"]),
                 self.value_selector("last_name", row["LastName"]),
@@ -145,7 +145,7 @@ class ArchiveQueue:
         case_select = "(SELECT id FROM pa_court_archive_case WHERE otn = %s)"
 
         self.arrestee_case_inserts.append(
-            "(%s, %s)" % (arrestee_select, case_select))
+            f"({arrestee_select}, {case_select})")
 
         for param in [row["FirstName"], row["MiddleName"], row["LastName"], birth_date]:
             if param is not None:
@@ -182,7 +182,7 @@ class ArchiveQueue:
             try:
                 statute_type = m.StatuteType(row["StatuteType"][0])
             except ValueError:
-                logger.warn("Invalid StatuteType %s", row["StatuteType"])
+                logger.warning(f"Invalid StatuteType {row['StatuteType']}")
                 statute_type = None
 
         self.offense_inserts.append(
@@ -217,7 +217,7 @@ class ArchiveQueue:
         self.clear_docket_queue()
         self.clear_offense_queue()
 
-        logger.debug("Queue cleared, total %d rows so far.", self.total)
+        logger.debug(f"Queue cleared, total {self.total} rows so far.")
         self._initialize_queues()
 
     def clear_arrestee_queue(self):
@@ -226,8 +226,8 @@ class ArchiveQueue:
 
         query = """INSERT INTO pa_court_archive_arrestee
             (first_name, middle_name, last_name, gender_code, race_code, birth_date)
-            VALUES %s
-            ON CONFLICT DO NOTHING""" % (",".join(self.arrestee_inserts))
+            VALUES {}
+            ON CONFLICT DO NOTHING""".format(",".join(self.arrestee_inserts))
 
         with django_connection.cursor() as cursor:
             cursor.execute(query, self.arrestee_params)
@@ -238,8 +238,8 @@ class ArchiveQueue:
 
         query = """INSERT INTO pa_court_archive_case
             (otn, filed_date, city, county, state, zip, disposition, disposition_date, disposing_judge)
-            VALUES %s
-            ON CONFLICT DO NOTHING""" % (",".join(self.case_inserts))
+            VALUES {}
+            ON CONFLICT DO NOTHING""".format(",".join(self.case_inserts))
 
         with django_connection.cursor() as cursor:
             cursor.execute(query, self.case_params)
@@ -250,8 +250,8 @@ class ArchiveQueue:
 
         query = """INSERT INTO pa_court_archive_case_arrestees
             (arrestee_id, case_id)
-            VALUES %s
-            ON CONFLICT DO NOTHING""" % (",".join(self.arrestee_case_inserts))
+            VALUES {}
+            ON CONFLICT DO NOTHING""".format(",".join(self.arrestee_case_inserts))
 
         with django_connection.cursor() as cursor:
             cursor.execute(query, self.arrestee_case_params)
@@ -275,9 +275,9 @@ class ArchiveQueue:
 
         query = """INSERT INTO pa_court_archive_docket
             (docket_number, case_id)
-            VALUES %s
+            VALUES {}
             ON CONFLICT DO NOTHING
-            """ % (",".join(inserts))
+            """.format(",".join(inserts))
 
         with django_connection.cursor() as cursor:
             cursor.execute(query, params)
@@ -291,9 +291,9 @@ class ArchiveQueue:
          originating_sequence, statute_type, statute_title, statute_section,
          statute_subsection, inchoate_statute_title, inchoate_statute_section,
          inchoate_statute_subsection, grade, docket_id)
-        VALUES %s
+        VALUES {}
         ON CONFLICT DO NOTHING
-        """ % (",".join(self.offense_inserts))
+        """.format(",".join(self.offense_inserts))
 
         with django_connection.cursor() as cursor:
             cursor.execute(query, self.offense_params)
@@ -317,7 +317,7 @@ class ArchiveQueue:
         """Produce "name = %s" or "name IS NULL" string for a sql selector."""
 
         if val is None:
-            return "%s IS NULL" % name
+            return f"{name} IS NULL"
 
         return f"{name} = %s"
 
@@ -335,12 +335,12 @@ def get_connection():
         "ssl_verify_cert": True
     }
 
-    logger.debug("connection arguments: %s", connection_args)
+    logger.debug(f"connection arguments: {connection_args}")
 
     try:
         cnx = pymysql.connect(**connection_args)
     except pymysql.Error as err:
-        logger.error("Failed to connect to %s, %s", host, str(err))
+        logger.error(f"Failed to connect to {host}, {str(err)}")
         sys.exit(1)
 
     return cnx
@@ -372,11 +372,11 @@ def fix_zip_code(zc):
         zc = str(int(zc))
 
     if len(zc) < 4 or len(zc) > 10:
-        logger.warn("Invalid zipcode %s", zc)
+        logger.warning(f"Invalid zipcode {zc}")
         return
 
     if len(zc) == 4:
-        return "0%s" % zc
+        return f"0{zc}"
 
     if len(zc) == 5:
         return zc
@@ -384,7 +384,7 @@ def fix_zip_code(zc):
     if "-" in zc:
         return zc
 
-    return "%s-%s" % (zc[:5], zc[5:])
+    return f"{zc[:5]}-{zc[5:]}"
 
 
 def retrieve_all_rows(cursor):
@@ -405,11 +405,10 @@ def retrieve_all_rows(cursor):
             count += 1
 
             if row is None:
-                logger.warn("expected %d results, but finished with %d",
-                            cursor.rowcount, count)
+                logger.warning(f"expected {cursor.rowcount} results, but finished with {count}")
                 return
 
             yield row
-        logger.debug("retrieved %d rows so far", count)
+        logger.debug(f"retrieved {count} rows so far")
 
-    logger.debug("finished retrieving %d rows", count)
+    logger.debug(f"finished retrieving {count} rows")

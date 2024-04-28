@@ -52,6 +52,7 @@ export default function Radio(props) {
                             value={item[0]}
                             handleChange={props.handleChange}
                             checked={item[0] === props.selected}
+                            disabled={props.disabled || false}
                         />
                     ))}
                 </ul>

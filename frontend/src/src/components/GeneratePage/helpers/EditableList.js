@@ -13,6 +13,7 @@ export default function EditableList(props) {
             - emptyItem: property object template for a new item
             - items: array of property objects appropriate for Inner component
             - handleChange
+            - smallHeader: should the header be in a small font?
     */
 
     const Inner = props.inner;
@@ -42,6 +43,16 @@ export default function EditableList(props) {
         return(objString === emptyString);
     }
 
+    function showLabel() {
+        if (props.smallHeader) {
+            return <Form.Label>{props.label}</Form.Label>;
+        } else if (!props.label) {
+            return <></>;
+        } else {
+            return <h2>{props.label}</h2>;
+        }
+    }
+
     function AddButton() {
         let variant = "primary";
         let onClick = () => {addItem()};
@@ -54,13 +65,14 @@ export default function EditableList(props) {
             <Button
                 variant={variant}
                 onClick={onClick}
+                disabled={props.disabled || false}
             >Add { props.label }</Button>
         );
     }
 
     return (
         <Form.Group as="div">
-            { props.label ? <h2>{props.label}</h2> : <></>}
+            {showLabel()}
             { !props.items.length && (
                 <span style={{color: '#dc3545'}}>
                     <svg xmlns="http://www.w3.org/2000/svg" strokeWidth="20" width="16" height="16" fill="currentColor" className="bi bi-exclamation-circle" viewBox="0 0 16 16">
@@ -88,5 +100,4 @@ export default function EditableList(props) {
             </Row>
         </Form.Group>
     );
-
 }

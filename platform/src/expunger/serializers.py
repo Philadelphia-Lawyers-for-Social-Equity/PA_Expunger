@@ -28,7 +28,7 @@ class AttorneySerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.SerializerMethodField("attorney_name")
 
     def attorney_name(self, attorney):
-        return "%s %s" % (attorney.user.first_name, attorney.user.last_name)
+        return f"{attorney.user.first_name} {attorney.user.last_name}"
 
 
 class UserSerializer(serializers.ModelSerializer):

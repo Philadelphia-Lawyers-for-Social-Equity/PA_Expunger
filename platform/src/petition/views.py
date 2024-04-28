@@ -33,19 +33,19 @@ class PetitionAPIView(APIView):
             context = {
                 "organization": profile.organization,
                 "attorney": profile.attorney,
-                "petitioner": models.Petitioner.from_dict(request.data["petitioner"]),
-                "petition": models.Petition.from_dict(request.data["petition"]),
-                "dockets": [
-                    models.DocketId.from_dict(d)
-                    for d in request.data.get("dockets", [])
-                ],
-                "restitution": models.Restitution.from_dict(
-                    request.data["restitution"]
-                ),
-                "charges": [
-                    models.Charge.from_dict(c) for c in request.data.get("charges", [])
-                ],
+                "petitioner":
+                    models.Petitioner.from_dict(request.data["petitioner"]),
+                "petition":
+                    models.Petition.from_dict(request.data["petition"]),
+                "dockets": [models.DocketId.from_dict(d) for d in
+                            request.data.get("dockets", [])],
+                "fines":
+                    models.Fines.from_dict(request.data["fines"]),
+                "charges": [models.Charge.from_dict(c) for c in
+                            request.data.get("charges", [])]
             }
+            dispositions = set([charge.disposition for charge in context["charges"]])
+            context["dispositions"] = ', '.join(dispositions)
         except KeyError as err:
             msg = f"Missing field: {err}"
             logger.warning(msg)
@@ -79,28 +79,75 @@ class DocketParserAPIView(APIView):
         profile = request.user.expungerprofile
 
         try:
-            df = request.FILES["docket_file"]
+            df = request.FILES.getlist("docket_file")
         except MultiValueDictKeyError:
             msg = f"No docket_file, got {request.FILES.keys()}"
             logger.warning(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            parsed = docket_parser.parse_pdf(df)
-        except Exception as exception:
-            tb = traceback.format_exc()
-            short_msg = f"Parse error {exception}"
-            logger.warning(tb)
-            return Response({"error": short_msg})
+        grouped_dockets = {}
 
-        ratio, charges = charges_from_parser(parsed)
         content = {
-            "petitioner": petitioner_from_parser(parsed),
-            "petition": petition_from_parser(parsed, ratio),
-            "dockets": docket_numbers_from_parser(parsed),
-            "charges": charges,
-            "restitution": restitution_from_parser(parsed),
+            "petitioner": None,
+            "petitions": []
         }
+
+        for file in df:
+            try:
+                parsed = docket_parser.parse_pdf(file)
+            except Exception as exception:
+                tb = traceback.format_exc()
+                short_msg = f"Parse error {exception}"
+                logger.warning(tb)
+                return Response({"error": short_msg})
+
+            # grouping parsed files by OTN or docket/cross court docket numbers
+            otn = parsed.get("otn")
+            if otn is not None:
+                if otn in grouped_dockets:
+                    grouped_dockets[otn].append(parsed)
+                else:
+                    grouped_dockets[otn] = [parsed]
+            else:
+                docket_number = parsed.get("docket_number")
+                if docket_number in grouped_dockets:
+                    grouped_dockets[docket_number].append(parsed)
+                else:
+                    grouped_dockets[docket_number] = [parsed]
+
+        for docket, group in grouped_dockets.items():
+            petition = {
+                "docket_info": {},
+                "docket_numbers": [],
+                "charges": [],
+                "fines": {}
+            }
+            for parsed in group:
+                petitioner = petitioner_from_parser(parsed)
+                if content["petitioner"] is None:
+                    content["petitioner"] = petitioner
+                else:
+                    if content["petitioner"]["name"] != petitioner["name"]:
+                        content["petitioner"]["aliases"] += petitioner["name"]
+                    if petitioner["aliases"] is not None:
+                        for alias in petitioner["aliases"]:
+                            if alias not in content["petitioner"]["aliases"]:
+                                content["petitioner"]["aliases"].append(alias)
+
+                petition["charges"] += charges_from_parser(parsed)
+            
+                # This assumes the document from which most relevant information will be obtained will not have a cross court docket number.
+                cross_court = parsed.get("cross_court_docket_numbers")
+                if not cross_court:
+                    petition["docket_numbers"] += docket_numbers_from_parser(parsed)
+                    petition["docket_info"] = petition_from_parser(parsed)
+                    petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
+                else:
+                    dockets = docket_numbers_from_parser(parsed)
+                    for docket in dockets:
+                        if docket not in petition["docket_numbers"]:
+                            petition["docket_numbers"].append(docket)
+            content["petitions"].append(petition)
 
         logger.debug(f"Request: {request.data}")
         logger.debug(f"Parsed: {content}")
@@ -125,7 +172,7 @@ def petitioner_from_parser(parsed: dict) -> dict:
     return petitioner
 
 
-def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
+def petition_from_parser(parsed: dict):
     """
     Produce the petition data based on the docket parser output.
     """
@@ -133,7 +180,7 @@ def petition_from_parser(parsed: dict, ratio: models.PetitionRatio):
         "otn": parsed.get("otn"),
         "complaint_date": parsed.get("complaint_date"),
         "judge": parsed.get("judge"),
-        "ratio": ratio.name,
+        "ratio": models.PetitionRatio.full.name
     }
 
 
@@ -162,30 +209,19 @@ def docket_numbers_from_parser(parsed: dict) -> List[str]:
         return docket_number[:3] in ("MC-", "CP-")
 
     docket_numbers = list(filter(docket_number_filter, docket_numbers))
+    # remove duplicates while preserving order
+    docket_numbers = list(dict.fromkeys(docket_numbers))
+
     return docket_numbers
 
 
-def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]:
+def charges_from_parser(parsed: dict) -> List[dict]:
     """
-    Produces the ratio, charges based on the docket parser output.
+    Produces the charges based on the docket parser output.
     """
-    expungeable_dispositions = [
-        "Nolle Prossed",
-        "ARD - County",
-        "Not Guilty",
-        "Dismissed",
-        "Withdrawn",
-    ]
 
-    def is_expungeable(offense_disposition) -> bool:
-        for expungeable_disposition in expungeable_dispositions:
-            if expungeable_disposition.lower() in offense_disposition.lower():
-                return True
-        return False
-
-    expungeable_charges = []
+    charges = []
     case_events = parsed.get("section_disposition", {})
-    ratio = models.PetitionRatio.full
     if not any(case_event.get("disposition_finality") == "Final Disposition" for case_event in case_events):
         logger.error("No final disposition found.")
 
@@ -201,24 +237,27 @@ def charges_from_parser(parsed: dict) -> Tuple[models.PetitionRatio, List[dict]]
             if "offense_disposition" not in charge:
                 logger.error(f"Charge must include a disposition, got: {charge}")
 
-            if is_expungeable(charge["offense_disposition"]):
-                adapted_charge = adapt_charge(charge, disposition_date)
-                expungeable_charges.append(adapted_charge)
-            else:
-                ratio = models.PetitionRatio.partial
+            adapted_charge = adapt_charge(charge, disposition_date)
+            charges.append(adapted_charge)
 
-    return ratio, expungeable_charges
+    return charges
 
 
-def restitution_from_parser(parsed: dict) -> dict:
-    """Produce restitution data based on the docket parser output."""
-    assessment = parsed.get("assessment")
-    payments = parsed.get("payments")
-    adjustments = parsed.get("adjustments")
-    paid = None
-    if payments is not None and adjustments is not None:
-        paid = -payments - adjustments
-    return {"total": assessment, "paid": paid}
+def fines_from_parser(parsed):
+    """Produce fines data based on the docket parser output."""
+
+    money_sections = ["assessment", "total", "non_monetary", "adjustments", "payments"]
+
+    for section in money_sections:
+        if parsed.get(section, None) is None:
+            return {}
+        else:
+            continue
+
+    total = parsed.get("assessment", 0)
+    paid = abs(parsed.get("payments", 0)) + abs(parsed.get("adjustments", 0))
+
+    return {"total": total, "paid": paid}
 
 
 def date_string(d):

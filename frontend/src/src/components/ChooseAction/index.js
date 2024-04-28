@@ -3,11 +3,9 @@ import { useHistory } from 'react-router-dom';
 import "./style.css";
 //import axios from 'axios';
 import { Button, Modal, Row, Col } from 'react-bootstrap';
-// import { useAuth } from '../../context/auth';
 
 
 export default function ChooseAction() {
-
     const history = useHistory();
 
     // On click to search module
@@ -29,18 +27,19 @@ export default function ChooseAction() {
 
                 <Modal.Body>
                     <Row>
-                        <Col sm={2}> </Col>
-                        <Col sm={4}>   
-                            <Button id="searchButton" onClick={redirectToSearch}>Search Archive</Button>
+                        <Col sm={1}> </Col>
+                        <Col sm={5}>
+                            <Button disabled id="searchButton" className="option-btn" onClick={redirectToSearch}>Search Archive</Button>
                         </Col>
-                        <Col sm={4}>
-                            <Button id="uploadButton" onClick={redirectToUpload}>Upload Docket</Button>
+                        <Col sm={5}>
+                            <Button id="uploadButton" className="option-btn" onClick={redirectToUpload}>Upload Document</Button>
                         </Col>
-                        <Col sm={2}> </Col>
+                        <Col sm={1}> </Col>
                     </Row>
                 </Modal.Body>
 
                 <Modal.Footer>
+                    Uploaded documents must be PDF files of Pennsylvania Court Summaries and Court Dockets
                 </Modal.Footer>
             </Modal.Dialog>
         </div>

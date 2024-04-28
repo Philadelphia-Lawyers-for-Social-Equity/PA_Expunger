@@ -1,5 +1,5 @@
 form.generator {
-    margin: 0 5%;
+    margin: 3% 5%;
 }
 
 .invalid-warning {
@@ -14,20 +14,8 @@ form.generator {
     margin-left: 16px;
 }
 
-.generate-button {
-    margin-top: 16px;
-    margin-bottom: 28px;
-}
-
 #returnToLoginButton {
     background-color : white;
     color:#405664;
     border-color : #405664; 
-} 
-
-#ExpungeButton {
-    background-color : #0a5688;
-    margin-top : 20px;
-    border-color : #0a5688;
-    width : 100%;
 }

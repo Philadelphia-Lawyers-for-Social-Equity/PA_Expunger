@@ -3,12 +3,15 @@ import React, { useEffect, useState } from 'react';
 import "./style.css";
 import axios from 'axios';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
+import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 
 export default function ProfilePage() {
-  const [myUsername, setMyUsername] = useState("");
-  const [myFirstName, setMyFirstName] = useState("");
-  const [myLastName, setMyLastName] = useState("");
-  const [myEmail, setMyEmail] = useState("");
+  const { user } = useUser();
+  const [myUsername, setMyUsername] = useState(user.username);
+  const [myFirstName, setMyFirstName] = useState(user.firstName);
+  const [myLastName, setMyLastName] = useState(user.lastName);
+  const [myEmail, setMyEmail] = useState(user.email);
   const [attorneypk, setAttorneypk] = useState(0);
   const [attorneyName, setAttorneyName] = useState("");
   const [attorneyBar, setAttorneyBar] = useState("");
@@ -23,12 +26,12 @@ export default function ProfilePage() {
   const [orgPhone, setOrgPhone] = useState("");
   const [orgURL, setOrgURL] = useState("");
   const [isEdit, setIsEdit] = useState(false);
+  const { authTokens } = useAuth();
 
   // useEffect is the React Hook equivalent to ComponentDidMount
   useEffect(() => {
 
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
+    const token = `Bearer ${authTokens.access}`;
     var config = {
       'headers': { 'Authorization': token }
     };
@@ -62,7 +65,7 @@ export default function ProfilePage() {
           }
         }
       )
-  }, []); // empty array as the second argument will limit to one get call
+  }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
   // onclick for Edit button
   function editProfile() {
@@ -121,8 +124,7 @@ export default function ProfilePage() {
     console.log(sendData);
     console.log(shortData);
 
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
+    const token = `Bearer ${authTokens.access}`;
     var config = {
       'headers': { 'Authorization': token }
     };
@@ -151,7 +153,7 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Username :
-          </Col>
+            </Col>
             <Col>
               {myUsername}
             </Col>
@@ -159,32 +161,32 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Name :
-          </Col>
+            </Col>
             <Col>
               {!isEdit && myFirstName} {!isEdit && myLastName}
-              {isEdit && <input type="text" onChange={e => {
+              {isEdit && <input type="text" value={myFirstName} onChange={e => {
                 setMyFirstName(e.target.value);
-              }} placeholder="First Name"  />}
-              {isEdit && <input type="text" onChange={e => {
+              }} placeholder="First Name" />}
+              {isEdit && <input type="text" value={myLastName} onChange={e => {
                 setMyLastName(e.target.value);
-              }} placeholder="Last Name"  />}
+              }} placeholder="Last Name" />}
             </Col>
           </Row>
           <Row>
             <Col>
               Email Address :
-          </Col>
+            </Col>
             <Col>
               {!isEdit && myEmail}
-              {isEdit && <input type="text" onChange={e => {
+              {isEdit && <input type="text" value={myEmail} onChange={e => {
                 setMyEmail(e.target.value);
-              }} placeholder="Email"  />}
+              }} placeholder="Email" />}
             </Col>
           </Row>
           <Row>
             <Col>
               Header Text for Petition :
-          </Col>
+            </Col>
             <Col>
               <p className="petp">{orgName}</p>
               <p className="petp">BY: {attorneyName}</p>
@@ -198,7 +200,7 @@ export default function ProfilePage() {
           <Row>
             <Col>
               Expungement Petition Signature :
-          </Col>
+            </Col>
             <Col>
               {attorneyName}, Esquire
             </Col>

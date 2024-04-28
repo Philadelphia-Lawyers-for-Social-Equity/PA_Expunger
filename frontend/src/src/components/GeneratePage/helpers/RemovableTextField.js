@@ -45,6 +45,7 @@ export default function RemovableTextField(props) {
                 onKeyDown={(e) => {handleEnterKey(e)}}
                 value={text}
                 readOnly={ !editing }
+                disabled={ props.disabled || false }
             />
             </Col>
             <Col sm={1}>
@@ -52,6 +53,7 @@ export default function RemovableTextField(props) {
                 variant={ hovering ? "danger" : "secondary"}
                 onClick={ props.handleRemove }
                 cursor="pointer"
+                disabled={ props.disabled || false }
             >
                 X
             </Button>

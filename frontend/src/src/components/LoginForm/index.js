@@ -1,76 +1,80 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Redirect } from "react-router-dom";
-import "./style.css";
 import axios from "axios";
-import { Button, Form, Row, Col } from "react-bootstrap";
+import Alert from "react-bootstrap/Alert";
+import { Button, Col, Form } from "react-bootstrap";
 import { useAuth } from "../../context/auth";
 
 export default function LoginForm() {
-  const [isLoggedIn, setLoggedIn] = useState(false);
   const [isError, setIsError] = useState(false);
   const [is404, setIs404] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const { setAuthTokens } = useAuth();
+  const { authTokens, setAuthTokens } = useAuth();
+  const isMounted = useRef(true);
 
   function onKeyUp(e) {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       postLogin();
     }
   }
 
   function postLogin() {
-
-    localStorage.clear();
-
     const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/auth/token/";
     console.debug("Login url: " + url);
     axios
       .post(url, {
         username: userName,
-        password: password
+        password: password,
       })
-      .then(res => {
-        if (res.status === 200) {
-          setAuthTokens(res.data);
-          localStorage.setItem("access_token", res.data.access);
-          setLoggedIn(true);
-        } else {
-          setIsError(true);
+      .then((res) => {
+        if (isMounted.current) {
+          if (res.status === 200) {
+            setAuthTokens(res.data);
+          } else {
+            setIsError(true);
+          }
         }
       })
-      .catch(err => {
-        console.error(err);
-        setIsError(true);
+      .catch((err) => {
+        if (isMounted.current) {
+          console.error(err);
+          setIsError(true);
+        }
       });
   }
 
-  if (isLoggedIn) {
-    const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-    const bearer = "Bearer ";
-    const token = bearer.concat(localStorage.getItem("access_token"));
-    var config = {
-      'headers': { 'Authorization': token }
-    };
+  useEffect(() => {
+    if (authTokens && isMounted.current) {
+      const profileurl =
+        process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
+      const token = `Bearer ${authTokens.access}`;
 
-    axios.get(profileurl, config)
-      .then(
-        res => {
+      var config = {
+        headers: { Authorization: token },
+      };
+
+      axios
+        .get(profileurl, config)
+        .then((res) => {
           if (res.status === 200) {
             setHasProfile(true);
           }
-        })      
-        .catch(
-          err => {
-            if (err.response.status === 404) {
-              setIs404(true);
-            }
+        })
+        .catch((err) => {
+          if (err.response.status === 404) {
+            setIs404(true);
+          }
         });
-  }
+    }
+    return () => {
+      isMounted.current = false;
+    };
+  }, [authTokens]);
 
-  if (hasProfile) {
-    return <Redirect to="/action" />;
+  if (hasProfile || authTokens) {
+    return <Redirect to="/" />;
   }
 
   if (is404) {
@@ -78,66 +82,62 @@ export default function LoginForm() {
   }
 
   return (
-    <div>
-      <Form style={{ margin: `80px` }}>
-        <Row>
-          <Col md={4}></Col>
-          <Col md={1}>
-            <p>Username</p>
-          </Col>
-          <Col md={3}>
-            <input
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}>
+      <Form style={{ width: "25em" }}>
+        <Form.Group className="mb-1">
+          <Form.Label column>Username</Form.Label>
+          <Col>
+            <Form.Control
               type="text"
-              name="username"
               id="username"
+              name="username"
+              placeholder="Username"
               value={userName}
-              onChange={e => {
-                setUserName(e.target.value);
-              }}
-            ></input>
+              onChange={(e) => setUserName(e.target.value)}
+            />
           </Col>
-          <Col md={4}></Col>
-        </Row>
-
-        <Row>
-          <Col md={4}></Col>
-          <Col md={1}>
-            <p>Password</p>
-          </Col>
-          <Col md={3}>
-            <input
+        </Form.Group>
+        <Form.Group className="mb-4">
+          <Form.Label column>Password</Form.Label>
+          <Col>
+            <Form.Control
               type="password"
-              name="password"
               id="password"
+              name="password"
+              placeholder="Password"
               value={password}
-              onKeyDown={e => {onKeyUp(e)}}
-              onChange={e => {
-                setPassword(e.target.value);
-              }}
-            ></input>
+              onKeyDown={(e) => onKeyUp(e)}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </Col>
-          <Col md={4}></Col>
-        </Row>
-        <Row>
-          <Col></Col>
-        </Row>
-        <Row>
-          <Col md={5}></Col>
-          <Col md={2}>
+        </Form.Group>
+        <Form.Group>
+          <Col>
             <Button
               id="SubmitButton"
-              variant="info"
               onClick={postLogin}
               name="action"
-            >
+              className="w-100">
               Submit
             </Button>
+          </Col>
+        </Form.Group>
+        <Form.Group>
+          <Col>
             {isError && (
-              <div>The username or password provided were incorrect</div>
+              <Alert variant="warning">
+                The username or password provided were incorrect.
+              </Alert>
             )}
           </Col>
-          <Col md={5}></Col>
-        </Row>
+        </Form.Group>
       </Form>
     </div>
   );
