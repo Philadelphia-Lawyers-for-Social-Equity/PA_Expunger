@@ -60,5 +60,8 @@ class PdfFontWrapper(DictionaryObject):
         """Calculate the width that a unicode string has with this font, in glyph space units"""
         return sum(self.unicode_widths[char] for char in string)
 
+    def get_unicode_characters(self):
+        return list(self.unicode_to_cid_map.keys())
+
     def unicode_to_bytestring(self, string: str) -> bytes:
         return bytes((self.unicode_to_cid_map[char] for char in string))
