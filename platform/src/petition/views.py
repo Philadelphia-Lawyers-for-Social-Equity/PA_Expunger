@@ -116,6 +116,7 @@ class DocketParserAPIView(APIView):
                     grouped_dockets[docket_number] = [parsed]
 
         for docket, group in grouped_dockets.items():
+            most_recent_disposition = datetime.datetime.strptime("1900-01-01", "%Y-%m-%d")
             petition = {
                 "docket_info": {},
                 "docket_numbers": [],
@@ -128,25 +129,33 @@ class DocketParserAPIView(APIView):
                     content["petitioner"] = petitioner
                 else:
                     if content["petitioner"]["name"] != petitioner["name"]:
-                        content["petitioner"]["aliases"] += petitioner["name"]
+                        content["petitioner"]["aliases"].append(petitioner["name"])
                     if petitioner["aliases"] is not None:
                         for alias in petitioner["aliases"]:
                             if alias not in content["petitioner"]["aliases"]:
                                 content["petitioner"]["aliases"].append(alias)
 
-                petition["charges"] += charges_from_parser(parsed)
-            
-                # This assumes the document from which most relevant information will be obtained will not have a cross court docket number.
-                cross_court = parsed.get("cross_court_docket_numbers")
-                if not cross_court:
-                    petition["docket_numbers"] += docket_numbers_from_parser(parsed)
+                parsed_docket_numbers = docket_numbers_from_parser(parsed)
+                for parsed_docket_number in parsed_docket_numbers:
+                    if parsed_docket_number not in petition["docket_numbers"]:
+                        petition["docket_numbers"].append(parsed_docket_number)
+                parsed_charges = charges_from_parser(parsed)
+                petition["charges"] += parsed_charges
+
+                # Prioritizing docket_info and fines based on the most recent disposition date
+                disposition_date = [datetime.datetime.strptime(charge["date"], "%Y-%m-%d") for charge in parsed_charges if charge["date"]]
+                disposition_date.sort(reverse=True)
+
+                if disposition_date:
+                    if disposition_date[0] > most_recent_disposition:
+                        most_recent_disposition = disposition_date[0]
+                        petition["docket_info"] = petition_from_parser(parsed)
+                        petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
+                if not petition["docket_info"]:
                     petition["docket_info"] = petition_from_parser(parsed)
+                if not petition["fines"]:
                     petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
-                else:
-                    dockets = docket_numbers_from_parser(parsed)
-                    for docket in dockets:
-                        if docket not in petition["docket_numbers"]:
-                            petition["docket_numbers"].append(docket)
+
             content["petitions"].append(petition)
 
         logger.debug(f"Request: {request.data}")
