@@ -1,13 +1,14 @@
 import datetime
 import logging
 import os
+import re
 import traceback
 from typing import List, Tuple
 
 import jinja2
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate, RichText
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -50,7 +51,11 @@ class PetitionAPIView(APIView):
             msg = f"Missing field: {err}"
             logger.warning(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
-
+        
+        # Format address to allow for new lines to populate.
+        context["organization"].formattedAddress = format_address_for_template(context["organization"].address)
+        context["petitioner"].formattedAddress = format_address_for_template(context["petitioner"].address)
+        
         logger.debug(f"Petition POSTed with context: {context}")
 
         docx = os.path.join(
@@ -299,3 +304,14 @@ def adapt_charge(charge: dict, disposition_date: datetime.date) -> dict:
         "date": disposition_date,
         "disposition": charge.get("offense_disposition"),
     }
+
+# Template library will not recoganize \n unless it is in rtf format.
+# This function will parse it as RTF, instead of doing it in the __str__ function of the Address class.
+#  This keeps our __str__ function clean of template specific logic.
+def format_address_for_template(address: models.Address) -> RichText:
+
+    if address is None:
+        return RichText('')
+    s = re.sub(r'[\n\r]+', '\n', str(address))
+    formattedAddress = RichText(str(s))
+    return formattedAddress
