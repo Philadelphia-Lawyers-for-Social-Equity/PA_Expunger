@@ -306,13 +306,12 @@ def adapt_charge(charge: dict, disposition_date: datetime.date) -> dict:
     }
 
 # Template library will not recoganize \n unless it is in rtf format.
-# Rather than format our string as rtf, we can instead replace the \n with the template's
-# br tag.  This keeps our __str__ function clean of template specific logic, and it keeps us
-# from having to format as rtf.
-def format_address_for_template(address: models.Address) -> str:
+# This function will parse it as RTF, instead of doing it in the __str__ function of the Address class.
+#  This keeps our __str__ function clean of template specific logic.
+def format_address_for_template(address: models.Address) -> RichText:
 
     if address is None:
-        return ''
-
-    formattedAddress = re.sub(r'[\n\r]+', '<w:br/>', str(address))
+        return RichText('')
+    s = re.sub(r'[\n\r]+', '\n', str(address))
+    formattedAddress = RichText(str(s))
     return formattedAddress
