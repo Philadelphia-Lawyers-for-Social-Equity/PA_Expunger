@@ -4,10 +4,10 @@ import axios from "axios";
 import { useAuth } from "../../context/auth";
 import Petitioner from "../GeneratePage/components/Petitioner";
 import { Button, Form, Row, Col } from "react-bootstrap";
+import UploadSummary from "./components/upload-summary";
 
 export default function UploadPreview(props) {
 	const history = useHistory();
-
 	const [uploadedFiles, setUploadedFiles] = useState([]);
 	const [fileNames, setFileNames] = useState([]);
 	const [isError, setIsError] = useState(false);
@@ -66,12 +66,19 @@ export default function UploadPreview(props) {
 	);
 
 	return (
-		<Form className='generator'>
-			<Petitioner
-				{...petitioner}
-				handleChange={setPetitioner}
-				disabled={false}
-			/>
-		</Form>
+		<div>
+			<Form className='generator'>
+				<Petitioner
+					{...petitioner}
+					handleChange={setPetitioner}
+					disabled={false}
+				/>
+				<UploadSummary
+					petitions={
+						props.location.state.petitionFields.petitions
+					}></UploadSummary>
+				<Button id='submit'>Submit</Button>
+			</Form>
+		</div>
 	);
 }
