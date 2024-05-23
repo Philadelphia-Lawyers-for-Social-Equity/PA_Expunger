@@ -20,6 +20,7 @@ export default function UploadPreview(props) {
 	const defaultPetitionFields = {
 		petitioner: {
 			name: "",
+			petitionerName: "",
 			aliases: [],
 			dob: "",
 			ssn: "",
