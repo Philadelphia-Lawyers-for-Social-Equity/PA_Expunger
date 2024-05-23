@@ -65,6 +65,14 @@ export default function UploadPreview(props) {
 		petitionFields.petitioner
 	);
 
+	function submit() {
+		console.log("Petition Fields: ", petitioner);
+		petitionFields.petitioner = petitioner;
+		history.push("/generate", {
+			petitionFields: petitionFields,
+		});
+	}
+
 	return (
 		<div>
 			<Form className='generator'>
@@ -77,7 +85,9 @@ export default function UploadPreview(props) {
 					petitions={
 						props.location.state.petitionFields.petitions
 					}></UploadSummary>
-				<Button id='submit'>Submit</Button>
+				<Button id='submit' onClick={submit}>
+					Submit
+				</Button>
 			</Form>
 		</div>
 	);
