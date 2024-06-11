@@ -3,6 +3,7 @@ import GeneratorInput from '../helpers/GeneratorInput';
 import EditableList from '../helpers/EditableList';
 import Address from '../helpers/Address';
 import RemovableTextField from '../helpers/RemovableTextField';
+import SocialSecurityInput from './SocialSecurityInput';
 
 export default function Petitioner(props) {
     /* Props expects:
@@ -55,14 +56,14 @@ export default function Petitioner(props) {
                 disabled={props.disabled || false}
             />
 
-            <GeneratorInput
+            <SocialSecurityInput
                 label="Social Security Number"
                 type="text"
                 placeholder="###-##-####"
                 name="ssn"
                 value={props.ssn}
                 handleChange={props.handleChange}
-                required={true}
+                required
                 disabled={props.disabled || false}
             />
 

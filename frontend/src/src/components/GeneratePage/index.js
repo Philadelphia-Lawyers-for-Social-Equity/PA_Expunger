@@ -195,13 +195,13 @@ export default function GeneratePage(props) {
                     </Form.Group>
                     <Form.Group as={Row}>
                         <Col>
-                            <div class="mr-2 d-inline" id="downloadbutton">
-                                <a class="btn btn-primary" href={downloadUrl} download="petition.docx">Download</a>
+                            <div className="mr-2 d-inline" id="downloadbutton">
+                                <a className="btn btn-primary" href={downloadUrl} download="petition.docx">Download</a>
                             </div>
-                            <div class="mr-2 d-inline">
+                            <div className="mr-2 d-inline">
                                 <Button onClick={edit}>Edit Petition</Button>
                             </div>
-                            <div class="mr-2 d-inline">
+                            <div className="mr-2 d-inline">
                                 <Button href="/action">New Petition</Button>
                             </div>
                         </Col>
