@@ -2,7 +2,7 @@ import React from 'react';
 import GeneratorCurrencyInput from '../helpers/GeneratorCurrencyInput';
 import { requiredInputValidators } from '../helpers/validatorUtils';
 
-const sectionKey = 'fees';
+const sectionKey = 'fines';
 
 export default function Fines(props) {
     /* props expects:
