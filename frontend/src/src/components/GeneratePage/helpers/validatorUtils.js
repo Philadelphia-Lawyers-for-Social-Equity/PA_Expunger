@@ -28,6 +28,8 @@ export const addressValidators = {
     },
 };
 
+const REQUIRED_CHARGES_FIELDS = ['date', 'description', 'disposition', 'grade', 'statute']
+
 export const requiredInputValidators = {
     petitioner: {
         name: {
@@ -85,10 +87,10 @@ export const requiredInputValidators = {
     },
     charges: {
         validator:
-            (charges, expectedItems) => {
+            (charges) => {
                 if (!charges.length) return false;
-                for (const item of expectedItems) {
-                    const isPresentInAllCharges = charges.every(charge => charge[item]);
+                for (const field of REQUIRED_CHARGES_FIELDS) {
+                    const isPresentInAllCharges = charges.every(charge => charge[field]);
                     if (!isPresentInAllCharges) return false
                 };
                 return true;

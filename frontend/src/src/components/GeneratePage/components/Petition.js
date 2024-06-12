@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import GeneratorInput from '../helpers/GeneratorInput';
 import Radio from '../helpers/Radio';
 import { requiredInputValidators } from '../helpers/validatorUtils';
@@ -12,6 +12,14 @@ export default function Petition(props) {
         - ratio: string, either "partial" or "full"
         - handleChange
     */
+    
+    useEffect(
+        // Since we're defaulting the radio selection to be "full" in the UI,
+        // let's go ahead and set this state when Petition mounts
+        () => {
+            props.handleChange({ ratio: props.ratio ?? 'full' })
+        }, []
+    )
 
     return (
         <>
