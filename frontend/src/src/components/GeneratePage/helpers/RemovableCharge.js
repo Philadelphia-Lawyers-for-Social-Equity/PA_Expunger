@@ -35,7 +35,7 @@ export default function RemovableCharge(props) {
 
     return (
         <Row className="mb-2">
-					<Col xs={1} className="py-1 d-flex flex-column">
+					<Col xs={1} className="offset-1 py-1 d-flex flex-column">
 							<Button className="mt-4 mb-2"
 								variant={readOnly ? 'secondary' : 'success'}
 								onClick={(e) => {
