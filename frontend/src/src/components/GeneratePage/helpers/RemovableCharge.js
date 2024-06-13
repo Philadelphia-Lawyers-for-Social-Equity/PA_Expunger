@@ -20,9 +20,6 @@ export default function RemovableCharge(props) {
     const [date, setDate] = useState(props.date || "");
     const [disposition, setDisposition] = useState(props.disposition || "");
 
-    const [editing, setEditing] = useState(false);
-    const [hovering, setHovering] = useState(false);
-
 		const [readOnly, setReadOnly] = useState(true);
 
     function save() {
@@ -34,7 +31,6 @@ export default function RemovableCharge(props) {
             "disposition": disposition,
             "key": description
         });
-        setEditing(false);
     }
 
     return (
