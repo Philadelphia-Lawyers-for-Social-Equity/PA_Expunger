@@ -39,8 +39,6 @@ export default function RemovableCharge(props) {
         <div
             onMouseOver={() => {setHovering(true);}}
             onMouseOut={() => {setHovering(false);}}
-            onFocus={() => {setEditing(true);}}
-            onBlur={() => {save();}}
         >
         <Row className="mb-2">
             <Col sm={2}><Form.Label>{props.label || ""}</Form.Label></Col>
@@ -49,7 +47,6 @@ export default function RemovableCharge(props) {
                     placeholder="Statute"
                     value={statute}
                     onChange={(e) => {setStatute(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -58,7 +55,6 @@ export default function RemovableCharge(props) {
                     placeholder="grade"
                     value={grade}
                     onChange={(e) => {setGrade(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -67,7 +63,6 @@ export default function RemovableCharge(props) {
                     type="date"
                     value={date}
                     onChange={(e) => {setDate(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -76,7 +71,6 @@ export default function RemovableCharge(props) {
                     placeholder="Disposition"
                     value={disposition}
                     onChange={(e) => {setDisposition(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -97,7 +91,6 @@ export default function RemovableCharge(props) {
                 <Form.Control
                     value={description}
                     onChange={(e) => {setDescription(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
