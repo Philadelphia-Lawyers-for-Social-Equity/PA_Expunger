@@ -23,6 +23,8 @@ export default function RemovableCharge(props) {
     const [editing, setEditing] = useState(false);
     const [hovering, setHovering] = useState(false);
 
+		const [readOnly, setReadOnly] = useState(true);
+
     function save() {
         props.handleChange({
             "statute": statute,
@@ -36,66 +38,75 @@ export default function RemovableCharge(props) {
     }
 
     return (
-        <div
-            onMouseOver={() => {setHovering(true);}}
-            onMouseOut={() => {setHovering(false);}}
-        >
         <Row className="mb-2">
-            <Col sm={2}><Form.Label>{props.label || ""}</Form.Label></Col>
-            <Col sm={2}>
-                <Form.Control
-                    placeholder="Statute"
-                    value={statute}
-                    onChange={(e) => {setStatute(e.target.value);}}
-                    disabled={props.disabled || false}
-                />
-            </Col>
-            <Col sm={1}>
-                <Form.Control
-                    placeholder="grade"
-                    value={grade}
-                    onChange={(e) => {setGrade(e.target.value);}}
-                    disabled={props.disabled || false}
-                />
-            </Col>
-            <Col sm={2}>
-                <Form.Control
-                    type="date"
-                    value={date}
-                    onChange={(e) => {setDate(e.target.value);}}
-                    disabled={props.disabled || false}
-                />
-            </Col>
-            <Col sm={2}>
-                <Form.Control
-                    placeholder="Disposition"
-                    value={disposition}
-                    onChange={(e) => {setDisposition(e.target.value);}}
-                    disabled={props.disabled || false}
-                />
-            </Col>
-            <Col sm={1}>
-            <Button
-                variant={ hovering ? "danger" : "secondary"}
+					<Col xs={1} className="py-1 d-flex flex-column">
+							<Button className="mt-4 mb-2"
+								variant={readOnly ? 'secondary' : 'success'}
+								onClick={(e) => {
+									if (!readOnly) {
+										save();
+									}
+									setReadOnly(!readOnly); 
+								}}
+							>{readOnly ? 'Edit' : 'Save'}</Button>
+							<Button variant="danger" className="mb-4"
                 onClick={ props.handleRemove }
-                cursor="pointer"
                 disabled={props.disabled || false}
-            >
-                X
-            </Button>
-            </Col>
-        </Row>
-        <Row>
-            <Col sm={2}></Col>
-            <Col sm={7}>
-                <Form.Control
-                    value={description}
-                    onChange={(e) => {setDescription(e.target.value);}}
-                    disabled={props.disabled || false}
+							>Remove</Button>
+					</Col>
+					<Col xs={7}>
+						<Row className="mb-2">
+							<Form.Group className="col-3 px-0 mx-2 mb-0" controlId="statute">
+								<Form.Label className="mb-0"><strong>Statute</strong></Form.Label>
+								<Form.Control className="col"
+                  placeholder="Statute"
+                  value={statute}
+                  onChange={(e) => {setStatute(e.target.value);}}
+                  disabled={props.disabled || false}
+									readOnly={readOnly}
+								/>
+							</Form.Group>
+							<Form.Group className="col-1 px-0 mx-2 mb-0" controlId="grade"> 
+								<Form.Label className="mb-0"><strong>Grade</strong></Form.Label>
+								<Form.Control className="col"
+									placeholder="grade"
+                  value={grade}
+                  onChange={(e) => {setGrade(e.target.value);}}
+                  disabled={props.disabled || false}
+									readOnly={readOnly}
+								/>
+							</Form.Group>
+							<Form.Group className="col-3 px-0 mx-2 mb-0" controlId="date">
+								<Form.Label className="mb-0"><strong>Date</strong></Form.Label>
+								<Form.Control className="col"
+									type="date"
+                  value={date}
+                  onChange={(e) => {setDate(e.target.value);}}
+									disabled={props.disabled || false}
+									readOnly={readOnly}
                 />
-            </Col>
-        </Row>
-        <Row><Col sm={2}/><Col sm={8}><hr /></Col></Row>
-        </div>
+							</Form.Group>
+							<Form.Group className="col-4 px-0 mx-2 mb-0" controlId="disposition"> 
+								<Form.Label className="mb-0"><strong>Disposition</strong></Form.Label>
+								<Form.Control className="col"
+									placeholder="Disposition"
+                  value={disposition}
+									onChange={(e) => {setDisposition(e.target.value);}}
+                  disabled={props.disabled || false}
+									readOnly={readOnly}
+                />
+							</Form.Group>
+						</Row>
+						<Form.Group className="row px-2" controlId="description">
+							<Form.Label className="mb-0"><strong>Description</strong></Form.Label>
+							<Form.Control
+                  value={description}
+                  onChange={(e) => {setDescription(e.target.value);}}
+                  disabled={props.disabled || false}
+									readOnly={readOnly}
+                />
+						</Form.Group>	
+					</Col>
+				</Row>
     );
 }
