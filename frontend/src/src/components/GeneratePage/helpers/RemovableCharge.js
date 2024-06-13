@@ -34,7 +34,9 @@ export default function RemovableCharge(props) {
     }
 
     return (
-        <Row className="mb-2">
+        <fieldset className="row mb-2"
+					disabled={props.disabled ?? false}
+				>
 					<Col xs={1} className="offset-1 py-1 d-flex flex-column">
 							<Button className="mt-4 mb-2"
 								variant={readOnly ? 'secondary' : 'success'}
@@ -47,7 +49,6 @@ export default function RemovableCharge(props) {
 							>{readOnly ? 'Edit' : 'Save'}</Button>
 							<Button variant="danger" className="mb-4"
                 onClick={ props.handleRemove }
-                disabled={props.disabled || false}
 							>Remove</Button>
 					</Col>
 					<Col xs={7}>
@@ -58,7 +59,6 @@ export default function RemovableCharge(props) {
                   placeholder="Statute"
                   value={statute}
                   onChange={(e) => {setStatute(e.target.value);}}
-                  disabled={props.disabled || false}
 									readOnly={readOnly}
 								/>
 							</Form.Group>
@@ -68,7 +68,6 @@ export default function RemovableCharge(props) {
 									placeholder="grade"
                   value={grade}
                   onChange={(e) => {setGrade(e.target.value);}}
-                  disabled={props.disabled || false}
 									readOnly={readOnly}
 								/>
 							</Form.Group>
@@ -78,7 +77,6 @@ export default function RemovableCharge(props) {
 									type="date"
                   value={date}
                   onChange={(e) => {setDate(e.target.value);}}
-									disabled={props.disabled || false}
 									readOnly={readOnly}
                 />
 							</Form.Group>
@@ -88,7 +86,6 @@ export default function RemovableCharge(props) {
 									placeholder="Disposition"
                   value={disposition}
 									onChange={(e) => {setDisposition(e.target.value);}}
-                  disabled={props.disabled || false}
 									readOnly={readOnly}
                 />
 							</Form.Group>
@@ -98,11 +95,10 @@ export default function RemovableCharge(props) {
 							<Form.Control
                   value={description}
                   onChange={(e) => {setDescription(e.target.value);}}
-                  disabled={props.disabled || false}
 									readOnly={readOnly}
                 />
 						</Form.Group>	
 					</Col>
-				</Row>
+				</fieldset>
     );
 }
