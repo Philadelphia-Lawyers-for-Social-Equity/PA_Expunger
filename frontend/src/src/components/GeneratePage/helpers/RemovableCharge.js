@@ -35,7 +35,7 @@ export default function RemovableCharge(props) {
 
     return (
         <fieldset className="row mb-2"
-					disabled={props.disabled ?? false}
+					disabled={!!props.disabled}
 				>
 					<Col xs={1} className="offset-1 py-1 d-flex flex-column">
 							<Button className="mt-4 mb-2"
