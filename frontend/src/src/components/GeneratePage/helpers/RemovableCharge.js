@@ -37,21 +37,7 @@ export default function RemovableCharge(props) {
         <fieldset className="row mb-2"
 					disabled={!!props.disabled}
 				>
-					<Col xs={1} className="offset-1 py-1 d-flex flex-column">
-							<Button className="mt-4 mb-2"
-								variant={readOnly ? 'secondary' : 'success'}
-								onClick={(e) => {
-									if (!readOnly) {
-										save();
-									}
-									setReadOnly(!readOnly); 
-								}}
-							>{readOnly ? 'Edit' : 'Save'}</Button>
-							<Button variant="danger" className="mb-4"
-                onClick={ props.handleRemove }
-							>Remove</Button>
-					</Col>
-					<Col xs={7}>
+					<Col className="offset-2">
 						<Row className="mb-2">
 							<Form.Group className="col-3 px-0 mx-2 mb-0" controlId="statute">
 								<Form.Label className="mb-0"><strong>Statute</strong></Form.Label>
@@ -99,6 +85,20 @@ export default function RemovableCharge(props) {
                 />
 						</Form.Group>	
 					</Col>
+					<Col xs="auto" className="py-1 d-flex flex-column">
+							<Button className="mt-4 mb-2"
+								variant={readOnly ? 'secondary' : 'success'}
+								onClick={(e) => {
+									if (!readOnly) {
+										save();
+									}
+									setReadOnly(!readOnly); 
+								}}
+							>{readOnly ? 'Edit' : 'Save'}</Button>
+							<Button variant="danger" className="mb-4"
+                onClick={ props.handleRemove }
+							>Remove</Button>
+					</Col>			
 				</fieldset>
     );
 }
