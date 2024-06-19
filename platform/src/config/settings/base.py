@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'expunger',
     'petition',
     'pa_court_archive',
-    'mod_wsgi.server'
+    'mod_wsgi.server',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [

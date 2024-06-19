@@ -20,6 +20,7 @@ from .views import staticbundle
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
+    TokenVerifyView
     )
 
 urlpatterns = [
@@ -27,6 +28,8 @@ urlpatterns = [
          TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v0.2.0/auth/refresh/',
          TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v0.2.0/auth/verify/',
+         TokenVerifyView.as_view(), name='token_verify'),
     url(r'admin\/?', admin.site.urls),
     path('account/', include('django.contrib.auth.urls')),
     path('api/v0.2.0/expunger/', include('expunger.urls',
