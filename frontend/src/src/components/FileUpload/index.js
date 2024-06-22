@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
 

@@ -8,7 +8,6 @@ import Fines from "./components/Fines";
 import { useAuth } from "../../context/auth";
 
 import "./style.css";
-import axios from "axios";
 
 import { Button, Form, Row, Col } from "react-bootstrap";
 
