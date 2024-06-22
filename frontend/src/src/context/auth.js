@@ -23,33 +23,34 @@ export function AuthProvider({ children }) {
     
     // if 10 min since access token set
     if ( timePassed > 60000 ) {
-      const verifyResponse = await axios.post(
-        `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.0/auth/verify/`,
-        { token: refreshToken },
+
+      var verifyResponse;
+
+      try {
+        verifyResponse = await axios.post(
+          `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.0/auth/verify/`,
+          { token: refreshToken },
+        );
+      } catch (err) {
+        if (err.message.includes('401')) {
+          logout();
+        }
+      }
+
+      const refreshResponse = await axios.post(
+        `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.0/auth/refresh/`,
+        { refresh: refreshToken }
       );
 
-      const refreshTokenIsVerified = Object.keys(verifyResponse.data).length === 0;
+      const newAccessToken = refreshResponse.data.access;
+      const now = Date.now();
+      setAccessToken(newAccessToken);
+      localStorage.setItem('access', newAccessToken);
+      setTokenTime(now);
+      localStorage.setItem('time', now);
+      config.headers.Authorization = `Bearer ${newAccessToken}`;
 
-      if ( refreshTokenIsVerified ) {
-        const refreshResponse = await axios.post(
-          `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.0/auth/refresh/`,
-          { refresh: refreshToken }
-        );
-
-        const newAccessToken = refreshResponse.data.access;
-
-        setAccessToken(newAccessToken);
-        localStorage.setItem('access', newAccessToken);
-
-        const now = Date.now();
-        setTokenTime(now);
-        localStorage.setItem('time', now);
-
-        config.headers.Authorization = `Bearer ${newAccessToken}`;
-        return config;
-      } else {
-        logout();
-      }
+      return config;
     }
     
     return config;
