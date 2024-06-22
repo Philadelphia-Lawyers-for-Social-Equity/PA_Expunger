@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 // import { Redirect } from 'react-router-dom';
 import "./style.css";
-import axios from 'axios';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
@@ -26,19 +25,14 @@ export default function ProfilePage() {
   const [orgPhone, setOrgPhone] = useState("");
   const [orgURL, setOrgURL] = useState("");
   const [isEdit, setIsEdit] = useState(false);
-  const { authTokens } = useAuth();
+  const { authedAxios } = useAuth();
 
   // useEffect is the React Hook equivalent to ComponentDidMount
   useEffect(() => {
 
-    const token = `Bearer ${authTokens.access}`;
-    var config = {
-      'headers': { 'Authorization': token }
-    };
-
     // Get to return user data
-    const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-    axios.get(url, config)
+    const url = '/expunger/my-profile/';
+    authedAxios.get(url)
       .then(
         res => {
           if (res.status === 200) {
@@ -65,7 +59,7 @@ export default function ProfilePage() {
           }
         }
       )
-  }, [authTokens.access]); // empty array as the second argument will limit to one get call
+  }, [authedAxios]); // empty array as the second argument will limit to one get call
 
   // onclick for Edit button
   function editProfile() {
@@ -121,17 +115,9 @@ export default function ProfilePage() {
       }
     }
 
-    console.log(sendData);
-    console.log(shortData);
-
-    const token = `Bearer ${authTokens.access}`;
-    var config = {
-      'headers': { 'Authorization': token }
-    };
-
-    const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
+    const url = '/expunger/my-profile/';
     // axios.post(url, JSON.parse(postData), config)
-    axios.put(url, shortData, config)
+    authedAxios.put(url, shortData)
       .then(
         console.log("Posted")
       )

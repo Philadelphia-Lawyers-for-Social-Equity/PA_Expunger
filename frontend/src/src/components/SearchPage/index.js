@@ -7,22 +7,17 @@ import { Button, Modal, Col, Row, Table } from 'react-bootstrap';
 import { useAuth } from '../../context/auth';
 
 export default function SearchPage() {
-    const { authTokens } = useAuth();
+    const { authedAxios } = useAuth();
 
     // searchResults is an of Petition Fields, per the api glossary.
     // null indicates that a search has not yet been performed.
     const [searchResults, updateSearchResults] = useState(null);
 
-    const accessToken = authTokens?.access;
     function handleSearch(firstName, lastName) {
-        const config = { "headers": { "Authorization": "Bearer " + accessToken } };
-        const url = process.env.REACT_APP_BACKEND_HOST
-            + "/api/v0.2.1/pa_court_archive/search/?first_name="
-            + firstName
-            + "&last_name="
-            + lastName;
+        const config = { baseURL:  `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.1` };
+        const url = `/pa_court_archive/search/?first_name=${firstName}&last_name=${lastName}`;
 
-        axios.get(url, config).then(res => {
+        authedAxios.get(url, config).then(res => {
             console.debug(res);
             if (res.status === 200) {
                 updateSearchResults(res.data);
