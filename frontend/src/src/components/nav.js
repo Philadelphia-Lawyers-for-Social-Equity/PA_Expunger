@@ -4,7 +4,7 @@ import { Navbar, Nav } from 'react-bootstrap';
 import { useAuth } from '../context/auth';
 
 const Navigation = () => {
-  const { logout, authTokens } = useAuth();
+  const { logout, accessToken } = useAuth();
 
   return (
     <Navbar
@@ -27,7 +27,7 @@ const Navigation = () => {
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="ml-auto">
-          {authTokens ? (
+          {accessToken ? (
             <>
               <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
               <Nav.Link onClick={logout}>Log out</Nav.Link>

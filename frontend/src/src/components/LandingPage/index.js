@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Redirect } from 'react-router-dom';
-import axios from 'axios';
 import { Button, Modal } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { useAuth } from "../../context/auth";
@@ -12,28 +11,27 @@ export default function LandingPage() {
     const [isAttorneyChosen, setAttorneyChosen] = useState(false);
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
-    const { authTokens } = useAuth();
+    const { authedAxios } = useAuth();
     const { user } = useUser();
+    const isMounted = useRef(true);
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
-        const token = `Bearer ${authTokens.access}`;
-        var config = {
-            'headers': { 'Authorization': token }
-        };
-
-        // Get to return all attorneys (PKs are integers)
-        const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/attorneys/";
-        axios.get(url, config)
+        if (isMounted.current) {
+          isMounted.current = false;
+          // Get to return all attorneys (PKs are integers)
+          const url = '/expunger/attorneys/';
+          authedAxios.get(url)
             .then(
-                res => {
-                    if (res.status === 200) {
-                        // return data
-                        setAttorneyData(res.data);
-                    }
+              res => {
+                if (res.status === 200) {
+                    // return data
+                    setAttorneyData(res.data);
                 }
-            )
-    }, [authTokens.access]); // empty array as the second argument will limit to one get call
+              }
+            );
+        }
+   }); // empty array as the second argument will limit to one get call
 
     // On click for the cancel button
     function returnLogin() {
@@ -66,13 +64,9 @@ export default function LandingPage() {
         };
 
         // post to generate profile
-        const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-        const token = `Bearer ${authTokens.access}`;
-        var config = {
-            'headers': { 'Authorization': token }
-        };
+        const profileurl = "/expunger/my-profile/";
 
-        axios.put(profileurl, profiledata, config)
+        authedAxios.put(profileurl, profiledata)
             .then(res => {
                 if (res.status === 200) {
                     setProfileGenerated(true);

@@ -10,7 +10,7 @@ export default function FileUpload() {
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
-    const { authTokens } = useAuth();
+    const { authedAxios } = useAuth();
     
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
@@ -47,17 +47,12 @@ export default function FileUpload() {
             }
 
             // post to generate profile
-            const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/parse-docket/";
-            const token = `Bearer ${authTokens.access}`;
-            var config = {
-                'headers': { 'Authorization': token }
-            };
+            const url = '/petition/parse-docket/';
 
-            axios.post(url, pdfdata, config)
+            authedAxios.post(url, pdfdata)
                 .then(res => {
                     if (res.status === 200) {
                         console.log("Ready to generate ..!");
-                        console.info(res.data);
                         history.push("/generate", {"petitionFields": res.data});
                     }
                 })

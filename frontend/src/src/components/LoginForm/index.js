@@ -3,7 +3,7 @@ import { Redirect } from "react-router-dom";
 import axios from "axios";
 import Alert from "react-bootstrap/Alert";
 import { Button, Col, Form } from "react-bootstrap";
-import { useAuth } from "../../context/auth";
+import { useAuth } from '../../context/auth';
 
 export default function LoginForm() {
   const [isError, setIsError] = useState(false);
@@ -11,8 +11,8 @@ export default function LoginForm() {
   const [hasProfile, setHasProfile] = useState(false);
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const { authTokens, setAuthTokens } = useAuth();
   const isMounted = useRef(true);
+  const { updateAccessToken, updateRefreshToken } = useAuth();
 
   function onKeyUp(e) {
     if (e.key === "Enter") {
@@ -20,18 +20,20 @@ export default function LoginForm() {
     }
   }
 
-  function postLogin() {
+  function postLogin() { 
     const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/auth/token/";
-    console.debug("Login url: " + url);
-    axios
-      .post(url, {
+    axios.post(
+      url, 
+      {
         username: userName,
         password: password,
-      })
+      }
+    )
       .then((res) => {
         if (isMounted.current) {
           if (res.status === 200) {
-            setAuthTokens(res.data);
+            updateAccessToken(res.data.access);
+            updateRefreshToken(res.data.refresh);
           } else {
             setIsError(true);
           }
@@ -46,19 +48,14 @@ export default function LoginForm() {
   }
 
   useEffect(() => {
-    if (authTokens && isMounted.current) {
-      const profileurl =
-        process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-      const token = `Bearer ${authTokens.access}`;
-
-      var config = {
-        headers: { Authorization: token },
-      };
+    const accessToken = localStorage.getItem('access');
+    if (accessToken && isMounted.current) {
+      const profileurl = `${process.env.REACT_APP_BACKEND_HOST}/api/v0.2.0/expunger/my-profile/`;
 
       axios
-        .get(profileurl, config)
+        .get(profileurl, {headers: {Authorization: `Bearer ${accessToken}`}})
         .then((res) => {
-          if (res.status === 200) {
+          if (res.status === 200 && isMounted.current) {
             setHasProfile(true);
           }
         })
@@ -71,9 +68,9 @@ export default function LoginForm() {
     return () => {
       isMounted.current = false;
     };
-  }, [authTokens]);
+  }, []);
 
-  if (hasProfile || authTokens) {
+  if (hasProfile || localStorage.getItem('access')) {
     return <Redirect to="/" />;
   }
 

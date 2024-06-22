@@ -17,8 +17,7 @@ import { Button, Form, Row, Col } from "react-bootstrap";
     - Move components to be imported.
 */
 
-const url =
-    process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
+const url = '/petition/generate/';
 const defaultPetitionFields = {
     petitioner: {
         name: "",
@@ -54,7 +53,7 @@ export default function GeneratePage(props) {
     /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
-    const { authTokens } = useAuth();
+    const { authedAxios } = useAuth();
 
     const [petitionNumber, setPetitionNumber] = useState(0)
 
@@ -94,18 +93,9 @@ export default function GeneratePage(props) {
             petitionFields.petition.ratio = "full";
         }
 
-        function postRequestConfig() {
-            const token = `Bearer ${authTokens.access}`;
-            return {
-                responseType: "arraybuffer",
-                headers: { Authorization: token },
-            };
-        }
-
-        console.info(petitionFields);
         setBusy(true);
-        axios
-            .post(url, petitionFields, postRequestConfig())
+        authedAxios
+            .post(url, petitionFields, {responseType: 'arrayBuffer'})
             .then((res) => {
                 if (res.status === 200) {
                     let blob = new Blob([res.data], {
