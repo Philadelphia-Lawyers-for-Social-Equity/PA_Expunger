@@ -1,20 +1,22 @@
 import React from 'react';
 import EditableList from '../helpers/EditableList';
 import RemovableTextField from '../helpers/RemovableTextField';
+import { usePetitions } from '../../../context/petitions';
 
-export default function Dockets(props) {
+export default function Dockets({petitionNumber, disabled}) {
     /* props expects:
-        - dockets: a list of docket strings
-        - handleChange: function should accept a list of docket strings and do the update
+        - petitionNumber: integer
+        - disabled: boolean
     */
+    const { petitions, updatePetitions } = usePetitions();
+    const docket_numbers = petitions[petitionNumber].docket_numbers;
 
     function makeItems() {
-        return(props.dockets.map((d) => ({"text": d, "key": d})));
+        return(docket_numbers.map((d) => ({"text": d, "key": d})));
     }
 
-    function saveItems(items) {
-        let newDockets = items.map((item) => (item.text));
-        props.handleChange(newDockets);
+    function handleChange(items) {
+        updatePetitions('docket_numbers', petitionNumber, items);
     }
 
     return (
@@ -23,8 +25,8 @@ export default function Dockets(props) {
             inner={RemovableTextField}
             items={makeItems()}
             emptyItem={{"text": "", "key": ""}}
-            handleChange={(e) => {saveItems(e);}}
-            disabled={props.disabled || false}
+            handleChange={handleChange}
+            disabled={disabled || false}
         />
     );
 }

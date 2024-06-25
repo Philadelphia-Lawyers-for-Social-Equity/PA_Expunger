@@ -1,11 +1,14 @@
-import React, { useState, useReducer } from "react";
+import React, { useEffect, useState, useReducer } from "react";
+import { useHistory } from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
 import Dockets from "./components/Dockets";
 import Charges from "./components/Charges";
 import Fines from "./components/Fines";
+import Progress from "./components/Progress";
 import { useAuth } from "../../context/auth";
+import { initialPetitionState, usePetitions } from "../../context/petitions";
 
 import "./style.css";
 import axios from "axios";
@@ -33,12 +36,12 @@ const defaultPetitionFields = {
             zipcode: "",
         },
     },
-    petition: {
+    docket_info: {
         otn: "",
         judge: "",
         ratio: "full",
     },
-    dockets: [],
+    docket_numbers: [],
     charges: [],
     fines: {
         total: 0,
@@ -54,8 +57,9 @@ export default function GeneratePage(props) {
     /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
+    const history = useHistory();
     const { authTokens } = useAuth();
-
+    const { petitions, setPetitions } = usePetitions();
     const [petitionNumber, setPetitionNumber] = useState(0)
 
     const fieldsFromRouterState =
@@ -64,30 +68,42 @@ export default function GeneratePage(props) {
             : null;
     let petitionFields =
         fieldsFromRouterState || props.petitionFields || defaultPetitionFields;
-
     const [petitioner, setPetitioner] = useReducer(
         mergeReduce,
         petitionFields.petitioner
     );
-    const [petition, setPetition] = useReducer(
-        mergeReduce,
-        petitionFields.petitions[petitionNumber].docket_info
-    );
-    const [dockets, setDockets] = useState(petitionFields.petitions[petitionNumber].docket_numbers);
-    const [charges, setCharges] = useState(petitionFields.petitions[petitionNumber].charges);
-    const [fines, setFines] = useReducer(mergeReduce, petitionFields.petitions[petitionNumber].fines);
-    const [success, setSuccess] = useState(false);
+
+    const [success, setSuccess] = useState({0: false});
     const [busy, setBusy] = useState(false);
-    const [downloadUrl, setDownloadUrl] = useState("");
+    const [downloadUrls, setDownloadUrls] = useState({0: ""});
     const [error, setError] = useState("");
+
+    const formDisabled = busy || success[petitionNumber];
+    const totalPetitions = petitions.length;
+    const multiPetition = (totalPetitions > 1) ? true : false;
+
+    useEffect(() => {
+        if (success[petitionNumber] === true) {
+            document.getElementById("downloadbutton").scrollIntoView({ behavior: "smooth" });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [success])
+
+    // re-create petitions state from history after page refresh
+    useEffect(() => {
+        if (petitions === initialPetitionState) {
+            setPetitions(props.location.state.petitionFields.petitions)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     function postGeneratorRequest() {
         let petitionFields = {
             petitioner: petitioner,
-            petition: { ...petition, date: today() },
-            dockets: dockets,
-            charges: charges,
-            fines: fines,
+            petition: { ...petitions[petitionNumber].docket_info, date: today() },
+            dockets: petitions[petitionNumber].docket_numbers,
+            charges: petitions[petitionNumber].charges,
+            fines: petitions[petitionNumber].fines,
         };
 
         if (!petitionFields.petition.ratio) {
@@ -112,19 +128,24 @@ export default function GeneratePage(props) {
                         type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     });
                     let downloadUrl = window.URL.createObjectURL(blob);
-                    setDownloadUrl(downloadUrl);
-                    setSuccess(true);
-                    setError("");
-                    setTimeout(() => {
-                        // needs to happen after DOM updates
-                        document.getElementById("downloadbutton").scrollIntoView({ behavior: "smooth" });
+                    setDownloadUrls({
+                        ...downloadUrls,
+                        [petitionNumber]: downloadUrl
                     });
+                    setSuccess({
+                        ...success,
+                        [petitionNumber]: true
+                    });
+                    setError("");
                 } else {
                     throw new Error(`${res.status}: ${res.statusText}`)
                 }
             })
             .catch((error) => {
-                setSuccess(false);
+                setSuccess({
+                    ...success,
+                    [petitionNumber]: false
+                });
                 setError("There was an error generating the petition.");
                 console.error(error);
             })
@@ -134,13 +155,19 @@ export default function GeneratePage(props) {
     }
 
     function edit() {
-        setSuccess(false);
+        setSuccess({
+            ...success,
+            [petitionNumber]: false
+        });
         setError("");
     }
 
     function handleSubmit() {
         setError("");
-        setSuccess(false);
+        setSuccess({
+            ...success,
+            [petitionNumber]: false
+        });
 
         const ssn = petitioner.ssn;
         const hasDashes = /(-)/.test(ssn);
@@ -169,24 +196,70 @@ export default function GeneratePage(props) {
         }
     }
 
-    const formDisabled = busy || success;
+    function savePetitions() {
+        // update history state to include any revisions to petition
+        history.replace("/generate", {"petitionFields": {
+            petitioner: props.location.state.petitionFields.petitioner,
+            petitions: petitions
+        }})
+    }
+
+    function handlePrevious() {
+        setPetitionNumber(n => {
+            if (n >= 0) return n - 1
+        })
+    }
+    
+    function handleNext() {
+        savePetitions();
+        if (petitionNumber === totalPetitions - 1) {
+            // TODO: navigate to "review petitions" component
+        } else setPetitionNumber(n => n + 1);
+    }
+
+    const nextButton = (petitionNumber === totalPetitions - 1)
+        ? <div className="mr-2 d-inline">
+            <Button onClick={handleNext} >
+                Review petitions
+            </Button>
+        </div>
+        : <div className="mr-2 d-inline">
+            <Button onClick={handleNext} >
+                Save & Continue
+            </Button>
+        </div>
+
+    if (petitions === initialPetitionState) {
+        return null
+    }
 
     return (
         <Form className="generator">
             <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
-            <Petition {...petition} handleChange={setPetition} disabled={formDisabled} />
-            <Dockets dockets={dockets} handleChange={setDockets} disabled={formDisabled} />
-            <Charges charges={charges} handleChange={setCharges} disabled={formDisabled} />
-            <Fines {...fines} handleChange={setFines} disabled={formDisabled} />
+            <Petition petitionNumber={petitionNumber} disabled={formDisabled} />
+            <Dockets petitionNumber={petitionNumber} disabled={formDisabled} />
+            <Charges petitionNumber={petitionNumber} disabled={formDisabled} />
+            <Fines petitionNumber={petitionNumber} disabled={formDisabled} />
             {error && <Form.Group as={Row}><Col><Alert variant="warning">{error}</Alert></Col></Form.Group>}
-            <Form.Group as={Row}>
-                <Col>
-                    <Button onClick={handleSubmit} disabled={formDisabled}>
-                        Generate Petition
-                    </Button>
-                </Col>
+            <Form.Group as={Row} className="d-flex justify-content-start">
+                <div>
+                    {multiPetition && <div className="mr-2 d-inline">
+                        <Button onClick={handlePrevious} disabled={petitionNumber === 0}>
+                            Previous Petition
+                        </Button>
+                    </div>}
+                    {multiPetition && nextButton}
+                    <div className="mr-2 d-inline">
+                        <Button onClick={handleSubmit} disabled={formDisabled}>
+                            Generate Petition
+                        </Button>
+                    </div>
+                </div>
+                <div>
+                    <Progress petitionNumber={petitionNumber} totalPetitions={totalPetitions} />
+                </div>
             </Form.Group>
-            {success && (
+            {success[petitionNumber] && (
                 <>
                     <Form.Group as={Row}>
                         <Col><Alert variant="success">
@@ -196,14 +269,14 @@ export default function GeneratePage(props) {
                     <Form.Group as={Row}>
                         <Col>
                             <div className="mr-2 d-inline" id="downloadbutton">
-                                <a className="btn btn-primary" href={downloadUrl} download="petition.docx">Download</a>
+                                <a className="btn btn-primary" href={downloadUrls[petitionNumber]} download="petition.docx">Download</a>
                             </div>
                             <div className="mr-2 d-inline">
                                 <Button onClick={edit}>Edit Petition</Button>
                             </div>
-                            <div className="mr-2 d-inline">
+                            {(petitionNumber === totalPetitions - 1) && <div className="mr-2 d-inline">
                                 <Button href="/action">New Petition</Button>
-                            </div>
+                            </div>}
                         </Col>
                     </Form.Group>
                 </>
