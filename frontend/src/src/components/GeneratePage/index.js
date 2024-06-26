@@ -88,7 +88,7 @@ export default function GeneratePage(props) {
 
     function postGeneratorRequest() {
         let petitionFields = {
-            petitioner: petitioner,
+            petitioner: petitionerData,
             petition: { ...petition, date: today() },
             dockets: dockets,
             charges: charges,
@@ -147,12 +147,12 @@ export default function GeneratePage(props) {
         setError("");
         setSuccess(false);
 
-        const ssn = petitioner.ssn;
+        const ssn = petitionerData.ssn;
         const hasDashes = /(-)/.test(ssn);
 
-        if (!petitioner.name) {
+        if (!petitionerData.name) {
             setError("Please enter a name.");
-        } else if (!petitioner.dob) {
+        } else if (!petitionerData.dob) {
             setError("Please enter a valid birth date.");
         } else if (!ssn) {
             setError("Please enter a valid Social Security number.");
@@ -162,11 +162,11 @@ export default function GeneratePage(props) {
         ) {
             setError("Please enter a valid Social Security number.");
         } else if (
-            !petitioner.address ||
-            !petitioner.address.street1 ||
-            !petitioner.address.city ||
-            !petitioner.address.state ||
-            !petitioner.address.zipcode
+            !petitionerData.address ||
+            !petitionerData.address.street1 ||
+            !petitionerData.address.city ||
+            !petitionerData.address.state ||
+            !petitionerData.address.zipcode
         ) {
             setError("Please enter a valid address.");
         } else {
@@ -178,7 +178,7 @@ export default function GeneratePage(props) {
 
     return (
         <Form className="generator">
-            <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
+            <Petitioner {...petitionerData} handleChange={setPetitionerData} disabled={formDisabled} />
             <Petition {...petition} handleChange={setPetition} disabled={formDisabled} />
             <Dockets dockets={dockets} handleChange={setDockets} disabled={formDisabled} />
             <Charges charges={charges} handleChange={setCharges} disabled={formDisabled} />
