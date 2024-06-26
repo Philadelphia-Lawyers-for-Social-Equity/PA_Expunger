@@ -6,6 +6,7 @@ import Dockets from "./components/Dockets";
 import Charges from "./components/Charges";
 import Fines from "./components/Fines";
 import { useAuth } from "../../context/auth";
+import { usePetitioner } from "../../context/petitioner";
 
 import "./style.css";
 import axios from "axios";
@@ -55,6 +56,10 @@ export default function GeneratePage(props) {
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const { authTokens } = useAuth();
+    const { petitionerData, setPetitionerData } = usePetitioner();
+    const { petitionerName, defendantName, aliases, birthdate, ssn, address } = petitionerData;
+
+    console.info(petitionerData);
 
     const [petitionNumber, setPetitionNumber] = useState(0)
 
@@ -65,10 +70,10 @@ export default function GeneratePage(props) {
     let petitionFields =
         fieldsFromRouterState || props.petitionFields || defaultPetitionFields;
 
-    const [petitioner, setPetitioner] = useReducer(
-        mergeReduce,
-        petitionFields.petitioner
-    );
+    // const [petitioner, setPetitioner] = useReducer(
+    //     mergeReduce,
+    //     petitionFields.petitioner
+    // );
     const [petition, setPetition] = useReducer(
         mergeReduce,
         petitionFields.petitions[petitionNumber].docket_info
