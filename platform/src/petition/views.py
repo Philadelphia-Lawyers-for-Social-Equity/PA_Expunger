@@ -107,18 +107,37 @@ class DocketParserAPIView(APIView):
                 return Response({"error": short_msg})
 
             # grouping parsed files by OTN or docket/cross court docket numbers
-            otn = parsed.get("otn")
-            if otn is not None:
-                if otn in grouped_dockets:
-                    grouped_dockets[otn].append(parsed)
+            # TODO: consider moving some of this functionality to a helper function
+            if parsed.get('type') == 'docket':
+                otn = parsed.get("otn")
+                if otn is not None:
+                    if otn in grouped_dockets:
+                        grouped_dockets[otn].append(parsed)
+                    else:
+                        grouped_dockets[otn] = [parsed]
                 else:
-                    grouped_dockets[otn] = [parsed]
-            else:
-                docket_number = parsed.get("docket_number")
-                if docket_number in grouped_dockets:
-                    grouped_dockets[docket_number].append(parsed)
-                else:
-                    grouped_dockets[docket_number] = [parsed]
+                    docket_number = parsed.get("docket_number")
+                    if docket_number in grouped_dockets:
+                        grouped_dockets[docket_number].append(parsed)
+                    else:
+                        grouped_dockets[docket_number] = [parsed]
+                
+            elif parsed.get('type') == 'court summary':
+                court_summary_dockets = parsed.pop('dockets', [])
+                for docket in court_summary_dockets:
+                    parsed_section = {**parsed, **docket}
+                    otn = parsed_section.get("otn")
+                    if otn is not None:
+                        if otn in grouped_dockets:
+                            grouped_dockets[otn].append(parsed_section)
+                        else:
+                            grouped_dockets[otn] = [parsed_section]
+                    else:
+                        docket_number = parsed_section.get("docket_number")
+                        if docket_number in grouped_dockets:
+                            grouped_dockets[docket_number].append(parsed_section)
+                        else:
+                            grouped_dockets[docket_number] = [parsed_section]
 
         for docket, group in grouped_dockets.items():
             most_recent_disposition = datetime.datetime.strptime("1900-01-01", "%Y-%m-%d")
@@ -129,7 +148,15 @@ class DocketParserAPIView(APIView):
                 "fines": {}
             }
             for parsed in group:
-                petitioner = petitioner_from_parser(parsed)
+                # TODO: filter out dockets that don't have {'count': 'Philadelphia'}
+
+                if parsed["type"] == "court summary":
+                    if parsed["category"] == 'Archived':
+                        # TODO: handle archived dockets.  Does anything else need to be added?  New petition field for {'category': 'Archived'}?
+                        petition["docket_numbers"].append(parsed.get("docket_number"))
+                        continue
+
+                petitioner = petitioner_from_parser(parsed)                
                 if content["petitioner"] is None:
                     content["petitioner"] = petitioner
                 else:
@@ -144,7 +171,20 @@ class DocketParserAPIView(APIView):
                 for parsed_docket_number in parsed_docket_numbers:
                     if parsed_docket_number not in petition["docket_numbers"]:
                         petition["docket_numbers"].append(parsed_docket_number)
-                parsed_charges = charges_from_parser(parsed)
+
+                parsed_charges = []
+                if parsed["type"] == "docket":
+                    parsed_chargescharges_from_parser(parsed)
+                else:
+                    # TODO: if this works, move to helper function
+                    disposition_date = parsed.get("disposition_date")
+                    for charge in parsed["charges"]:
+                        if "disposition" not in charge:
+                            logger.error(f"Charge must include a disposition, got: {charge}")
+
+                        adapted_charge = adapt_charge(charge, disposition_date)
+                        parsed_charges.append(adapted_charge)
+
                 petition["charges"] += parsed_charges
 
                 # Prioritizing docket_info and fines based on the most recent disposition date
@@ -155,10 +195,13 @@ class DocketParserAPIView(APIView):
                     if disposition_date[0] > most_recent_disposition:
                         most_recent_disposition = disposition_date[0]
                         petition["docket_info"] = petition_from_parser(parsed)
-                        petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
+                        # TODO: consider changing to look for fines regardless of type, add to petition if fines not None
+                        if parsed["type"] == "docket":
+                            petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
                 if not petition["docket_info"]:
                     petition["docket_info"] = petition_from_parser(parsed)
-                if not petition["fines"]:
+                if not petition["fines"] and parsed["type"] == "docket":
+                    # TODO: also here, consider changing to look for fines regardless of type
                     petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
 
             content["petitions"].append(petition)
@@ -175,9 +218,14 @@ def petitioner_from_parser(parsed: dict) -> dict:
     """
     Produce the petitioner data based on the docket parser output.
     """
-    petitioner = {"name": parsed.get("defendant_name"),
+    petitioner = {"name": None,
                   "aliases": parsed.get("aliases"),
                   "dob": None}
+
+    if parsed.get("type") == "docket":
+        petitioner["name"] = parsed.get("defendant_name")
+    else:
+        petitioner["name"] = parsed.get("defendant_name_reversed")
 
     dob = parsed.get("dob")
     if dob is not None:
@@ -190,12 +238,17 @@ def petition_from_parser(parsed: dict):
     """
     Produce the petition data based on the docket parser output.
     """
-    return {
+    petition_dict = {
         "otn": parsed.get("otn"),
-        "complaint_date": parsed.get("complaint_date"),
         "judge": parsed.get("judge"),
         "ratio": models.PetitionRatio.full.name
     }
+    if parsed.get("type") == "docket":
+        petition_dict["complaint_date"] = parsed.get("complaint_date")
+    else:
+        petition_dict["arrest_date"] = parsed.get("arrest_date")
+
+    return petition_dict
 
 
 def docket_numbers_from_parser(parsed: dict) -> List[str]:
@@ -296,13 +349,20 @@ def adapt_charge(charge: dict, disposition_date: datetime.date) -> dict:
 
     if disposition_date is not None:
         disposition_date = disposition_date.isoformat()
+    
+    disposition = None
+    disposition_from_docket = charge.get("offence_disposition")
+    if disposition_from_docket is not None:
+        disposition = disposition_from_docket
+    else:
+        disposition = charge.get("disposition")
 
     return {
         "statute": charge.get("statute"),
         "description": charge.get("charge_description"),
         "grade": charge.get("grade"),
         "date": disposition_date,
-        "disposition": charge.get("offense_disposition"),
+        "disposition": disposition,
     }
 
 # Template library will not recoganize \n unless it is in rtf format.

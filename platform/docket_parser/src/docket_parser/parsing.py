@@ -449,6 +449,7 @@ def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | date
     parsed = {}
     try:
         parsed = visitor.visit(tree)
+        parsed['type'] = document_type.value
     except VisitationError as e:
         msg = "VisitationError caused by:\n" + get_cause_without_context(e)
         logger.error(msg)
