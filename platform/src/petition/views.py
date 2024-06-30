@@ -148,7 +148,7 @@ class DocketParserAPIView(APIView):
             }
             for parsed in group:
                 if parsed["type"] == "court summary":
-                    # NOTE: handle dockets from court summaries that have county data other than: {'county': 'Philadelphia'}.  The same OTN and/or docket numbers may have been addressed by courts in multiple counties, eg. Philadelphia County and Montgomery County
+                    # TODO: handle dockets from court summaries that have county data other than: {'county': 'Philadelphia'}.  The same OTN and/or docket numbers may have been addressed by courts in multiple counties, eg. Philadelphia County and Montgomery County
                     # NOTE from 6/23/2023 meeting with PLSE attorney: "It would be nice to have those petitions drafted for out of county, but it is a low priority"
                     petition["county"] = parsed.get("county")
                         
