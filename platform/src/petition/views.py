@@ -312,9 +312,6 @@ def charges_from_court_summary(parsed: dict) -> List[dict]:
     disposition_date = parsed.get("disposition_date")
     if parsed.get("charges"):
         for charge in parsed["charges"]:
-            if "disposition" not in charge:
-                logger.error(f"Charge must include a disposition, got: {charge}")
-
             adapted_charge = adapt_charge(charge, disposition_date, "court summary")
             charges.append(adapted_charge)
     return charges
