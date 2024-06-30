@@ -2,6 +2,7 @@
 
 **Petition Fields** is a data structure (typically JSON or python dict)
 containing:
+
     - petitioner
             - name: string, full name
             - aliases: list of strings, aliases of petitioner
@@ -15,24 +16,26 @@ containing:
                 - city: string
                 - state: string, two letter US state code
                 - zipcode: string of numbers
-    - petition
-            - otn: string
-            - judge: string, full name of the judge
-            - ratio: string, may be "full" if every charge could be
-                     expunged, or "partial" if some charges have been
-                     excluded.
-    - dockets: List of docket ids, such as "MC-51-CR-1234567-1995"
-    
-    - charges (list of):
-        - statute: string
-        - description: string
-        - grade: string (usually 2-3 chars)
-        - date: date, formatted such as “2020-10-11”
-        - disposition: string
-    
-    - fines:
-            - total: decimal number
-            - paid: decimal number
+    - petitions: (list of dicts):
+            -docket info
+                - otn: string
+                - judge: string, full name of the judge
+                - ratio: string, may be "full" if every charge could be
+                        expunged, or "partial" if some charges have been
+                        excluded.
+                - complaint date or arrest date: iso formatted date
+            - docket numbers: List of docket ids, such as "MC-51-CR-1234567-1995"
+            - charges (list of):
+                - statute: string
+                - description: string
+                - grade: string (usually 2-3 chars)
+                - date: date, formatted such as “2020-10-11”
+                - disposition: string
+            - fines:
+                - total: decimal number
+                - paid: decimal number
+            - county: string (this field is only included if the parsed document is a court summary)
+            - category: string (this field is only included if the parsed document is a court summary)
 
 # API
 
@@ -140,17 +143,23 @@ parsing. This is where the real work gets done.
         - city: string
         - state: string, two character state abbreviation
         - zipcode: string formatted zip code
-    - petition
-      - date: iso formatted date, such as "2019-10-17"
-      - ratio: string, must be "full" if every charge is to be
+    - petitions
+      - docket info
+        - date: iso formatted date, such as "2019-10-17"
+        - ratio: string, must be "full" if every charge is to be
         expunged, or "partial" if some charges are excluded.
-      - otn: string
-      - disposition: string
-      - judge: string, full name of the judge
-    - docket: String of a docket id, such as "MC-51-CR-1234567-1995"
-    - fines:
-      - total: decimal number
-      - paid: decimal number
+        - otn: string
+        - judge: string, full name of the judge
+      - docket numbers: String of a docket id, such as "MC-51-CR-1234567-1995"
+      - fines:
+        - total: decimal number
+        - paid: decimal number
+      - charges
+        - date: iso formated date
+        - statute: string
+        - grade: string
+        - description: string
+        - disposition: string
 
 - **api/v0.2.0/petition/parse_docket/**
     - Requires access token header
