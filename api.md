@@ -3,7 +3,7 @@
 **Petition Fields** is a data structure (typically JSON or python dict)
 containing:
 
-    - petitioner
+    - petitioner:
             - name: string, full name
             - aliases: list of strings, aliases of petitioner
             - dob: petitioners date of birth, iso formatted, such as
@@ -16,7 +16,7 @@ containing:
                 - city: string
                 - state: string, two letter US state code
                 - zipcode: string of numbers
-    - petitions: (list of dicts):
+    - petitions (list of dicts containing):
             -docket info
                 - otn: string
                 - judge: string, full name of the judge
@@ -25,13 +25,13 @@ containing:
                         excluded.
                 - complaint date or arrest date: iso formatted date
             - docket numbers: List of docket ids, such as "MC-51-CR-1234567-1995"
-            - charges (list of):
+            - charges (list of dicts containing):
                 - statute: string
                 - description: string
                 - grade: string (usually 2-3 chars)
                 - date: date, formatted such as “2020-10-11”
                 - disposition: string
-            - fines:
+            - fines (dict of):
                 - total: decimal number
                 - paid: decimal number
             - county: string (this field is only included if the parsed document is a court summary)
