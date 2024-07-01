@@ -56,10 +56,9 @@ export default function GeneratePage(props) {
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const { authTokens } = useAuth();
-    const { petitionerData, setPetitionerData } = usePetitioner();
-    const { petitionerName, defendantName, aliases, birthdate, ssn, address } = petitionerData;
+    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
 
-    console.info(petitionerData);
+    console.log(petitioner);
 
     const [petitionNumber, setPetitionNumber] = useState(0)
 
@@ -70,10 +69,6 @@ export default function GeneratePage(props) {
     let petitionFields =
         fieldsFromRouterState || props.petitionFields || defaultPetitionFields;
 
-    // const [petitioner, setPetitioner] = useReducer(
-    //     mergeReduce,
-    //     petitionFields.petitioner
-    // );
     const [petition, setPetition] = useReducer(
         mergeReduce,
         petitionFields.petitions[petitionNumber].docket_info
@@ -88,7 +83,7 @@ export default function GeneratePage(props) {
 
     function postGeneratorRequest() {
         let petitionFields = {
-            petitioner: petitionerData,
+            petitioner: petitioner,
             petition: { ...petition, date: today() },
             dockets: dockets,
             charges: charges,
@@ -147,12 +142,12 @@ export default function GeneratePage(props) {
         setError("");
         setSuccess(false);
 
-        const ssn = petitionerData.ssn;
+        const ssn = petitioner.ssn;
         const hasDashes = /(-)/.test(ssn);
 
-        if (!petitionerData.name) {
+        if (!petitioner.name) {
             setError("Please enter a name.");
-        } else if (!petitionerData.dob) {
+        } else if (!petitioner.dob) {
             setError("Please enter a valid birth date.");
         } else if (!ssn) {
             setError("Please enter a valid Social Security number.");
@@ -162,11 +157,11 @@ export default function GeneratePage(props) {
         ) {
             setError("Please enter a valid Social Security number.");
         } else if (
-            !petitionerData.address ||
-            !petitionerData.address.street1 ||
-            !petitionerData.address.city ||
-            !petitionerData.address.state ||
-            !petitionerData.address.zipcode
+            !petitioner.address ||
+            !petitioner.address.street1 ||
+            !petitioner.address.city ||
+            !petitioner.address.state ||
+            !petitioner.address.zipcode
         ) {
             setError("Please enter a valid address.");
         } else {
@@ -178,7 +173,7 @@ export default function GeneratePage(props) {
 
     return (
         <Form className="generator">
-            <Petitioner {...petitionerData} handleChange={setPetitionerData} disabled={formDisabled} />
+            <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
             <Petition {...petition} handleChange={setPetition} disabled={formDisabled} />
             <Dockets dockets={dockets} handleChange={setDockets} disabled={formDisabled} />
             <Charges charges={charges} handleChange={setCharges} disabled={formDisabled} />
