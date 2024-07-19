@@ -4,7 +4,6 @@ import axios from 'axios';
 import { Button, Modal } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { useAuth } from "../../context/auth";
-import { useUser } from '../../context/user';
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
@@ -13,7 +12,6 @@ export default function LandingPage() {
     const [profileGenerated, setProfileGenerated] = useState(false);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
-    const { user } = useUser();
 
     // useEffect is the React Hook equivalent to ComponentDidMount
     useEffect(() => {
@@ -57,12 +55,6 @@ export default function LandingPage() {
         const profiledata = {
             "attorney" : attorneyKey,
             "organization" : 1,
-            "user" : {
-                "first_name" : user.firstName,
-                "last_name" : user.lastName,
-                "email" : user.email,
-                "username" : user.username            
-            }
         };
 
         // post to generate profile

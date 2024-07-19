@@ -30,43 +30,44 @@ export default function ProfilePage() {
 
   // useEffect is the React Hook equivalent to ComponentDidMount
   useEffect(() => {
+    fetchUserData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authTokens.access]); // empty array as the second argument will limit to one get call
 
+  function fetchUserData() {
     const token = `Bearer ${authTokens.access}`;
     var config = {
-      'headers': { 'Authorization': token }
+      headers: { Authorization: token },
     };
 
     // Get to return user data
-    const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-    axios.get(url, config)
-      .then(
-        res => {
-          if (res.status === 200) {
-            // return data
-            setMyUsername(res.data.user.username);
-            setMyFirstName(res.data.user.first_name);
-            setMyLastName(res.data.user.last_name);
-            setMyEmail(res.data.user.email);
+    const url =
+      process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
+    axios.get(url, config).then((res) => {
+      if (res.status === 200) {
+        // return data
+        setMyUsername(res.data.user.username);
+        setMyFirstName(res.data.user.first_name);
+        setMyLastName(res.data.user.last_name);
+        setMyEmail(res.data.user.email);
 
-            setAttorneypk(res.data.attorney.pk);
-            setAttorneyName(res.data.attorney.name);
-            setAttorneyBar(res.data.attorney.bar);
-            setAttorneyURL(res.data.attorney.url);
+        setAttorneypk(res.data.attorney.pk);
+        setAttorneyName(res.data.attorney.name);
+        setAttorneyBar(res.data.attorney.bar);
+        setAttorneyURL(res.data.attorney.url);
 
-            setOrgpk(res.data.organization.pk);
-            setAddresspk(res.data.organization.address.pk);
-            setOrgName(res.data.organization.name);
-            setOrgStreet(res.data.organization.address.street1);
-            setOrgCity(res.data.organization.address.city);
-            setOrgState(res.data.organization.address.state);
-            setOrgZipcode(res.data.organization.address.zipcode);
-            setOrgPhone(res.data.organization.phone);
-            setOrgURL(res.data.organization.url);
-          }
-        }
-      )
-  }, [authTokens.access]); // empty array as the second argument will limit to one get call
-
+        setOrgpk(res.data.organization.pk);
+        setAddresspk(res.data.organization.address.pk);
+        setOrgName(res.data.organization.name);
+        setOrgStreet(res.data.organization.address.street1);
+        setOrgCity(res.data.organization.address.city);
+        setOrgState(res.data.organization.address.state);
+        setOrgZipcode(res.data.organization.address.zipcode);
+        setOrgPhone(res.data.organization.phone);
+        setOrgURL(res.data.organization.url);
+      }
+    });
+  }
   // onclick for Edit button
   function editProfile() {
 
@@ -132,8 +133,10 @@ export default function ProfilePage() {
     const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
     // axios.post(url, JSON.parse(postData), config)
     axios.put(url, shortData, config)
-      .then(
-        console.log("Posted")
+      .then(() => {
+        setIsEdit(false);
+        fetchUserData();
+      }
       )
       .catch(err => {
         console.log(err);
