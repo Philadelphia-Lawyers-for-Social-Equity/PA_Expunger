@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
+import { usePetitions } from '../../context/petitions';
 
 export default function FileUpload() {
     const history = useHistory();
@@ -11,6 +12,7 @@ export default function FileUpload() {
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
+    const { setPetitions } = usePetitions();
     
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
@@ -58,6 +60,7 @@ export default function FileUpload() {
                     if (res.status === 200) {
                         console.log("Ready to generate ..!");
                         console.info(res.data);
+                        setPetitions(res.data.petitions)
                         history.push("/generate", {"petitionFields": res.data});
                     }
                 })
