@@ -1,4 +1,5 @@
 import React, { useState, useReducer } from "react";
+import { Link } from "react-router-dom";
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
@@ -57,8 +58,6 @@ export default function GeneratePage(props) {
     */
     const { authTokens } = useAuth();
     const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
-
-    console.log(petitioner);
 
     const [petitionNumber, setPetitionNumber] = useState(0)
 
@@ -202,7 +201,10 @@ export default function GeneratePage(props) {
                                 <Button onClick={edit}>Edit Petition</Button>
                             </div>
                             <div class="mr-2 d-inline">
-                                <Button href="/action">New Petition</Button>
+                                <Link to={{
+                                    pathname: '/action',
+                                    state: {petitioner: petitioner}
+                                    }} ><Button>New Petition</Button></Link>
                             </div>
                         </Col>
                     </Form.Group>

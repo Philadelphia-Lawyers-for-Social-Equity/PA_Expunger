@@ -19,7 +19,7 @@ export default function Petitioner(props) {
         - adds address via handleChange
     */
 
-    const { petitionerData, setPetitionerData } = usePetitioner();
+    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
 
     function aliasItems() {
         if(!props.aliases) {
@@ -36,7 +36,7 @@ export default function Petitioner(props) {
 
     function handleChange(item) {
         let attribute = Object.keys(item)[0];
-        setPetitionerData({...petitionerData, [attribute]: item[attribute]});
+        setPetitioner({...petitioner, [attribute]: item[attribute]});
     }
 
     return(
@@ -47,7 +47,7 @@ export default function Petitioner(props) {
                 type="text"
                 placeholder="Full Name"
                 name="name"
-                value={petitionerData.name}
+                value={petitioner.name}
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
@@ -57,7 +57,7 @@ export default function Petitioner(props) {
                 label="Birth Date"
                 type="date"
                 name="dob"
-                value={petitionerData.dob}
+                value={petitioner.dob}
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
@@ -68,7 +68,7 @@ export default function Petitioner(props) {
                 type="text"
                 placeholder="###-##-####"
                 name="ssn"
-                value={petitionerData.ssn}
+                value={petitioner.ssn}
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
@@ -84,7 +84,7 @@ export default function Petitioner(props) {
                 smallHeader={true}
             />
 
-            <Address {...petitionerData.address} handleChange={(a) => {handleChange({"address": a});}} disabled={props.disabled || false} />
+            <Address {...petitioner.address} handleChange={(a) => {handleChange({"address": a});}} disabled={props.disabled || false} />
         </>
         );
 }

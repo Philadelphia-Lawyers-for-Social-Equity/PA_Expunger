@@ -12,7 +12,7 @@ export default function FileUpload() {
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
-    const { setPetitioner } = usePetitioner();
+    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
 
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
@@ -61,7 +61,19 @@ export default function FileUpload() {
                         console.log("Ready to generate ..!");
                         console.info(res.data);
                         history.push("/generate", {"petitionFields": res.data});
-                        setPetitioner(res.data.petitioner);
+
+                        // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
+                        if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
+                            let newPetitioner = {};
+                            newPetitioner.name = res.data.petitioner.name || petitioner.name;
+                            newPetitioner.aliases = res.data.petitioner.aliases || petitioner.aliases;
+                            newPetitioner.dob = res.data.petitioner.dob || petitioner.aliases;
+                            newPetitioner.ssn = res.data.petitioner.ssn || petitioner.ssn;
+                            newPetitioner.address = res.data.petitioner.address || petitioner.address;
+                            setPetitioner(newPetitioner);
+                        } else {
+                            setPetitioner(res.data.petitioner);
+                        }
                     }
                 })
                 .catch(err => {
