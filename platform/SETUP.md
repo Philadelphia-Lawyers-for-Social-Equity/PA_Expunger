@@ -6,6 +6,8 @@ Devs will need to download [Docker](https://docs.docker.com/get-docker/) to work
 
 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
+[Pandoc](https://www.pandoc.org/installing.html): We recommend using the `.pkg` file for Mac and `.msi` for Windows, as these come with installers, as opposed to the `.zip` files.
+
 ## Dev Setup
 
 The _fastest_ route to a local install should be:
@@ -15,6 +17,11 @@ The _fastest_ route to a local install should be:
     ```
     git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
     ```
+
+1. Now we create git hooks that will allow us to track changes to .docx files. Run the following in your terminal:
+
+      * Mac or Linux: `init/init.sh`
+      * Windows: `init/init.ps1`
 
 1. Run `docker-compose build` to set up the images. (EST ~3 minutes, only needed the first time you clone into the repository. Read through the [Settings](#settings) section or [docker-compose.yml](../docker-compose.yml) while it builds!)
 
@@ -36,7 +43,7 @@ The _fastest_ route to a local install should be:
    Username: `plse`
 
    Password: `defaultTestPassword`
-   
+
 
 # Setting up the user data
 
