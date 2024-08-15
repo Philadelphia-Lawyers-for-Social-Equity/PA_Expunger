@@ -56,6 +56,11 @@ class PetitionAPIView(APIView):
         context["organization"].formattedAddress = format_address_for_template(context["organization"].address)
         context["petitioner"].formattedAddress = format_address_for_template(context["petitioner"].address)
         
+        # Any charges with no disposition are given disposition of 'unk'
+        for charge in context["charges"]:
+            if charge.grade == None:
+                charge.grade = 'unk'
+
         logger.debug(f"Petition POSTed with context: {context}")
 
         docx = os.path.join(
