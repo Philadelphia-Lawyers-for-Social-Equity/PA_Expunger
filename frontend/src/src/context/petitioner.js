@@ -6,10 +6,19 @@ export function usePetitioner() {
   return useContext(PetitionerContext);
 }
 
-export function PetitionerProvider({ children }) {
-  const [petitionerData, setPetitionerData] = useState({});
+export const initialPetitionerState = {
+  preferred_name: "",
+  name: "",
+  aliases: [],
+  dob: "",
+  ssn: "",
+  address: "",
+}
 
-  const value = { petitionerData, setPetitionerData };
+export function PetitionerProvider({ children }) {
+  const [petitioner, setPetitioner] = useState(initialPetitionerState);
+
+  const value = { petitioner, setPetitioner };
 
   return (
     <PetitionerContext.Provider value={value}>

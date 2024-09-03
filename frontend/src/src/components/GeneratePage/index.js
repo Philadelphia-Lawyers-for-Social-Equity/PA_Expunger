@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from "react";
+import React, { useEffect, useState, useReducer } from "react";
 import { Link } from "react-router-dom";
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
@@ -7,7 +7,7 @@ import Dockets from "./components/Dockets";
 import Charges from "./components/Charges";
 import Fines from "./components/Fines";
 import { useAuth } from "../../context/auth";
-import { usePetitioner } from "../../context/petitioner";
+import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
 
 import "./style.css";
 import axios from "axios";
@@ -57,7 +57,7 @@ export default function GeneratePage(props) {
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const { authTokens } = useAuth();
-    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
+    const { petitioner, setPetitioner } = usePetitioner();
 
     const [petitionNumber, setPetitionNumber] = useState(0)
 
@@ -118,6 +118,8 @@ export default function GeneratePage(props) {
                         // needs to happen after DOM updates
                         document.getElementById("downloadbutton").scrollIntoView({ behavior: "smooth" });
                     });
+
+                    //history.push("/generate");
                 } else {
                     throw new Error(`${res.status}: ${res.statusText}`)
                 }
@@ -131,6 +133,15 @@ export default function GeneratePage(props) {
                 setBusy(false);
             });
     }
+
+    // re-create petitioner state from history after page refresh
+    useEffect(() => {
+        if (petitioner === initialPetitionerState) {
+            setPetitioner(props.location.state.petitionFields.petitioner);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    
 
     function edit() {
         setSuccess(false);
@@ -172,7 +183,7 @@ export default function GeneratePage(props) {
 
     return (
         <Form className="generator">
-            <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
+            <Petitioner {...petitioner} disabled={formDisabled} />
             <Petition {...petition} handleChange={setPetition} disabled={formDisabled} />
             <Dockets dockets={dockets} handleChange={setDockets} disabled={formDisabled} />
             <Charges charges={charges} handleChange={setCharges} disabled={formDisabled} />

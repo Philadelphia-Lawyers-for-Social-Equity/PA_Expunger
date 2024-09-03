@@ -19,7 +19,7 @@ export default function Petitioner(props) {
         - adds address via handleChange
     */
 
-    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
+    const { petitioner, setPetitioner } = usePetitioner();
 
     function aliasItems() {
         if(!props.aliases) {

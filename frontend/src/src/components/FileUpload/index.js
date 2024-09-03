@@ -5,14 +5,14 @@ import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
 import { usePetitioner } from '../../context/petitioner';
 
-export default function FileUpload() {
+export default function FileUpload(props) {
     const history = useHistory();
 
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
-    const { petitionerData: petitioner, setPetitionerData: setPetitioner } = usePetitioner();
+    const { petitioner, setPetitioner } = usePetitioner();
 
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
@@ -60,22 +60,23 @@ export default function FileUpload() {
                     if (res.status === 200) {
                         console.log("Ready to generate ..!");
                         console.info(res.data);
-                        history.push("/generate", {"petitionFields": res.data});
 
                         // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
                         if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
                             let newPetitioner = {};
-                            newPetitioner.name = res.data.petitioner.name || petitioner.name;
-                            newPetitioner.aliases = res.data.petitioner.aliases || petitioner.aliases;
-                            newPetitioner.dob = res.data.petitioner.dob || petitioner.aliases;
-                            newPetitioner.ssn = res.data.petitioner.ssn || petitioner.ssn;
-                            newPetitioner.address = res.data.petitioner.address || petitioner.address;
+                            newPetitioner.name = res.data.petitioner.name;
+                            newPetitioner.aliases = res.data.petitioner.aliases.concat(petitioner.aliases);
+                            newPetitioner.dob = res.data.petitioner.dob || petitioner.dob;
+                            newPetitioner.ssn = petitioner.ssn;
+                            newPetitioner.address = petitioner.address;
                             setPetitioner(newPetitioner);
+                            res.data.petitioner = newPetitioner;
                         } else {
                             setPetitioner(res.data.petitioner);
                         }
-                    }
-                })
+
+                        history.push("/generate", {"petitionFields": res.data});
+                    }})
                 .catch(err => {
                     console.error(err);
                 });
