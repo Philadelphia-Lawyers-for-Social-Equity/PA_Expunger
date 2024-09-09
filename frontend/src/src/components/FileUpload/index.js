@@ -4,8 +4,9 @@ import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
 import { usePetitions } from '../../context/petitions';
+import { usePetitioner } from '../../context/petitioner';
 
-export default function FileUpload() {
+export default function FileUpload(props) {
     const history = useHistory();
 
     const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -13,7 +14,7 @@ export default function FileUpload() {
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
     const { setPetitions } = usePetitions();
-    
+    const { petitioner, setPetitioner } = usePetitioner();
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
     })
@@ -61,9 +62,23 @@ export default function FileUpload() {
                         console.log("Ready to generate ..!");
                         console.info(res.data);
                         setPetitions(res.data.petitions)
+
+                        // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
+                        if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
+                            let newPetitioner = {};
+                            newPetitioner.name = res.data.petitioner.name;
+                            newPetitioner.aliases = res.data.petitioner.aliases.concat(petitioner.aliases);
+                            newPetitioner.dob = res.data.petitioner.dob || petitioner.dob;
+                            newPetitioner.ssn = petitioner.ssn;
+                            newPetitioner.address = petitioner.address;
+                            setPetitioner(newPetitioner);
+                            res.data.petitioner = newPetitioner;
+                        } else {
+                            setPetitioner(res.data.petitioner);
+                        }
+                        
                         history.push("/generate", {"petitionFields": res.data});
-                    }
-                })
+                    }})
                 .catch(err => {
                     console.error(err);
                 });

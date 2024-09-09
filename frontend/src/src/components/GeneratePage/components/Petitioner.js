@@ -4,6 +4,7 @@ import EditableList from '../helpers/EditableList';
 import Address from '../helpers/Address';
 import RemovableTextField from '../helpers/RemovableTextField';
 import SocialSecurityInput from './SocialSecurityInput';
+import { usePetitioner } from '../../../context/petitioner.js';
 
 export default function Petitioner(props) {
     /* Props expects:
@@ -19,6 +20,8 @@ export default function Petitioner(props) {
         - adds address via handleChange
     */
 
+    const { petitioner, setPetitioner } = usePetitioner();
+
     function aliasItems() {
         if(!props.aliases) {
             return([]);
@@ -32,6 +35,11 @@ export default function Petitioner(props) {
         props.handleChange({"aliases": newAliases});
     }
 
+    function handleChange(item) {
+        let attribute = Object.keys(item)[0];
+        setPetitioner({...petitioner, [attribute]: item[attribute]});
+    }
+
     return(
         <>
             <h2>Petitioner</h2>
@@ -40,8 +48,8 @@ export default function Petitioner(props) {
                 type="text"
                 placeholder="Full Name"
                 name="name"
-                value={props.name}
-                handleChange={props.handleChange}
+                value={petitioner.name}
+                handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
             />
@@ -50,8 +58,8 @@ export default function Petitioner(props) {
                 label="Birth Date"
                 type="date"
                 name="dob"
-                value={props.dob}
-                handleChange={props.handleChange}
+                value={petitioner.dob}
+                handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
             />
@@ -61,9 +69,9 @@ export default function Petitioner(props) {
                 type="text"
                 placeholder="###-##-####"
                 name="ssn"
-                value={props.ssn}
-                handleChange={props.handleChange}
-                required
+                value={petitioner.ssn}
+                handleChange={handleChange}
+                required={true}
                 disabled={props.disabled || false}
             />
 
@@ -77,7 +85,7 @@ export default function Petitioner(props) {
                 smallHeader={true}
             />
 
-            <Address {...props.address} handleChange={(a) => {props.handleChange({"address": a});}} disabled={props.disabled || false} />
+            <Address {...petitioner.address} handleChange={(a) => {handleChange({"address": a});}} disabled={props.disabled || false} />
         </>
         );
 }

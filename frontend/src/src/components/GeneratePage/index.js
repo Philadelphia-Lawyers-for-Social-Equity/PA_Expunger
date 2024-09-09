@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useReducer } from "react";
 import { useHistory } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
@@ -9,6 +10,7 @@ import Fines from "./components/Fines";
 import Progress from "./components/Progress";
 import { useAuth } from "../../context/auth";
 import { initialPetitionState, usePetitions } from "../../context/petitions";
+import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
 
 import "./style.css";
 import axios from "axios";
@@ -60,6 +62,8 @@ export default function GeneratePage(props) {
     const history = useHistory();
     const { authTokens } = useAuth();
     const { petitions, setPetitions } = usePetitions();
+    const { petitioner, setPetitioner } = usePetitioner();
+
     const [petitionNumber, setPetitionNumber] = useState(0)
 
     const fieldsFromRouterState =
@@ -68,12 +72,7 @@ export default function GeneratePage(props) {
             : null;
     let petitionFields =
         fieldsFromRouterState || props.petitionFields || defaultPetitionFields;
-    const [petitioner, setPetitioner] = useReducer(
-        mergeReduce,
-        petitionFields.petitioner
-    );
-
-    const [success, setSuccess] = useState({0: false});
+    const [success, setSuccess] = useState(false);
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
     const [error, setError] = useState("");
@@ -153,6 +152,15 @@ export default function GeneratePage(props) {
                 setBusy(false);
             });
     }
+
+    // re-create petitioner state from history after page refresh
+    useEffect(() => {
+        if (petitioner === initialPetitionerState) {
+            setPetitioner(props.location.state.petitionFields.petitioner);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    
 
     function edit() {
         setSuccess({
@@ -235,7 +243,7 @@ export default function GeneratePage(props) {
 
     return (
         <Form className="generator">
-            <Petitioner {...petitioner} handleChange={setPetitioner} disabled={formDisabled} />
+            <Petitioner {...petitioner} disabled={formDisabled} />
             <Petition petitionNumber={petitionNumber} disabled={formDisabled} />
             <Dockets petitionNumber={petitionNumber} disabled={formDisabled} />
             <Charges petitionNumber={petitionNumber} disabled={formDisabled} />
@@ -275,7 +283,10 @@ export default function GeneratePage(props) {
                                 <Button onClick={edit}>Edit Petition</Button>
                             </div>
                             {(petitionNumber === totalPetitions - 1) && <div className="mr-2 d-inline">
-                                <Button href="/action">New Petition</Button>
+                                <Link to={{
+                                    pathname: '/action',
+                                    state: {petitioner: petitioner}
+                                    }} ><Button>New Petition</Button></Link>
                             </div>}
                         </Col>
                     </Form.Group>
