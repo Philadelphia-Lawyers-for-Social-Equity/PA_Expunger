@@ -8,7 +8,7 @@ Attorney for {{ petitioner.name }}
 
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
-+-------------------------------------+---+----------------------------+
++:-----------------------------------:+---+----------------------------+
 | COMMONWEALTH OF PENNSYLVANIA        | : | COURT OF COMMON PLEAS      |
 |                                     |   |                            |
 | vs.                                 | : | CRIMINAL TRIAL DIVISION    |
@@ -98,7 +98,7 @@ Pursuant to Pa.R.Crim.P. 790, the following information is provided:
 9.  **The specific charges, as they appear on the charging document, to
     be expunged and applicable dispositions:**
 
-+------------+------------------+----+---------+---------------------+
++------------+------------------+:---+:--------+---------------------+
 | > **Code   | > **Statute      | >  | >       | > **Disposition**   |
 | >          | > Description**  |  * |  **Disp |                     |
 |  Section** |                  | *G | >       |                     |
@@ -177,7 +177,7 @@ Attorney for {{ petitioner.name }}
 
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
-+-------------------------------------+---+------------------------------+
++:-----------------------------------:+:-:+------------------------------+
 | COMMONWEALTH OF PENNSYLVANIA        | : | COURT OF COMMON PLEAS        |
 |                                     |   |                              |
 | vs.                                 | : | CRIMINAL TRIAL DIVISION      |
