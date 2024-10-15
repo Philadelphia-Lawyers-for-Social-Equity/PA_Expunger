@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:3.12
 
 ENV INSTALL_DIR /srv/plse/install
 ENV APP_DIR /srv/plse/expunger
