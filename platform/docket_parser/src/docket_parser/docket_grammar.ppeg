@@ -89,8 +89,8 @@ alias = content_char+
 properties_03x_normal = props_open &'03' coordinates normal props_close
 
 # We get defendant name from case participants section
-defendant_name_segment = "Defendant" tab defendant_name properties_normal terminator
-defendant_name = content_char+
+defendant_name_segment = "Defendant" tab defendant_name_reversed properties_normal terminator
+defendant_name_reversed = content_char+
 
 section_disposition =
     disposition_full_header

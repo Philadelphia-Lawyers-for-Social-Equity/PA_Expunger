@@ -1,14 +1,19 @@
 import React from "react";
 import GeneratorInput from "../helpers/GeneratorInput";
 import Radio from "../helpers/Radio";
+import { usePetitions } from "../../../context/petitions";
 
-export default function Petition(props) {
+export default function Petition({petitionNumber, disabled}) {
     /* props expects:
-        - otn
-        - judge
-        - ratio: string, either "partial" or "full"
-        - handleChange
+        - petitionNumber: integer
+        - disabled: boolean
     */
+    const { petitions, updatePetitions } = usePetitions();
+    const docket_info = petitions[petitionNumber].docket_info;
+
+    function handleChange(changes) {
+        updatePetitions('docket_info', petitionNumber, changes)
+    }
 
     return (
         <>
@@ -18,29 +23,29 @@ export default function Petition(props) {
                 type="text"
                 placeholder="########"
                 name="otn"
-                value={props.otn}
-                handleChange={props.handleChange}
-                disabled={props.disabled || false}
+                value={docket_info.otn}
+                handleChange={handleChange}
+                disabled={disabled || false}
             />
             <GeneratorInput
                 label="Judge"
                 type="text"
                 placeholder="First & Last Name"
                 name="judge"
-                value={props.judge}
-                handleChange={props.handleChange}
-                disabled={props.disabled || false}
+                value={docket_info.judge}
+                handleChange={handleChange}
+                disabled={disabled || false}
             />
             <Radio
                 label="Is this a full or partial expungement?"
                 name="ratio"
-                handleChange={props.handleChange}
+                handleChange={handleChange}
                 items={[
                     ["full", "Full Expungement"],
                     ["partial", "Partial Expungement"],
                 ]}
-                selected={props.ratio || "full"}
-                disabled={props.disabled || false}
+                selected={docket_info.ratio || "full"}
+                disabled={disabled || false}
             />
         </>
     );

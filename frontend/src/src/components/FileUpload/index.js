@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import { Button, Modal, Col } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
+import { usePetitions } from '../../context/petitions';
 import { usePetitioner } from '../../context/petitioner';
 
 export default function FileUpload(props) {
@@ -12,8 +13,8 @@ export default function FileUpload(props) {
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
+    const { setPetitions } = usePetitions();
     const { petitioner, setPetitioner } = usePetitioner();
-
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
     })
@@ -60,6 +61,7 @@ export default function FileUpload(props) {
                     if (res.status === 200) {
                         console.log("Ready to generate ..!");
                         console.info(res.data);
+                        setPetitions(res.data.petitions)
 
                         // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
                         if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
@@ -74,7 +76,7 @@ export default function FileUpload(props) {
                         } else {
                             setPetitioner(res.data.petitioner);
                         }
-
+                        
                         history.push("/generate", {"petitionFields": res.data});
                     }})
                 .catch(err => {

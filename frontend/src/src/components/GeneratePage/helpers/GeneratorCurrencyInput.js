@@ -31,11 +31,11 @@ export default function GeneratorCurrencyInput(props) {
           className="form-control"
           decimalsLimit={2}
           decimalScale={2}
-          defaultValue={props.value}
+          value={props.value}
           label="Total"
           onValueChange={(value, _, values) => {
             const changeObj = {};
-            changeObj[keyName] = values.float.toFixed(2);
+            changeObj[keyName] = value;
             props.handleChange(changeObj);
           }}
           placeholder={props.placeholder}

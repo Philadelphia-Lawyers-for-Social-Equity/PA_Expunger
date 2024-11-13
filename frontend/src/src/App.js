@@ -14,28 +14,31 @@ import ProfilePage from "../src/components/ProfilePage";
 import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
+import { PetitionsProvider } from "./context/petitions";
 
 function App(props) {
   return (
     <PetitionerProvider>
-    <AuthProvider>
-      <UserProvider>
-        <Router>
-          <Nav />
-          <Switch>
-            <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-            <Route exact path="/signup" component={SignUp} />
+      <AuthProvider>
+        <UserProvider>
+          <Router>
+            <Nav />
+            <Switch>
+              <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
+              <Route exact path="/signup" component={SignUp} />
               <PrivateRoute exact path="/" component={LandingPage} />
               <PrivateRoute exact path="/action" component={ChooseAction} />
               <PrivateRoute exact path="/search" component={SearchPage} />
-              <PrivateRoute exact path="/upload" component={FileUpload} />
-              <PrivateRoute exact path="/generate" component={GeneratePage} />
+              <PetitionsProvider>
+                <PrivateRoute exact path="/upload" component={FileUpload} />
+                <PrivateRoute exact path="/generate" component={GeneratePage} />
+              </PetitionsProvider>
               <PrivateRoute exact path="/profile" component={ProfilePage} />
               <PrivateRoute path="*" component={PageNotFound} />
-          </Switch>
-        </Router>
-      </UserProvider>
-    </AuthProvider>
+            </Switch>
+          </Router>
+        </UserProvider>
+      </AuthProvider>
     </PetitionerProvider>
   );
 }

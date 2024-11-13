@@ -3,6 +3,7 @@ import GeneratorInput from '../helpers/GeneratorInput';
 import EditableList from '../helpers/EditableList';
 import Address from '../helpers/Address';
 import RemovableTextField from '../helpers/RemovableTextField';
+import SocialSecurityInput from './SocialSecurityInput';
 import { usePetitioner } from '../../../context/petitioner.js';
 
 export default function Petitioner(props) {
@@ -31,7 +32,7 @@ export default function Petitioner(props) {
 
     function saveAliases(items) {
         let newAliases = items.map((a) => (a.text));
-        props.handleChange({"aliases": newAliases});
+        props.handleChange({...petitioner, "aliases": newAliases});
     }
 
     function handleChange(item) {
@@ -63,7 +64,7 @@ export default function Petitioner(props) {
                 disabled={props.disabled || false}
             />
 
-            <GeneratorInput
+            <SocialSecurityInput
                 label="Social Security Number"
                 type="text"
                 placeholder="###-##-####"

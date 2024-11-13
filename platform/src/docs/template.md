@@ -6,6 +6,7 @@ The petition template is located at
 Key libraries are (jinja2)[https://palletsprojects.com/p/jinja/] and
 (docxtpl)[https://docxtpl.readthedocs.io/en/latest/].
 
+Do NOT manually modify petition.md; this is updated automatically with git hooks to mirror the text in petition.docx so we can easily see any changes to the text in github.
 
 ## Template Input Pipeline
 

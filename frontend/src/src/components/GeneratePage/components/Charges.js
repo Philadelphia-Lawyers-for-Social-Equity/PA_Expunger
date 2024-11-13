@@ -1,21 +1,28 @@
 import React from 'react';
 import EditableList from '../helpers/EditableList';
 import RemovableCharge  from '../helpers/RemovableCharge';
+import { usePetitions } from '../../../context/petitions';
 
-export default function Charges(props) {
+export default function Charges({petitionNumber, disabled}) {
     /* props expects:
-        - charges: list of charge objects, per the api glossary or Charge props
-        - handleChange: function should take a list of charge objects, handle the update
+        - petitionNumber: integer
+        - disabled: boolean
     */
+    const { petitions, updatePetitions } = usePetitions();
+    const charges = petitions[petitionNumber].charges;
+
+    function handleChange(newCharges) {
+        updatePetitions('charges', petitionNumber, newCharges)
+    }
 
     return (
         <EditableList
             label="Charges"
             inner={RemovableCharge}
-            items={props.charges}
+            items={charges}
             emptyItem={{"statute": "", "description": "", "grade": "", "date": "", "disposition": "", "key": ""}}
-            handleChange={props.handleChange}
-            disabled={props.disabled || false}
+            handleChange={handleChange}
+            disabled={disabled || false}
         />
     );
 }
