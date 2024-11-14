@@ -32,7 +32,7 @@ export default function Petitioner(props) {
 
     function saveAliases(items) {
         let newAliases = items.map((a) => (a.text));
-        props.handleChange({"aliases": newAliases});
+        setPetitioner({...petitioner, "aliases": newAliases});
     }
 
     function handleChange(item) {

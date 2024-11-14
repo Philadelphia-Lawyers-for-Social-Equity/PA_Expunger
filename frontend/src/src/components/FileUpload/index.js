@@ -67,7 +67,13 @@ export default function FileUpload(props) {
                         if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
                             let newPetitioner = {};
                             newPetitioner.name = res.data.petitioner.name;
-                            newPetitioner.aliases = res.data.petitioner.aliases.concat(petitioner.aliases);
+                            if (res.data.petitioner.aliases !== null) {
+                                let aliasesSet = new Set(res.data.petitioner.aliases.concat(petitioner.aliases));
+                                newPetitioner.aliases = [...aliasesSet];
+                            } else {
+                                newPetitioner.aliases = petitioner.aliases;
+                            }
+
                             newPetitioner.dob = res.data.petitioner.dob || petitioner.dob;
                             newPetitioner.ssn = petitioner.ssn;
                             newPetitioner.address = petitioner.address;
