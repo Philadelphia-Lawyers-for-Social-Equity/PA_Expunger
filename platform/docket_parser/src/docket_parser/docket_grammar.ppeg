@@ -51,11 +51,15 @@ cross_court_docket_numbers = content_char+
 
 section_status_information =
     status_information_header
-    ( complaint_date_segment
+    ( arrest_date_lines
+    / complaint_date_segment
     / (page_break status_information_header)
     / (!generic_header junk_segment)
     )+
 
+arrest_date_lines = (content_char+ tab)? "Arrest Date:" content_char* properties_normal terminator
+                    arrest_date properties_normal terminator
+arrest_date = date{1}
 complaint_date_segment = complaint_date comes_before "Complaint Date:" properties_normal terminator
 status_information_header = "STATUS INFORMATION" properties_bold terminator
 complaint_date = content_char+

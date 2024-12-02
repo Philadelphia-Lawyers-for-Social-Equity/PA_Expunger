@@ -158,7 +158,7 @@ class DocketVisitor(NodeVisitor):
                      "cross_court_docket_numbers", "alias", "event_disposition", "case_event", "disposition_finality",
                      "sequence", "charge_description_part", "grade", "statute", "offense_disposition_part"
                      ]
-    date_leaves = ["dob", "disposition_date", "complaint_date"]
+    date_leaves = ["dob", "disposition_date", "complaint_date", "arrest_date"]
     money_leaves = ["assessment", "total", "non_monetary", "adjustments", "payments"]
 
     def __init__(self) -> None:
