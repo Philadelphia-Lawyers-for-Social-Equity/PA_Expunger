@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useReducer } from "react";
+import React, { useEffect, useState } from "react";
 import { useHistory } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import Alert from 'react-bootstrap/Alert';
@@ -24,36 +24,6 @@ import { Button, Form, Row, Col } from "react-bootstrap";
 
 const url =
     process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
-const defaultPetitionFields = {
-    petitioner: {
-        name: "",
-        aliases: [],
-        dob: "",
-        ssn: "",
-        address: {
-            street1: "",
-            street2: "",
-            city: "",
-            state: "",
-            zipcode: "",
-        },
-    },
-    docket_info: {
-        otn: "",
-        judge: "",
-        ratio: "full",
-    },
-    docket_numbers: [],
-    charges: [],
-    fines: {
-        total: 0,
-        paid: 0,
-    },
-};
-
-function mergeReduce(initial, changes) {
-    return { ...initial, ...changes };
-}
 
 export default function GeneratePage(props) {
     /* Props accepts:
@@ -61,17 +31,8 @@ export default function GeneratePage(props) {
     */
     const history = useHistory();
     const { authTokens } = useAuth();
-    const { petitions, setPetitions } = usePetitions();
     const { petitioner, setPetitioner } = usePetitioner();
-
-    const [petitionNumber, setPetitionNumber] = useState(0)
-
-    const fieldsFromRouterState =
-        props.location && props.location.state
-            ? props.location.state.petitionFields
-            : null;
-    let petitionFields =
-        fieldsFromRouterState || props.petitionFields || defaultPetitionFields;
+    const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
     const [success, setSuccess] = useState(false);
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
@@ -92,6 +53,9 @@ export default function GeneratePage(props) {
     useEffect(() => {
         if (petitions === initialPetitionState) {
             setPetitions(props.location.state.petitionFields.petitions)
+        }
+        if (petitioner === initialPetitionerState) {
+            setPetitioner(props.location.state.petitionFields.petitioner);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
@@ -153,15 +117,6 @@ export default function GeneratePage(props) {
             });
     }
 
-    // re-create petitioner state from history after page refresh
-    useEffect(() => {
-        if (petitioner === initialPetitionerState) {
-            setPetitioner(props.location.state.petitionFields.petitioner);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-    
-
     function edit() {
         setSuccess({
             ...success,
@@ -207,8 +162,8 @@ export default function GeneratePage(props) {
     function savePetitions() {
         // update history state to include any revisions to petition
         history.replace("/generate", {"petitionFields": {
-            petitioner: props.location.state.petitionFields.petitioner,
-            petitions: petitions
+            petitioner,
+            petitions
         }})
     }
 
@@ -221,7 +176,13 @@ export default function GeneratePage(props) {
     function handleNext() {
         savePetitions();
         if (petitionNumber === totalPetitions - 1) {
-            // TODO: navigate to "review petitions" component
+            // TODO: Should this info be saved to page history? delete if not
+            history.push("/review", {
+                "petitionFields": {
+                    petitioner, 
+                    petitions
+                }
+            })
         } else setPetitionNumber(n => n + 1);
     }
 
@@ -237,7 +198,7 @@ export default function GeneratePage(props) {
             </Button>
         </div>
 
-    if (petitions === initialPetitionState) {
+    if (petitions === initialPetitionState || petitioner === initialPetitionerState) {
         return null
     }
 

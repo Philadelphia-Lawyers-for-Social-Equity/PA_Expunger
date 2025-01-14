@@ -13,7 +13,9 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "uuid": "^8.3.2",
-    "yarn": "^1.22.10"
+    "yarn": "^1.22.10",
+    "jszip": "3.10.1",
+    "file-saver": "2.0.5"
   },
   "scripts": {
     "start": "react-scripts start",

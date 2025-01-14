@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 export const initialPetitionState = {
-    'petitions': [
+    petitions: [
         {
             charges: [],
             docket_info: {
@@ -27,6 +27,7 @@ export function usePetitions() {
 
 export function PetitionsProvider({ children }) {
   const [petitions, setPetitions] = useState(initialPetitionState);
+  const [petitionNumber, setPetitionNumber] = useState(0)
 
   function updatePetitions(field, petitionNumber, changes) {
     if (['docket_info', 'fines'].includes(field)) {
@@ -55,7 +56,13 @@ export function PetitionsProvider({ children }) {
     }
   }
 
-  const value = { petitions, setPetitions, updatePetitions };
+  const value = { 
+    petitions, 
+    setPetitions, 
+    petitionNumber, 
+    setPetitionNumber, 
+    updatePetitions 
+  };
 
   return (
     <PetitionsContext.Provider value={value}>

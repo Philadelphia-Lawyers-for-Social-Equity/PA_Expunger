@@ -11,6 +11,7 @@ import LandingPage from "../src/components/LandingPage";
 import FileUpload from "../src/components/FileUpload";
 import GeneratePage from "./components/GeneratePage";
 import ProfilePage from "../src/components/ProfilePage";
+import ReviewPage from "./components/ReviewPage";
 import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
@@ -32,6 +33,7 @@ function App(props) {
               <PetitionsProvider>
                 <PrivateRoute exact path="/upload" component={FileUpload} />
                 <PrivateRoute exact path="/generate" component={GeneratePage} />
+                <PrivateRoute exact path ="/review" component={ReviewPage}/>
               </PetitionsProvider>
               <PrivateRoute exact path="/profile" component={ProfilePage} />
               <PrivateRoute path="*" component={PageNotFound} />

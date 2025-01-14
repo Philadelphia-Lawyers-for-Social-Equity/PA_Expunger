@@ -13,8 +13,9 @@ export default function FileUpload(props) {
     const [fileNames, setFileNames] = useState([]);
     const [isError, setIsError] = useState(false);
     const { authTokens } = useAuth();
-    const { setPetitions } = usePetitions();
     const { petitioner, setPetitioner } = usePetitioner();
+    const { setPetitions, setPetitionNumber } = usePetitions();
+    
     const fileNameList = fileNames.map(name => {
         return <li key={name}>{name}</li>
     })
@@ -83,6 +84,7 @@ export default function FileUpload(props) {
                             setPetitioner(res.data.petitioner);
                         }
                         
+                        setPetitionNumber(0)
                         history.push("/generate", {"petitionFields": res.data});
                     }})
                 .catch(err => {
