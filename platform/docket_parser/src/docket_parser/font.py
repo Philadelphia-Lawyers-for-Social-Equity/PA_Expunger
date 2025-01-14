@@ -1,6 +1,6 @@
 import logging
 
-from pypdf._cmap import parse_to_unicode
+from pypdf._cmap import _parse_to_unicode
 from pypdf.errors import PdfReadError
 from pypdf.generic import DictionaryObject
 
@@ -22,7 +22,7 @@ class PdfFontWrapper(DictionaryObject):
         """Return a dictionary mapping character ID (cid's) as ints to unicode characters."""
         if "/ToUnicode" not in self:
             raise PdfReadError(f"Font has no ToUnicode entry:\n{self}")
-        unicode_str_map, space_code, int_entry = parse_to_unicode(self, 0)
+        unicode_str_map, int_entry = _parse_to_unicode(self)
         # pypdf uses the key -1 in unicode_str_map for internal reasons. We don't need it.
         unicode_str_map.pop(-1)
         # Convert single character str keys to integer keys (0-255)
