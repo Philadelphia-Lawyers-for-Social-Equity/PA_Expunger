@@ -41,7 +41,7 @@ const Navigation = () => {
             </>
           ) : (
             <>
-              <Nav.Link href="/signup">Sign up</Nav.Link>
+              {/* <Nav.Link href="/signup">Sign up</Nav.Link> */}
               <Nav.Link href="/login">Log in</Nav.Link>
             </>
           )}
