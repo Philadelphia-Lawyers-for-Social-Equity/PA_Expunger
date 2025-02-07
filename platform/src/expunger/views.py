@@ -2,6 +2,7 @@ import logging
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.contrib.auth.models import User
 
 from . import models
 from . import serializers
@@ -155,6 +156,15 @@ class MyProfileView(APIView):
         """Allow the user to update their profile"""
         profile = getattr(request.user, "expungerprofile", None)
 
+        user = get_object_or_404(User, id=profile.user_id)
+
+        updated_user = request.data.get("user")
+        if updated_user is not None:
+            fields_to_update = ['first_name', 'last_name', 'email']
+            for field in fields_to_update:
+                if field in updated_user:
+                    setattr(user, field, updated_user[field])
+
         attorney_id = request.data.get("attorney", None)
 
         if attorney_id is not None:
@@ -184,7 +194,7 @@ class MyProfileView(APIView):
         else:
             profile.attorney = attorney
             profile.organization = organization
-
+        user.save()
         profile.save()
 
         serializer = serializers.ExpungerProfileSerializer(

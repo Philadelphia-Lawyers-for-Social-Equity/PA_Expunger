@@ -133,3 +133,42 @@ class TestRest(Authenticated, TestCase):
         self.assertEqual(jsr["organization"]["pk"], new_org.pk)
         self.assertEqual(self.authenticated_profile.organization,
                          new_org)
+
+    def test_update_profile_user_data(self):
+        """API allows user to update user data (first name, last name, email)"""
+        profile = self.authenticated_profile
+        profile.attorney = factories.AttorneyFactory()
+        profile.organization = factories.OrganizationFactory()
+        user = profile.user
+        user.first_name = 'FIRST_NAME'
+        user.last_name = 'LAST_NAME'
+        user.email = 'EMAIL@GMAIL.COM'
+        user.save()
+        profile.attorney.save()
+        profile.organization.save()
+        profile.save()
+
+        updated_first_name = "UPDATED_FIRST_NAME"
+        updated_last_name = "UPDATED_LAST_NAME"
+        updated_email = "UPDATEDEMAIL@GMAIL.COM"
+        url = reverse("expunger:my-profile")
+        update_data = {
+            "attorney": self.authenticated_profile.attorney.pk,
+            "organization": self.authenticated_profile.organization.pk,
+            "user": {
+                "first_name": updated_first_name,
+                "last_name": updated_last_name,
+                "email": updated_email
+            }}
+
+        res = self.authenticated_client.put(
+            url,
+            update_data,
+            content_type="application/json")
+
+        profile.refresh_from_db()
+        user = profile.user
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(user.first_name, updated_first_name)
+        self.assertEqual(user.last_name, updated_last_name)
+        self.assertEqual(user.email, updated_email)
