@@ -78,7 +78,7 @@ export default function LoginForm() {
   }
 
   if (is404) {
-    return <Redirect to="/signup" />;
+    return <Redirect to="/login" />;
   }
 
   return (
