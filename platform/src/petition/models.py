@@ -161,7 +161,7 @@ class PetitionRatio(enum.Enum):
 
 class Petition:
     """The petition data"""
-    def __init__(self, date, ratio, otn, complaint_date, judge):
+    def __init__(self, date, ratio, otn, judge, complaint_date=None, arrest_date=None):
 
         if not isinstance(ratio, PetitionRatio):
             raise ValueError("Invalid PetitionRatio")
@@ -170,6 +170,7 @@ class Petition:
         self.ratio = ratio
         self.otn = otn
         self.complaint_date = complaint_date
+        self.arrest_date = arrest_date
         self.judge = judge
 
     @staticmethod
@@ -178,7 +179,7 @@ class Petition:
         return Petition(
             dateparser.parse(data["date"]),
             PetitionRatio[data["ratio"]],
-            data["otn"], data["complaint_date"], data["judge"]
+            data["otn"], data["judge"], data.get("complaint_date"), data.get("arrest_date")
         )
 
     def __repr__(self):
