@@ -38,7 +38,7 @@ class TestDocketAnonymize:
         """Load a specific replacement file and check some properties of the resulting dictionary."""
         replacement_file_path = test_data_path / "court_summaries" / "anonymization" / "multiple_categories.anonymize"
         replacements_dict = load_replacements(replacement_file_path)
-        assert len(replacements_dict) == 17
+        assert len(replacements_dict) == 30
         assert all(isinstance(key, re.Pattern) for key in replacements_dict.keys())
         assert "19101" in replacements_dict.values()
 

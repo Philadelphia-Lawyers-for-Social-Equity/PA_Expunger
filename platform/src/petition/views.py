@@ -198,6 +198,7 @@ def petition_from_parser(parsed: dict):
     return {
         "otn": parsed.get("otn"),
         "complaint_date": parsed.get("complaint_date"),
+        "arrest_date": parsed.get("arrest_date"),
         "judge": parsed.get("judge"),
         "ratio": models.PetitionRatio.full.name
     }
