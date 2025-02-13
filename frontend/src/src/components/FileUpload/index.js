@@ -39,8 +39,9 @@ export default function FileUpload(props) {
     // POST to send PDF file
     function chooseFile() {
 
+
         // Need to check if a file is chosen
-        if (uploadedFiles === undefined) {
+        if (uploadedFiles === undefined || uploadedFiles.length === 0) {
             setIsError(true);
         }
         else {
@@ -110,13 +111,13 @@ export default function FileUpload(props) {
                             onChange={e => { getFile(e.target.files); }}
                         />
                         <ul style={{listStyleType: "none"}}>{fileNameList}</ul>
+                        {isError && <div className="alert alert-warning" role="alert">Please select a file</div>}
                     </Col>
                 </Modal.Body>
 
                 <Modal.Footer>
                     <Button id="returnToLoginButton" variant="outline-secondary" onClick={returnToChooseAction}>Cancel</Button>
                     <Button id="fileButton" onClick={chooseFile}>Submit</Button>
-                    {isError && <div>Please select a file</div>}
                 </Modal.Footer>
             </Modal.Dialog>
 
