@@ -9,7 +9,7 @@ from docket_parser.extraction import DocketReader
 from docket_parser.parsing import text_from_pdf, parse_pdf
 from docket_parser.tests import get_pdf_paths, get_anon_replacement_paths, find_anonymization_file
 
-
+@pytest.mark.skip(reason="anonymized files and .anonymize files do not exist in test docs")
 class TestDocketAnonymize:
     @pytest.mark.parametrize('pdf_path', get_pdf_paths()[0], ids=get_pdf_paths()[1])
     def test_all_documents(self, pdf_path):

@@ -1,11 +1,62 @@
-Anonymization
----
+# Docket_Parser CLI
+
+The `docket_parser` includes a command line interface (CLI) that can be used for debugging, viewing the parsed information from test documents, and anonymizing court records so they can be used as test documents. 
+
+To access the CLI:
+
+```sh
+# Initialize the docker containers
+docker-compose up
+
+# In a new terminal, open a bash terminal
+docker-compose exec -it expunger bash
+
+# CLI commands follow the following format:
+python -m docket_parser <positional arguments>
+```
+
+## Debugging and Viewing Parsed Info
+
+The CLI provides a useful way to view the information that is extracted from a court record and see any errors that may be occuring when a document is parsed.  This can be done by entering a pdf file path or file name into the CLI, along with some optional positional arguments.
+
+```sh
+# positional arguments for debugging and viewing parsed info:
+  filename              Docket to analyze. If not a valid filename, will try to find matching test pdf
+  -h, --help            Show this help message and exit
+  --loglevel LOGLEVEL   Set log level
+  -v, --verbose         Print logging messages
+  -o                    View the complete text output of the parser, rather than the parsed information
+```
+
+Here are some examples of how to use the CLI to view parsed information from test documents:
+```sh
+# To see the parsed information from a test document
+python -m docket_parser anon_merge-cp-01
+
+# To see the complete text from the parser
+python -m docket_parser anon_merge-cp-01 -t
+```
+
+## Creating Test Files
+
+If new test documents are added to `tests/data/court_summaries` or `test/data/dockets`, the CLI can be used to create the corresponding .txt files that are needed for testing.  Tests in `test_parsing.py` are designed to compare the parsing output to .txt files stored in the `/extracted` and `/page_break` test data folders.
+
+To create the necessary .txt files, use the `-e` and `-p` flags.
+```sh
+# To create the .txt files for the `/extracted` folder
+python -m docket_parser -e
+
+# To create the .txt files for the `/page_break` folder
+python -m docket_parser -p
+```
+Each of these commands will create the corresponding .txt file for every pdf in the `tests/data` directory.  The .txt files can then be moved into their appropriate locations.
+
+# Anonymization
 Dockets and court summaries obtained from the Unified Judicial System of Pennsylvania's Case Search Web Portal must be anonymized before they are made available for use as samples or test documents.
 The defendant's personal identifying information, docket numbers, dates, and other uniquely identifiable information must be replaced with fake or randomly-generated information.
-Anonymization of these documents is done through the use of a `.anonymize` file and anonymization tools accessed through a python command-line interface (CLI).
+Anonymization of these documents is done through the use of a `.anonymize` file and anonymization tools accessed through the `docket_parser` CLI.
 
-The .anonymize File
----
+## The .anonymize File
 In order to anonymize a court summary or docket, you must first create a .anonymize text file.  The .anonymize file will serve as a dictionary of key value pairs of sensitive info keys and replacement values.
 
 The .anonymize text file should be saved in the /anonymization folder within data/dockets or data/court_summaries.
@@ -60,10 +111,9 @@ MC-51-CR-0691261-2055;MC-51-CR-1234567-1234;
 ```
 
 
-Running the Anonymization CLI
+## Running the Anonymization CLI
 ---
-After the .anonymize file is prepared, the original pdf can be anonymized by running a python CLI command.
-
+After the .anonymize file is prepared, the original pdf can be anonymized through the CLI.
 
 The CLI command accepts three arguments:
 1. The pdf name(s) or pdf file path(s) to be anonymized.
@@ -82,13 +132,7 @@ The CLI command accepts three arguments:
 To run the anonymization function:
 
 ```sh
-# Initialize the docker containers
-docker-compose up
-
-# In a new terminal, open a bash terminal
-docker-compose exec -it expunger bash
-
-# In the bash terminal, enter the anonymization CLI command
+# In the bash terminal, enter the anonymization command
 python -m docket_parser <pdf_file_path> -a <anonymization_file_path> -o <output_file_path>
 ```
 
@@ -118,8 +162,10 @@ To include debug logging in the bash terminal, add a `-v` or `--verbose` flag th
 python -m docket_parser /srv/plse/install/docket_parser/src/docket_parser/tests/data/dockets/pdfs/john-doe-cp-docket.pdf -a -v
 ```
 
-The Anonymized PDF
+## The Anonymized PDF
 ---
+Anonymized pdfs are colored green to visually distinguish them from the original court documents.  It is important to be aware that successfully creating a green, anonymized pdf does not guarantee that all sensitive information has been removed from the document.
+
 Every pdf produced by the anonymizing function must be manually reviewed to check for any errors or ommissions that caused sensitive or potentially identifying information to remain in the pdf.
 
 If any sensitive or potentially identifying information was not successfully anonymized, the .anonymize file must be amended to address the issue and the file run through the anonymization command again
