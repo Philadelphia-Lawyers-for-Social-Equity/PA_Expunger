@@ -81,7 +81,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
         """Check that posting a specific docket file works and generates expected information."""
         url = reverse("petition:parse-docket")
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
 
         with pdf_path.open("rb") as file:
             res = self.authenticated_client.post(url, {"docket_file": file})
@@ -93,9 +93,9 @@ class TestDocketParserAPI(Authenticated, TestCase):
 
         # Not storing sensitive PII in tests, instead checking that result has correct shape
         petitioner = jsr["petitioner"]
-        assert len(petitioner["name"]) == 15
+        assert len(petitioner["name"]) == 14
         assert len(petitioner["aliases"]) == 1
-        assert len(petitioner["aliases"][0]) == 13
+        assert len(petitioner["aliases"][0]) == 12
         dob = petitioner["dob"]
         assert re.match(r"^\d{4}-\d{2}-\d{2}$", dob), f"Incorrect or missing date of birth: {dob}"
 
@@ -103,15 +103,15 @@ class TestDocketParserAPI(Authenticated, TestCase):
             jsr["petitions"][0]["docket_info"],
             {
                 "judge": "Fleisher, Leslie",
-                "complaint_date": "**REMOVED*",
-                "otn": "**REMOVED*",
+                "complaint_date": "1913-11-16",
+                "otn": "T 760873-7",
                 "ratio": "full"
             }
         )
 
         self.assertEqual(
             jsr["petitions"][0]["docket_numbers"],
-            ["*******REMOVED*******", "*******REMOVED*******"]
+            ["CP-51-CR-8442151-4164", "MC-51-CR-2011455-6885"]
         )
 
         self.assertEqual(
@@ -120,49 +120,49 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 {
                     "description": "FORGERY",
                     "statute": "18 § 4101",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY UNLAWFUL TAKING OR DISPOSITION",
                     "statute": "18 § 3921",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY DECEPTION",
                     "statute": "18 § 3922",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY RECEIVING STOLEN PROPERTY",
                     "statute": "18 § 3925",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "TAMPERING WITH RECORDS OR IDENTIFICATION",
                     "statute": "18 § 4104",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "Bad Checks",
                     "statute": "18 § 4105 §§ A1",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": "M2",
                     "disposition": "Guilty Plea"
                 },
                 {
                     "description": "SECURING EXEC DOCUMENTS BY DECEPTION",
                     "statute": "18 § 4114",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 }
@@ -172,7 +172,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
     def test_post_fines(self):
         """Get amounts for fines & fees."""
         url = reverse("petition:parse-docket")
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
 
         with pdf_path.open("rb") as f:
             res = self.authenticated_client.post(url, {"docket_file": f})
@@ -203,10 +203,10 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 assert set(response.json()["petitions"][0].keys()) == expected_petition_keys
 
     def test_multidockets_1(self):
-        """Ensure we get relevant docket numbers from merge-cp-01.pdf"""
-        expect = ["*******REMOVED*******", "*******REMOVED*******"]
+        """Ensure we get relevant docket numbers from anon_merge-cp-01.pdf"""
+        expect = ["CP-51-CR-8442151-4164", "MC-51-CR-2011455-6885"]
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
         url = reverse("petition:parse-docket")
 
         with pdf_path.open("rb") as f:
@@ -219,10 +219,10 @@ class TestDocketParserAPI(Authenticated, TestCase):
         self.assertEqual(jsr["petitions"][0]["docket_numbers"], expect)
 
     def test_multidockets_2(self):
-        """Ensure we get relevant docket numbers from merge-mc-02.pdf"""
-        expect = ["*******REMOVED*******", "*******REMOVED*******"]
+        """Ensure we get relevant docket numbers from anon_merge-mc-02.pdf"""
+        expect = ["MC-51-CR-5319217-9189", "CP-51-CR-6693526-3219"]
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-mc-02.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-mc-02.pdf"
         url = reverse("petition:parse-docket")
 
         with pdf_path.open("rb") as f:
