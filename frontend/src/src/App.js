@@ -12,7 +12,7 @@ import FileUpload from "../src/components/FileUpload";
 import GeneratePage from "./components/GeneratePage";
 import ProfilePage from "../src/components/ProfilePage";
 import ReviewPage from "./components/ReviewPage";
-import SignUp from "./components/SignUp/signUp";
+// import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
 import { PetitionsProvider } from "./context/petitions";
@@ -26,7 +26,7 @@ function App(props) {
             <Nav />
             <Switch>
               <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
-              <Route exact path="/signup" component={SignUp} />
+              {/* <Route exact path="/signup" component={SignUp} /> */}
               <PrivateRoute exact path="/" component={LandingPage} />
               <PrivateRoute exact path="/action" component={ChooseAction} />
               <PrivateRoute exact path="/search" component={SearchPage} />
