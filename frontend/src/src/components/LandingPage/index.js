@@ -55,6 +55,7 @@ export default function LandingPage() {
         const profiledata = {
             "attorney" : attorneyKey,
             "organization" : 1,
+            "user_id": attorneyData.filter(attorney => attorney.pk == attorneyKey)[0]["user_id"]
         };
 
         // post to generate profile

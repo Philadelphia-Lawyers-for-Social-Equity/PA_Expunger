@@ -156,7 +156,8 @@ class MyProfileView(APIView):
         """Allow the user to update their profile"""
         profile = getattr(request.user, "expungerprofile", None)
 
-        user = get_object_or_404(User, id=profile.user_id)
+        user_id = profile.user_id if profile is not None else int(request.data.get("user_id"))
+        user = get_object_or_404(User, id=user_id)
 
         updated_user = request.data.get("user")
         if updated_user is not None:
