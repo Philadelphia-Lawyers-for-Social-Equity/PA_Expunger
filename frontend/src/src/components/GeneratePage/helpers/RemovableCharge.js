@@ -37,8 +37,6 @@ export default function RemovableCharge(props) {
 
     return (
         <div
-            onMouseOver={() => {setHovering(true);}}
-            onMouseOut={() => {setHovering(false);}}
             onFocus={() => {setEditing(true);}}
             onBlur={() => {save();}}
         >
@@ -86,6 +84,8 @@ export default function RemovableCharge(props) {
                 onClick={ props.handleRemove }
                 cursor="pointer"
                 disabled={props.disabled || false}
+                onMouseOver={() => {setHovering(true);}}
+                onMouseOut={() => {setHovering(false);}}
             >
                 X
             </Button>

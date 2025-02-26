@@ -28,8 +28,6 @@ export default function RemovableTextField(props) {
 
     return(
         <Row
-            onMouseOver={() => setHovering(true)}
-            onMouseOut={() => setHovering(false)}
             className="mb-2"
         >
             <Col sm={2}>
@@ -54,6 +52,8 @@ export default function RemovableTextField(props) {
                 onClick={ props.handleRemove }
                 cursor="pointer"
                 disabled={ props.disabled || false }
+                onMouseOver={() => setHovering(true)}
+                onMouseOut={() => setHovering(false)}
             >
                 X
             </Button>
