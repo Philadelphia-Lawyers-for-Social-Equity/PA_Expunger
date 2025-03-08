@@ -41,6 +41,7 @@ class PetitionFactory(factory.Factory):
         model = Petition
 
     complaint_date = date.today()
+    arrest_date = date.today()
     date = date.today()
     ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
