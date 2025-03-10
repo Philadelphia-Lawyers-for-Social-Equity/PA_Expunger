@@ -2,37 +2,40 @@
 
 **Petition Fields** is a data structure (typically JSON or python dict)
 containing:
-    - petitioner
-            - name: string, full name
-            - aliases: list of strings, aliases of petitioner
-            - dob: petitioners date of birth, iso formatted, such as
-                   "2019-10-17"
 
-            - ssn: social security number. Only used as input on generator.
-            - address: # Only used as input on generator.
-                - street1: string, address line 1
-                - street2: string, address line 2
-                - city: string
-                - state: string, two letter US state code
-                - zipcode: string of numbers
-    - petition
+    - petitioner:
+        - name: string, full name
+        - aliases: list of strings, aliases of petitioner
+        - dob: petitioners date of birth, iso formatted, such as
+                "2019-10-17"
+        - ssn: social security number. Only used as input on generator.
+        - address: # Only used as input on generator.
+            - street1: string, address line 1
+            - street2: string, address line 2
+            - city: string
+            - state: string, two letter US state code
+            - zipcode: string of numbers
+    - petitions (list of dicts containing):
+        -docket info
             - otn: string
             - judge: string, full name of the judge
             - ratio: string, may be "full" if every charge could be
-                     expunged, or "partial" if some charges have been
-                     excluded.
-    - dockets: List of docket ids, such as "MC-51-CR-1234567-1995"
-    
-    - charges (list of):
-        - statute: string
-        - description: string
-        - grade: string (usually 2-3 chars)
-        - date: date, formatted such as “2020-10-11”
-        - disposition: string
-    
-    - fines:
+                    expunged, or "partial" if some charges have been
+                    excluded.
+            - complaint date: iso formatted date or null
+            - arrest date: iso formatted date or null
+        - docket numbers: List of docket numbers
+        - charges (list of dicts containing):
+            - statute: string
+            - description: string
+            - grade: string (usually 2-3 chars)
+            - date: date, formatted such as “2020-10-11”
+            - disposition: string
+        - fines (dict of):
             - total: decimal number
             - paid: decimal number
+        - county: string (this field is only included if the parsed document is a court summary)
+        - category: string (this field is only included if the parsed document is a court summary)
 
 # API
 
@@ -143,14 +146,21 @@ parsing. This is where the real work gets done.
     - petition
       - date: iso formatted date, such as "2019-10-17"
       - ratio: string, must be "full" if every charge is to be
-        expunged, or "partial" if some charges are excluded.
+      expunged, or "partial" if some charges are excluded.
       - otn: string
-      - disposition: string
       - judge: string, full name of the judge
-    - docket: String of a docket id, such as "MC-51-CR-1234567-1995"
+      - complaint_date: iso formatted date or null
+      - arrest_date: iso formated date or null
+    - dockets: list of strings, each string is a docket number
     - fines:
       - total: decimal number
       - paid: decimal number
+    - charges: (list of dicts containing)
+      - date: iso formated date
+      - statute: string
+      - grade: string
+      - description: string
+      - disposition: string
 
 - **api/v0.2.0/petition/parse_docket/**
     - Requires access token header
