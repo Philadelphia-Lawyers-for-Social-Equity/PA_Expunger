@@ -92,7 +92,7 @@ Settings are controlled via environment variables, and can be reviewed in the
 - **EXPUNGER_KEY** is used by the back-end for Django internal security. Set on first build, not readily changeable. It should be altered from the default on production builds.
 - **MYSQL_USER** and **MYSQL_PASS**: for the external pa_record database, needed to initialize pa_court_archive
 - **DJANGO_LOG_LEVEL**=INFO
-- **BACKEND_HOST** sets the hostname and port for the Django backend. Default is `http://localhost:8000/admin`. On production it will need to be changed to match the server URL.
+- **BACKEND_HOST** sets the hostname and port for the Django backend. Default is `http://localhost:8000`. On production it will need to be changed to match the server URL.
 - **FRONTEND_HOST** sets the hostname and port for the React frontend. Default is `http://localhost:3000`. On production it will need to be changed to gave the server URL.
 
 ## Troubleshooting:
