@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import JSZip from "jszip";
 import axios from "axios";
 import { saveAs } from "file-saver";
@@ -9,13 +9,34 @@ import { initialPetitionerState, usePetitioner } from "../../context/petitioner"
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import "./style.css";
 
-const url =
+const postPetitionUrl =
     process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
+
+const postSummaryUrl =
+    process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generator-report/";
+
+const initialSummary = {
+    name: "",
+    dob: "",
+    actions: {
+        partial: 0,
+        full: 0,
+    },
+    petitionSummaries: [
+        {
+            docket_numbers: [],
+            otn: "",
+            action: "",
+            error: false,
+        },
+    ],
+};
 
 export default function ReviewPage(props) {
     const { authTokens } = useAuth();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
+    const [ summary, setSummary ] = useState(initialSummary);
     
     useEffect(() => {
         // re-create petitions state from history after page refresh
@@ -29,7 +50,36 @@ export default function ReviewPage(props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    function postGeneratorRequest(petitioner, petition) {
+    useEffect(() => {
+        // create data for generation of petitions summary
+        let partial = 0
+        let full = 0
+        const petitionSummaries = petitions ? petitions.map(petition => {
+            if (petition.docket_info.ratio === "full") {
+                full++;
+            } else {
+                partial++;
+            }
+            return {
+                docket_numbers: petition.docket_numbers,
+                otn: petition.docket_info.otn,
+                action: petition.docket_info.ratio,
+                error: false,
+            }
+        }) : null;
+            
+        setSummary({
+            name: petitioner.name,
+            dob: petitioner.dob,
+            actions: {
+                partial,
+                full,
+            },
+            petitionSummaries,
+        })
+    }, [petitioner, petitions])
+
+    function postGeneratorRequest(petitioner, petition, index) {
         let petitionFields = {
             petitioner: petitioner,
             petition: { ...petition.docket_info, date: today() },
@@ -52,7 +102,7 @@ export default function ReviewPage(props) {
         console.info(petitionFields);
 
         return axios
-            .post(url, petitionFields, postRequestConfig())
+            .post(postPetitionUrl, petitionFields, postRequestConfig())
             .then((res) => {
                 if (res.status === 200) {
                     let blob = new Blob([res.data], {
@@ -64,43 +114,107 @@ export default function ReviewPage(props) {
             })
             .catch((error) => {
                 console.error(error);
+                setSummaryError(index);
             });
     }
 
     function generatePetitions() {
-        const petitionUrls = Promise.all(petitions.map(petition => {
-            return postGeneratorRequest(petitioner, petition)
+        const petitionUrls = Promise.all(petitions.map((petition, idx) => {
+            return postGeneratorRequest(petitioner, petition, idx)
         }))
         return petitionUrls
     }
 
+    function postSummaryRequest() {
+        
+        let summaryConfig = {
+            responseType: "arraybuffer",
+            headers: { Authorization: `Bearer ${authTokens.access}` },
+        };
+
+        return axios
+            .post(postSummaryUrl, summary, summaryConfig)
+            .then((res) => {
+                if (res.status === 200) {
+                    let blob = new Blob([res.data], {
+                        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    });
+                    const summaryUrl = window.URL.createObjectURL(blob)
+                    return summaryUrl
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+
+    }
+
+    function setSummaryError(errorIndex) {
+        const newPetitionSummaries = summary.petitionSummaries.map((sum, idx) => {
+            if (errorIndex === idx) {
+                sum.error = true;
+                return sum
+            } else {
+                return sum
+            }
+        })
+        setSummary({
+            ...summary,
+            petitionSummaries: newPetitionSummaries
+        })
+    }
+
     async function saveToZip() {
         const zip = new JSZip();
-        const folder = zip.folder('petitions')
-        const petitionUrls = await generatePetitions()
+        const folder = zip.folder('petitions');
+        const petitionUrls = await generatePetitions();
 
         // Fetch each petition and add it to the zip as a .docx file
-        await Promise.all(
+        await Promise.allSettled(
             petitionUrls.map(async (petitionUrl, index) => {
-                try {
-                    const response = await fetch(petitionUrl);
-                    if (response.status === 200) {
-                        const blob = await response.blob();
-                        const name = `petition-${index+1}.docx`;
-                        folder.file(name, blob, { binary: true });
-                    } else {
-                        console.error(`Failed to fetch ${petitionUrl}: ${response.statusText}`);
+                if (petitionUrl !== undefined) {
+                    try {
+                        const response = await fetch(petitionUrl);
+                        if (response.status === 200) {
+                            const blob = await response.blob();
+                            const name = `petition-${petitioner.name}-${index+1}.docx`;
+                            folder.file(name, blob, { binary: true });
+                        } else {
+                            console.error(`Failed to fetch ${petitionUrl}: ${response.statusText}`);
+                            setSummaryError(index);
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching ${petitionUrl}: ${error}`);
+                        setSummaryError(index);
                     }
-                } catch (error) {
-                    console.error(`Error fetching ${petitionUrl}: ${error}`);
+                } else {
+                    console.error(`Error fetching pettion ${index}`);
                 }
             })
         );
-    
+        
+        const summaryUrl = await postSummaryRequest();
+
+        if (summaryUrl) {
+            try {
+                const response = await fetch(summaryUrl);
+                if (response.status === 200) {
+                    const blob = await response.blob();
+                    const name = `report-${petitioner.name}.docx`;
+                    console.log("adding summary to folder")
+                    folder.file(name, blob, { binary: true });
+                } else {
+                    console.error(`Failed to fetch ${summaryUrl}: ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error(`Error fetching ${summaryUrl}: ${error}`);
+            }
+        }
+
         // Generate and save the zip file
         zip.generateAsync({type:"blob"})
             .then(blob => saveAs(blob, 'petitions.zip'))
-            .catch(e => console.log(e))
+            .catch(e => console.error(e))
     }
 
     if (petitions === initialPetitionState || petitioner === initialPetitionerState) {

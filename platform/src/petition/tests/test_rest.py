@@ -75,6 +75,40 @@ class TestPetitionAPI(Authenticated, TestCase):
         self.assertEqual(res.status_code, 200)
 
 
+class TestGeneratorReportAPI(Authenticated, TestCase):
+    """Check that the generator report REST API works"""
+
+    def test_generator_report(self):
+        """Generator report can be produced via REST API"""
+        
+        data = {
+            "name": "Jon Doe",
+            "dob": "1900-10-22",
+            "actions": {
+                "partial": 1,
+                "full": 1,
+            },
+            "petitionSummaries": [
+                {
+                    "docket_numbers": ['CP-451-CR-4896578-1000', 'CP-51-MD-7321720-7237'],
+                    "otn": "D 321123-5",
+                    "action": "partial",
+                    "error": False,
+                },
+                {
+                    "docket_numbers": ['CP-51-CR-1562453-2000'],
+                    "otn": "L 741258-3",
+                    "action": "full",
+                    "error": False,
+                },
+            ],
+        }
+
+        url = reverse("petition:generator-report")
+        res = self.authenticated_client.post(url, data, content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+
+
 class TestDocketParserAPI(Authenticated, TestCase):
     """Tests for the REST docket processing API"""
 

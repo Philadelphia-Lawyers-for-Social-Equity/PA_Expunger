@@ -82,6 +82,36 @@ class PetitionAPIView(APIView):
         return response
 
 
+class GeneratorReportAPIView(APIView):
+    def post(self, request: Request, *args, **kwargs):
+        logger.debug("GeneratorReportAPIView post")
+
+        context = {
+            "name": request.data["name"],
+            "dob": request.data["dob"],
+            "actions": request.data["actions"],
+            "petition_summaries": request.data["petitionSummaries"]
+        }
+
+        logger.debug(f"Summary POSTed with context: {context}")
+
+        docx = os.path.join(
+            BASE_DIR, "petition", "templates", "petition", "generator-report.docx"
+        )
+        document = DocxTemplate(docx)
+
+        jinja_env = jinja2.Environment()
+
+        document.render(context, jinja_env)
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        response["Content-Disposition"] = 'attachment; filename="generator-report.docx"'
+        document.save(response)
+
+        return response
+
+
 class DocketParserAPIView(APIView):
     def post(self, request: Request, *args, **kwargs):
         logger.debug("DocketParserAPIView post")

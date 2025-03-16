@@ -7,5 +7,7 @@ urlpatterns = [
     path("parse-docket/", views.DocketParserAPIView.as_view(),
          name="parse-docket"),
     path("generate/", views.PetitionAPIView.as_view(),
-         name="generate")
+         name="generate"),
+    path("generator-report/", views.GeneratorReportAPIView.as_view(),
+         name="generator-report"),
     ]
