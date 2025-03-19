@@ -190,7 +190,8 @@ class DocketParserAPIView(APIView):
 # Helpers
 
 def update_group_dockets(grouped_dockets: dict, parsed_docket: dict) -> None:
-    if (key := parsed_docket.get("otn")) == None:
+    key = parsed_docket.get("otn")
+    if not key:
         key = parsed_docket.get("docket_number")
     grouped_dockets.setdefault(key, []).append(parsed_docket)
 
