@@ -1,5 +1,6 @@
 import datetime
 import logging
+import json
 import os
 import re
 import traceback
@@ -16,6 +17,7 @@ from rest_framework.views import APIView
 
 import docket_parser
 from . import models
+from expunger.models import Organization, Attorney
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger = logging.getLogger("django")
@@ -26,14 +28,15 @@ logger.info(f"DJANGO_LOG_LEVEL: {os.environ.get('DJANGO_LOG_LEVEL')}")
 class PetitionAPIView(APIView):
     def post(self, request, *args, **kwargs):
         logger.debug("PetitionAPIView post")
-        profile = request.user.expungerprofile
+        # profile = request.user.expungerprofile
 
-        logger.debug(f"Profile {profile} found attorney {profile.attorney}")
+        # logger.debug(f"Profile {profile} found attorney {profile.attorney}")
+
 
         try:
             context = {
-                "organization": profile.organization,
-                "attorney": profile.attorney,
+                "organization": Organization.from_dict(request.data["organization"]),
+                "attorney": Attorney.from_dict(request.data["attorney"]),
                 "petitioner":
                     models.Petitioner.from_dict(request.data["petitioner"]),
                 "petition":
@@ -116,7 +119,7 @@ class DocketParserAPIView(APIView):
     def post(self, request: Request, *args, **kwargs):
         logger.debug("DocketParserAPIView post")
 
-        profile = request.user.expungerprofile
+        # profile = request.user.expungerprofile
 
         try:
             df = request.FILES.getlist("docket_file")
@@ -125,12 +128,23 @@ class DocketParserAPIView(APIView):
             logger.warning(msg)
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        grouped_dockets = {}
+        petitioner_json = request.POST.get("petitioner")
+        petitioner = None
+        if petitioner_json:
+            try:
+                petitioner = json.loads(petitioner_json)
+            except json.JSONDecodeError as e:
+                logger.warning("Error decoding petitioner_json")
+                logger.warning("petitioner_json:", petitioner_json)
+                raise e
 
         content = {
-            "petitioner": None,
-            "petitions": []
+            "petitioner": petitioner,
+            "petitions": [],
         }
+
+        grouped_dockets = {}
+
         for file in df:
             try:
                 parsed = docket_parser.parse_pdf(file)
@@ -156,20 +170,31 @@ class DocketParserAPIView(APIView):
                 "docket_info": {},
                 "docket_numbers": [],
                 "charges": [],
-                "fines": {}
+                "fines": {},
+                "category": "",
             }
             for parsed in group:
                 if parsed["type"] == "court summary":
-                    # TODO: handle dockets from court summaries that have county data other than: {'county': 'Philadelphia'}.  The same OTN and/or docket numbers may have been addressed by courts in multiple counties, eg. Philadelphia County and Montgomery County
-                    # NOTE from 6/23/2023 meeting with PLSE attorney: "It would be nice to have those petitions drafted for out of county, but it is a low priority"
+                    # TODO: handle dockets from court summaries that have county data other than: {'county': 'Philadelphia'}.
+                    # The same OTN and/or docket numbers might have been addressed by courts in multiple counties, 
+                    # eg. Philadelphia County and Montgomery County
+
+                    # "county" key used to alert user when a court summary record is from a county other than Philadelpyhia County
                     petition["county"] = parsed.get("county")
-                        
-                    petition["category"] = parsed["category"]
+                    
                     if parsed["category"] == 'Archived':
-                        # NOTE from 6/23/2023 meeting with PLSE attorney: "After uploading the court summary, we could alert the user to the fact that certain dockets are archived, and then allow them to upload the archived docket sheets."
+                        # "category" key used to alert user when petition info is only taken from a court summary
+                        # or an archived docket from a court summary
+                        if not petition["category"]:
+                            petition["category"] = parsed["category"]
+
                         if parsed.get("docket_number") not in petition["docket_numbers"]:
                             petition["docket_numbers"].append(parsed.get("docket_number"))
-                        continue 
+
+                    elif not petition["category"]:
+                        petition["category"] = parsed["category"]
+                else:
+                    petition["category"] = "Docket"
 
                 petitioner = petitioner_from_parser(parsed)
                 if content["petitioner"] is None:
@@ -205,6 +230,7 @@ class DocketParserAPIView(APIView):
                         petition["docket_info"] = petition_from_parser(parsed)
                         if parsed["type"] == "docket":
                             petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
+                            petition["docket_info"]["defendant_name"] = parsed.get("defendant_name")
                 if not petition["docket_info"]:
                     petition["docket_info"] = petition_from_parser(parsed)
                 if not petition["fines"] and parsed["type"] == "docket":

@@ -5,6 +5,7 @@ import { saveAs } from "file-saver";
 import { Button, Card, Container, ListGroup } from 'react-bootstrap';
 import PetitionSummary from "./components/PetitionSummary";
 import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 import { initialPetitionerState, usePetitioner } from "../../context/petitioner";
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import "./style.css";
@@ -34,6 +35,7 @@ const initialSummary = {
 
 export default function ReviewPage(props) {
     const { authTokens } = useAuth();
+    const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
     const [ summary, setSummary ] = useState(initialSummary);
@@ -86,6 +88,8 @@ export default function ReviewPage(props) {
             dockets: petition.docket_numbers,
             charges: petition.charges,
             fines: petition.fines,
+            organization: user.organization,
+            attorney: user.attorney,
         };
     
         if (!petitionFields.petition.ratio) {

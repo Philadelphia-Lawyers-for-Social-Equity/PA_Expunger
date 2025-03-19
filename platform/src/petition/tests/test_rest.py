@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from expunger.tests.test_rest import Authenticated
 from petition import factories
+from expunger.factories import OrganizationFactory, AttorneyFactory
 
 from docket_parser import test_data_path
 
@@ -19,6 +20,8 @@ class TestPetitionAPI(Authenticated, TestCase):
         petition = factories.PetitionFactory()
         fines = factories.FinesFactory()
         charges = [factories.ChargeFactory(), factories.ChargeFactory()]
+        organization = OrganizationFactory()
+        attorney = AttorneyFactory()
 
         return {
             "petitioner": {
@@ -41,6 +44,7 @@ class TestPetitionAPI(Authenticated, TestCase):
                 "ratio": petition.ratio.name,
                 "otn": petition.otn,
                 "judge": petition.judge,
+                "defendant_name": petition.defendant_name,
             },
             "dockets": [str(docket)],
             "fines": {
@@ -63,6 +67,28 @@ class TestPetitionAPI(Authenticated, TestCase):
                 "disposition": charges[1].disposition,
                 }
             ],
+            "category": "Docket",
+            "organization": {
+                "name": organization.name,
+                "address": {
+                    "pk": 1,
+                    "street1": organization.address.street1,
+                    "street2": organization.address.street2,
+                    "city": organization.address.city,
+                    "state": organization.address.state,
+                    "zipcode": organization.address.zipcode
+                },
+                "phone": organization.phone,
+                "pk": 1,
+                "url": "http://localhost:8000/api/v0.2.0/expunger/organization/1",
+            },
+            "attorney": {
+                "name": f"{attorney.user.first_name} {attorney.user.last_name}",
+                "bar": attorney.bar,
+                "pk": 1,
+                "url": "http://localhost:8000/api/v0.2.0/expunger/attorney/1/",
+                "user_id": 1,
+            },
         }
 
     def test_petition(self):
@@ -141,7 +167,8 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 "complaint_date": "1913-11-16",
                 "arrest_date": "1902-04-11",
                 "otn": "T 760873-7",
-                "ratio": "full"
+                "ratio": "full",
+                "defendant_name": "Real B. Person"
             }
         )
 
@@ -324,7 +351,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 assert response.status_code == 200
                 expected_keys = {"petitioner", "petitions"}
                 assert set(response.json().keys()) == expected_keys
-                expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines"}
+                expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines", "category"}
                 assert set(response.json()["petitions"][0].keys()) == expected_petition_keys
 
     def test_multidockets_1(self):

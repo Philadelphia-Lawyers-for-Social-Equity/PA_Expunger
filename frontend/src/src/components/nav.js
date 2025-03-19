@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import { Navbar, Nav } from 'react-bootstrap';
 import { useAuth } from '../context/auth';
 import { usePetitioner, initialPetitionerState } from '../context/petitioner';
+import { usePetitions, initialPetitionState } from '../context/petitions';
 
 const Navigation = () => {
   const { logout, authTokens } = useAuth();
   const { setPetitioner } = usePetitioner();
+  const { setPetitions } = usePetitions();
 
   const logOutAndReset = () => {
     setPetitioner(initialPetitionerState);
+    setPetitions(initialPetitionState);
     logout();
   }
 

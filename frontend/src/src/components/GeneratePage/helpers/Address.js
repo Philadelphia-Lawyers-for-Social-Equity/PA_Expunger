@@ -29,6 +29,7 @@ export default function Address(props) {
             value={props.street1 || ""}
             handleChange={handleChange}
             disabled={props.disabled || false}
+            previewComponent={props.previewComponent}
         />
 
         <GeneratorInput
@@ -38,9 +39,13 @@ export default function Address(props) {
             value={props.street2 || ""}
             handleChange={handleChange}
             disabled={props.disabled || false}
+            previewComponent={props.previewComponent}
         />
 
-        <Form.Group as={Row}>
+        <Form.Group 
+            as={Row}
+            className={props.previewComponent ? "p-0 pl-3 pt-2" : ""}
+        >
             <Col sm={2}/>
             <Col sm={4}>
                 <Form.Control placeholder="City" value={props.city || ""} onChange={e => {

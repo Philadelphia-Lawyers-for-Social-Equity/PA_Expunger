@@ -9,6 +9,7 @@ import Charges from "./components/Charges";
 import Fines from "./components/Fines";
 import Progress from "./components/Progress";
 import { useAuth } from "../../context/auth";
+import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
 
@@ -31,6 +32,7 @@ export default function GeneratePage(props) {
     */
     const history = useHistory();
     const { authTokens } = useAuth();
+    const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
     const [success, setSuccess] = useState(false);
@@ -67,6 +69,8 @@ export default function GeneratePage(props) {
             dockets: petitions[petitionNumber].docket_numbers,
             charges: petitions[petitionNumber].charges,
             fines: petitions[petitionNumber].fines,
+            organization: user.organization,
+            attorney: user.attorney,
         };
 
         if (!petitionFields.petition.ratio) {
