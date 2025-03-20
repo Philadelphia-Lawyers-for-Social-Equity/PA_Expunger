@@ -143,27 +143,52 @@ class DocketParserAPIView(APIView):
             "petitions": [],
         }
 
+        # store parsed files without OTNs here and sort them into grouped_dockets last
+        parsed_no_otn = []
+
+        # reference dictionary for associating dockets to OTNs
+        docket_to_otn = {}
         grouped_dockets = {}
 
-        for file in df:
-            try:
-                parsed = docket_parser.parse_pdf(file)
-            except Exception as exception:
-                tb = traceback.format_exc()
-                short_msg = f"Parse error {exception}"
-                logger.warning(tb)
-                return Response({"error": short_msg})
+        try:
+            parsed_files = [docket_parser.parse_pdf(file) for file in df]
+        except Exception as exception:
+            tb = traceback.format_exc()
+            short_msg = f"Parse error {exception}"
+            logger.error(tb)
+            return Response({"error": short_msg})
 
+        # Move the court summary(ies) to the start of the list so OTNs will be in order of appearance in court summary
+        parsed_files.sort(key=lambda d: d.get('type') != 'court summary')
+
+        for parsed in parsed_files:
             # grouping parsed files by OTN or docket/cross court docket numbers
             if parsed.get('type') == 'docket':
-                update_group_dockets(grouped_dockets, parsed)
+                if parsed.get("otn"):
+                    update_group_dockets(grouped_dockets, docket_to_otn, parsed)
+                else:
+                    # Defer grouping dockets without OTNs
+                    parsed_no_otn.append(parsed)
                 
             elif parsed.get('type') == 'court summary':
                 court_summary_dockets = parsed.pop('dockets', [])
                 for docket in court_summary_dockets:
                     parsed_section = {**parsed, **docket}
-                    update_group_dockets(grouped_dockets, parsed_section)
+                    if parsed_section.get("otn"):
+                        update_group_dockets(grouped_dockets, docket_to_otn, parsed_section)
+                    else:
+                        # Defer grouping dockets without OTNs
+                        parsed_no_otn.append(parsed_section)
 
+        # match OTN-less dockets with OTNs in grouped_dockets
+        while parsed_no_otn:
+            parsed = parsed_no_otn.pop()
+            docket_number = parsed.get("docket_number")
+            if not (key := docket_to_otn.get(docket_number)):
+                key = docket_number
+            grouped_dockets.setdefault(key, []).append(parsed)
+
+        # add each docket's petitioner and petition info to content
         for docket, group in grouped_dockets.items():
             most_recent_disposition = datetime.datetime.strptime("1900-01-01", "%Y-%m-%d")
             petition = {
@@ -174,6 +199,21 @@ class DocketParserAPIView(APIView):
                 "category": "",
             }
             for parsed in group:
+                petitioner = petitioner_from_parser(parsed)
+                if content["petitioner"] is None:
+                    content["petitioner"] = petitioner
+                else:
+                    if content["petitioner"]["name"] != petitioner["name"]:
+                        if content["petitioner"]["aliases"]:
+                            content["petitioner"]["aliases"].append(petitioner["name"])
+                        else:
+                            content["petitioner"]["aliases"] = [petitioner["name"]]
+
+                    if petitioner["aliases"] is not None:
+                        for alias in petitioner["aliases"]:
+                            if alias not in content["petitioner"]["aliases"]:
+                                content["petitioner"]["aliases"].append(alias)
+                
                 if parsed["type"] == "court summary":
                     # TODO: handle dockets from court summaries that have county data other than: {'county': 'Philadelphia'}.
                     # The same OTN and/or docket numbers might have been addressed by courts in multiple counties, 
@@ -183,29 +223,15 @@ class DocketParserAPIView(APIView):
                     petition["county"] = parsed.get("county")
                     
                     if parsed["category"] == 'Archived':
-                        # "category" key used to alert user when petition info is only taken from a court summary
-                        # or an archived docket from a court summary
-                        if not petition["category"]:
-                            petition["category"] = parsed["category"]
-
                         if parsed.get("docket_number") not in petition["docket_numbers"]:
                             petition["docket_numbers"].append(parsed.get("docket_number"))
 
-                    elif not petition["category"]:
+                    # "category" key used to alert user when petition info is only taken from a court summary
+                    # or an archived docket from a court summary
+                    if not petition["category"]:
                         petition["category"] = parsed["category"]
                 else:
                     petition["category"] = "Docket"
-
-                petitioner = petitioner_from_parser(parsed)
-                if content["petitioner"] is None:
-                    content["petitioner"] = petitioner
-                else:
-                    if content["petitioner"]["name"] != petitioner["name"]:
-                        content["petitioner"]["aliases"].append(petitioner["name"])
-                    if petitioner["aliases"] is not None:
-                        for alias in petitioner["aliases"]:
-                            if alias not in content["petitioner"]["aliases"]:
-                                content["petitioner"]["aliases"].append(alias)
 
                 parsed_docket_numbers = docket_numbers_from_parser(parsed)
                 for parsed_docket_number in parsed_docket_numbers:
@@ -236,6 +262,9 @@ class DocketParserAPIView(APIView):
                     petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
 
             content["petitions"].append(petition)
+            if content["petitioner"]["aliases"] is not None:
+                # remove duplicates while preserving order
+                content["petitioner"]["aliases"] = list(dict.fromkeys(content["petitioner"]["aliases"]))
 
         logger.debug(f"Request: {request.data}")
         logger.debug(f"Parsed: {content}")
@@ -244,9 +273,11 @@ class DocketParserAPIView(APIView):
 
 # Helpers
 
-def update_group_dockets(grouped_dockets: dict, parsed_docket: dict) -> None:
-    key = parsed_docket.get("otn")
-    if not key:
+def update_group_dockets(grouped_dockets: dict, docket_to_otn: dict, parsed_docket: dict) -> None:
+    if key := parsed_docket.get("otn"):
+        for docket_number in docket_numbers_from_parser(parsed_docket):
+            docket_to_otn[docket_number] = key
+    else:
         key = parsed_docket.get("docket_number")
     grouped_dockets.setdefault(key, []).append(parsed_docket)
 

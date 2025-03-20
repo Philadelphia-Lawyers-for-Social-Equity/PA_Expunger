@@ -1,4 +1,6 @@
+import logging
 import re
+from contextlib import ExitStack
 
 import pytest
 from django.test import TestCase
@@ -250,7 +252,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
         )
 
     def test_post_court_summary(self):
-        """Check that posting a specific court summary file workds and generates
+        """Check that posting a specific court summary file works and generates
         expected information"""
         url = reverse("petition:parse-docket")
 
@@ -398,27 +400,24 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines", "category", "county"}
                 assert set(response.json()["petitions"][0].keys()) == expected_petition_keys
 
-    def test_court_summary_grouping(self):
-        """Check that dockets in a court summary are correctly grouped
-        by OTN or docket number when no OTN exists"""
+    def test_docket_grouping(self):
+        """Check that records from a court summary and court dockets are correctly grouped by OTN and docket number"""
         url = reverse("petition:parse-docket")
-
-        pdf_path = test_data_path / "court_summaries" / "pdfs" / "anon_multiple_counties.pdf"
-        with pdf_path.open("rb") as file:
-            res = self.authenticated_client.post(url, {"docket_file": file})
+        pdf_paths = (test_data_path / "combined_records" / "pdfs").glob("anon_example_01*.pdf")
+        with ExitStack() as stack:
+            files = {"docket_file": [stack.enter_context(open(path, "rb")) for path in pdf_paths]}
+            res = self.authenticated_client.post(url, files)
         jsr = res.json()
 
-        self.assertEqual(
-            jsr["petitions"][0]["docket_numbers"],
-            ['CP-46-CR-6218516-7626', 'CP-51-MD-7321720-7237']
-        )
+        # We want the OTNs in the order that they appear on the Court Summary
+        OTNs = [petition["docket_info"].get("otn") for petition in jsr["petitions"]]
+        assert OTNs == ["F 372272-1", "P 733709-9", "N 665222-2", "W 900260-2"]
 
-        self.assertEqual(
-            jsr["petitions"][6]["docket_numbers"],
-            ['CP-51-SA-5372500-7138']
-        )
-
-        self.assertEqual(
-            jsr["petitions"][7]["docket_numbers"],
-            ['MC-51-CR-9272001-5085']
-        )
+        # Order of docket numbers within each petition doesn't matter, so we use sets
+        docket_number_sets = [set(petition.get("docket_numbers")) for petition in jsr["petitions"]]
+        expected_docket_number_sets = [{"CP-51-CR-3598712-5872", "MC-51-CR-5827715-5723"},
+                                       {"MC-51-CR-2358911-1585"},
+                                       {"MC-51-CR-5587585-2178"},
+                                       {"CP-51-CR-2587279-1518", "MC-51-CR-5899178-1791"}]
+        assert docket_number_sets == expected_docket_number_sets
+        assert len(jsr["petitions"]) == 4
