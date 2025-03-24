@@ -28,6 +28,12 @@ export default function ProfilePage() {
   const [isEdit, setIsEdit] = useState(false);
   const { authTokens } = useAuth();
 
+  // Seperate variables for form input values
+  // so that we can revert to original values on cancel
+  const [myFirstNameInput, setMyFirstNameInput] = useState(user.firstName);
+  const [myLastNameInput, setMyLastNameInput] = useState(user.lastName);
+  const [myEmailInput, setMyEmailInput] = useState(user.email);
+
   // useEffect is the React Hook equivalent to ComponentDidMount
   useEffect(() => {
     fetchUserData()
@@ -65,6 +71,10 @@ export default function ProfilePage() {
         setOrgZipcode(res.data.organization.address.zipcode);
         setOrgPhone(res.data.organization.phone);
         setOrgURL(res.data.organization.url);
+        
+        setMyFirstNameInput(res.data.user.first_name);
+        setMyLastNameInput(res.data.user.last_name);
+        setMyEmailInput(res.data.user.email);
       }
     });
   }
@@ -115,9 +125,9 @@ export default function ProfilePage() {
       "attorney": attorneypk,
       "organization": orgpk,
       "user": {
-        "email": myEmail,
-        "first_name": myFirstName,
-        "last_name": myLastName,
+        "email": myEmailInput,
+        "first_name": myFirstNameInput,
+        "last_name": myLastNameInput,
         "username": myUsername
       }
     }
@@ -144,10 +154,18 @@ export default function ProfilePage() {
 
   }
 
+  function handleCancel() {
+    setIsEdit(false);
+    // reset form values to previous input
+    setMyFirstNameInput(myFirstName);
+    setMyLastNameInput(myLastName);
+    setMyEmailInput(myEmail);
+  }
+
   return (
     <div className="text-left">
       <Modal.Dialog>
-        <Modal.Header closeButton>
+        <Modal.Header>
           <Modal.Title>Profile Information</Modal.Title>
           <Button id="editbutton" onClick={editProfile}>Edit</Button>
         </Modal.Header>
@@ -167,11 +185,11 @@ export default function ProfilePage() {
             </Col>
             <Col>
               {!isEdit && myFirstName} {!isEdit && myLastName}
-              {isEdit && <input type="text" value={myFirstName} onChange={e => {
-                setMyFirstName(e.target.value);
+              {isEdit && <input type="text" value={myFirstNameInput} onChange={e => {
+                setMyFirstNameInput(e.target.value);
               }} placeholder="First Name" />}
-              {isEdit && <input type="text" value={myLastName} onChange={e => {
-                setMyLastName(e.target.value);
+              {isEdit && <input type="text" value={myLastNameInput} onChange={e => {
+                setMyLastNameInput(e.target.value);
               }} placeholder="Last Name" />}
             </Col>
           </Row>
@@ -181,8 +199,8 @@ export default function ProfilePage() {
             </Col>
             <Col>
               {!isEdit && myEmail}
-              {isEdit && <input type="text" value={myEmail} onChange={e => {
-                setMyEmail(e.target.value);
+              {isEdit && <input type="text" value={myEmailInput} onChange={e => {
+                setMyEmailInput(e.target.value);
               }} placeholder="Email" />}
             </Col>
           </Row>
@@ -211,7 +229,18 @@ export default function ProfilePage() {
         </Modal.Body>
 
         <Modal.Footer>
-          {isEdit && <Button id="submitButton" onClick={postProfile}>Submit</Button>}
+          {isEdit && 
+            <>
+              <Button
+                id="cancelButton"
+                variant="outline-secondary"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+              <Button id="submitButton" onClick={postProfile}>Submit</Button>
+            </>
+          }
         </Modal.Footer>
 
       </Modal.Dialog>
