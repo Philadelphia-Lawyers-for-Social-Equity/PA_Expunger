@@ -165,7 +165,7 @@ export default function ProfilePage() {
   return (
     <div className="text-left">
       <Modal.Dialog>
-        <Modal.Header closeButton>
+        <Modal.Header>
           <Modal.Title>Profile Information</Modal.Title>
           <Button id="editbutton" onClick={editProfile}>Edit</Button>
         </Modal.Header>
