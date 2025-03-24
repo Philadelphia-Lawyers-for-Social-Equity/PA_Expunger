@@ -2,16 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar, Nav } from 'react-bootstrap';
 import { useAuth } from '../context/auth';
-import { usePetitioner, initialPetitionerState } from '../context/petitioner';
 
-const Navigation = () => {
-  const { logout, authTokens } = useAuth();
-  const { setPetitioner } = usePetitioner();
-
-  const logOutAndReset = () => {
-    setPetitioner(initialPetitionerState);
-    logout();
-  }
+const Navigation = (props) => {
+  const { authTokens } = useAuth();
 
   return (
     <Navbar
@@ -37,7 +30,7 @@ const Navigation = () => {
           {authTokens ? (
             <>
               <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
-              <Nav.Link onClick={logOutAndReset}>Log out</Nav.Link>
+              <Nav.Link as={Link} to="/logout">Log out</Nav.Link>
             </>
           ) : (
             <>

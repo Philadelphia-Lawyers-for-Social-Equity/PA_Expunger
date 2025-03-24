@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Route, Switch, Prompt } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import { AuthProvider } from "./context/auth";
 import { UserProvider } from "./context/user";
@@ -14,17 +14,21 @@ import ProfilePage from "../src/components/ProfilePage";
 import ReviewPage from "./components/ReviewPage";
 // import SignUp from "./components/SignUp/signUp";
 import Nav from "./components/nav";
+import Logout from "./components/logout";
 import PageNotFound from "./components/PageNotFound";
 import { PetitionsProvider } from "./context/petitions";
 
 function App(props) {
+  const [shouldBlockNavigation, setShouldBlockNavigation] = useState(false);
+
   return (
     <PetitionerProvider>
       <PetitionsProvider>
         <AuthProvider>
           <UserProvider>
             <Router>
-              <Nav />
+              <Prompt when={shouldBlockNavigation} message='You have unsaved changes. Are you sure you want to leave?' />
+              <Nav shouldBlockNavigation={shouldBlockNavigation} />
               <Switch>
                 <Route exact path="/login" render={props => <LoginForm {...props} isAuthed={true} />} />
                 {/* <Route exact path="/signup" component={SignUp} /> */}
@@ -33,8 +37,15 @@ function App(props) {
                 <PrivateRoute exact path="/search" component={SearchPage} />
                 <PrivateRoute exact path="/profile" component={ProfilePage} />
                   <PrivateRoute exact path="/upload" component={FileUpload} />
-                  <PrivateRoute exact path="/generate" component={GeneratePage} />
-                  <PrivateRoute exact path ="/review" component={ReviewPage}/>
+                  <PrivateRoute exact path="/generate">
+                    <GeneratePage setShouldBlockNavigation={setShouldBlockNavigation} />
+                  </PrivateRoute>
+                  <PrivateRoute exact path ="/review" component={ReviewPage} >
+                    <ReviewPage setShouldBlockNavigation={setShouldBlockNavigation} />
+                  </PrivateRoute>
+                  <PrivateRoute exact path="/logout">
+                    <Logout setShouldBlockNavigation={setShouldBlockNavigation} />
+                  </PrivateRoute>
                 <PrivateRoute path="*" component={PageNotFound} />
               </Switch>
             </Router>

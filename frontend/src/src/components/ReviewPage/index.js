@@ -29,6 +29,10 @@ export default function ReviewPage(props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    useEffect(() => {
+        props.setShouldBlockNavigation(true);
+    })
+
     function postGeneratorRequest(petitioner, petition) {
         let petitionFields = {
             petitioner: petitioner,
