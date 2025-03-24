@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useHistory } from 'react-router-dom';
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useHistory, Link } from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
@@ -37,11 +36,18 @@ export default function GeneratePage(props) {
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
     const [error, setError] = useState("");
+    const didMountRef = useRef(false);
 
     const formDisabled = busy || success[petitionNumber];
     const totalPetitions = petitions.length;
     const multiPetition = (totalPetitions > 1) ? true : false;
 
+    // If this isn't the first time this component is loaded, the page is being reloaded, e.g. on a refresh
+    const handleBeforeUnload = (event) => {
+        event.preventDefault();
+        event.returnValue = ''; // Chrome requires returnValue to be set
+    };
+    
     useEffect(() => {
         if (success[petitionNumber] === true) {
             document.getElementById("downloadbutton").scrollIntoView({ behavior: "smooth" });
@@ -59,6 +65,20 @@ export default function GeneratePage(props) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        props.setShouldBlockNavigation(true);
+
+        if (didMountRef.current) {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+
+            return () => {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+            };
+            } else {
+                didMountRef.current = true;
+            }
+    })
 
     function postGeneratorRequest() {
         let petitionFields = {
