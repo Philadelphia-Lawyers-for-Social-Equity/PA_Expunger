@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'expunger',
+    'expunger.apps.ExpungerConfig',
     'petition',
     'pa_court_archive',
     'mod_wsgi.server'
