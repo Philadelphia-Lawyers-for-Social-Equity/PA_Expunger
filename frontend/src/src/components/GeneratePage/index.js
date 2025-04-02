@@ -132,19 +132,38 @@ export default function GeneratePage(props) {
             [petitionNumber]: false
         });
 
-        const ssn = petitioner.ssn;
-        const hasDashes = /(-)/.test(ssn);
+        if (!isFormValid()) {
+            setErrorMessage()
+        } else {
+            postGeneratorRequest();
+        }
+    }
+    
+    function isFormValid(){
+        return petitioner.name &&
+            petitioner.dob &&
+            isValidSsn(petitioner.ssn) &&
+            petitioner.address &&
+            petitioner.address.street1 &&
+            petitioner.address.city &&
+            petitioner.address.state &&
+            petitioner.address.zipcode
+    }
 
+    function isValidSsn(ssn){
+        if (!ssn) return false
+        const hasDashes = /(-)/.test(ssn);
+        const isValidSsn = (hasDashes && ssn.length === 11) ||
+            (!hasDashes && ssn.length === 9)
+        return isValidSsn
+    }
+
+    function setErrorMessage(){
         if (!petitioner.name) {
             setError("Please enter a name.");
         } else if (!petitioner.dob) {
             setError("Please enter a valid birth date.");
-        } else if (!ssn) {
-            setError("Please enter a valid Social Security number.");
-        } else if (
-            (hasDashes && ssn.length !== 11) ||
-            (!hasDashes && ssn.length !== 9)
-        ) {
+        } else if (!isValidSsn(petitioner.ssn)) {
             setError("Please enter a valid Social Security number.");
         } else if (
             !petitioner.address ||
@@ -154,9 +173,7 @@ export default function GeneratePage(props) {
             !petitioner.address.zipcode
         ) {
             setError("Please enter a valid address.");
-        } else {
-            postGeneratorRequest();
-        }
+        } 
     }
 
     function savePetitions() {
@@ -174,16 +191,21 @@ export default function GeneratePage(props) {
     }
     
     function handleNext() {
-        savePetitions();
-        if (petitionNumber === totalPetitions - 1) {
-            // TODO: Should this info be saved to page history? delete if not
-            history.push("/review", {
-                "petitionFields": {
-                    petitioner, 
-                    petitions
-                }
-            })
-        } else setPetitionNumber(n => n + 1);
+        if (!isFormValid()){
+            setErrorMessage()
+        } else {
+            savePetitions();
+            setError("");
+            if (petitionNumber === totalPetitions - 1) {
+                // TODO: Should this info be saved to page history? delete if not
+                history.push("/review", {
+                    "petitionFields": {
+                        petitioner, 
+                        petitions
+                    }
+                })
+            } else setPetitionNumber(n => n + 1);
+        }
     }
 
     const nextButton = (petitionNumber === totalPetitions - 1)
@@ -218,11 +240,11 @@ export default function GeneratePage(props) {
                         </Button>
                     </div>}
                     {multiPetition && nextButton}
-                    <div className="mr-2 d-inline">
+                    {!multiPetition && <div className="mr-2 d-inline">
                         <Button onClick={handleSubmit} disabled={formDisabled}>
                             Generate Petition
                         </Button>
-                    </div>
+                    </div>}
                 </div>
                 <div>
                     <Progress petitionNumber={petitionNumber} totalPetitions={totalPetitions} />
