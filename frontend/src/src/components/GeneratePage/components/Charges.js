@@ -9,7 +9,12 @@ export default function Charges({petitionNumber, disabled}) {
         - disabled: boolean
     */
     const { petitions, updatePetitions } = usePetitions();
-    const charges = petitions[petitionNumber].charges;
+    
+    const charges = petitions[petitionNumber].charges.map((charge, idx) => {
+        const key = `${petitions[petitionNumber].charges.length}-${idx}`
+        charge["key"] = key;
+        return charge
+    });
 
     function handleChange(newCharges) {
         updatePetitions('charges', petitionNumber, newCharges)

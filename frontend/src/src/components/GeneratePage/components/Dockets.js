@@ -12,7 +12,7 @@ export default function Dockets({petitionNumber, disabled}) {
     const docket_numbers = petitions[petitionNumber].docket_numbers;
 
     function makeItems() {
-        return(docket_numbers.map((d) => ({"text": d, "key": d})));
+        return(docket_numbers.map((d,idx) => ({"text": d, "key": `${docket_numbers.length}-${idx}`})));
     }
 
     function handleChange(items) {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function EditableList(props) {
     /* Turn a list of property objects into specified items, including widgets
@@ -14,6 +13,7 @@ export default function EditableList(props) {
             - items: array of property objects appropriate for Inner component
             - handleChange
             - smallHeader: should the header be in a small font?
+            - disabled: boolean
     */
 
     const Inner = props.inner;
@@ -39,7 +39,9 @@ export default function EditableList(props) {
 
     function isEmpty(obj) {
         let objString = JSON.stringify(obj);
-        let emptyString = JSON.stringify(props.emptyItem);
+        let newItem = props.emptyItem;
+        newItem["key"] = `${props.items.length}-${props.items.length - 1}`
+        let emptyString = JSON.stringify(newItem);
         return(objString === emptyString);
     }
 
@@ -73,14 +75,16 @@ export default function EditableList(props) {
     return (
         <Form.Group as="div">
             {showLabel()}
-            { props.items.map((innerProps, idx) => {
-                    return(
-                        <Inner
-                            {...innerProps}
-                            key={uuidv4()}
-                            handleChange={(txt) => {updateItem(idx, txt);}}
-                            handleRemove={() => { dropItem(idx);}}
-                />);
+            {props.items.map((innerProps, idx) => {
+                return (
+                    <Inner
+                        {...innerProps}
+                        key={innerProps.key}
+                        handleChange={(txt) => {updateItem(idx, txt);}}
+                        handleRemove={() => { dropItem(idx);}}
+                        disabled={props.disabled || false}
+                    />
+                );
             })}
 
             <Row>

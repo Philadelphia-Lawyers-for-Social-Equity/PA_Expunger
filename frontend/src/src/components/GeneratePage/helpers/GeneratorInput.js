@@ -11,6 +11,7 @@ export default function GeneratorInput(props) {
         - name
         - value
         - handleChange
+        - disabled: boolean
     */
 
     if (!props.name) {
