@@ -11,7 +11,7 @@ export default function RemovableCharge(props) {
         - disposition
         - handleChange
         - handleRemove
-
+        - disabled
     */
 
     const [statute, setStatute] = useState(props.statute || "");
@@ -20,7 +20,6 @@ export default function RemovableCharge(props) {
     const [date, setDate] = useState(props.date || "");
     const [disposition, setDisposition] = useState(props.disposition || "");
 
-    const [editing, setEditing] = useState(false);
     const [hovering, setHovering] = useState(false);
 
     function save() {
@@ -30,24 +29,20 @@ export default function RemovableCharge(props) {
             "grade": grade,
             "date": date,
             "disposition": disposition,
-            "key": description
         });
-        setEditing(false);
     }
 
     return (
         <div
-            onFocus={() => {setEditing(true);}}
             onBlur={() => {save();}}
         >
         <Row className="mb-2">
-            <Col sm={2}><Form.Label>{props.label || ""}</Form.Label></Col>
+            <Col sm={2}></Col>
             <Col sm={2}>
                 <Form.Control
                     placeholder="Statute"
                     value={statute}
                     onChange={(e) => {setStatute(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -56,7 +51,6 @@ export default function RemovableCharge(props) {
                     placeholder="grade"
                     value={grade}
                     onChange={(e) => {setGrade(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -65,7 +59,6 @@ export default function RemovableCharge(props) {
                     type="date"
                     value={date}
                     onChange={(e) => {setDate(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
@@ -74,21 +67,20 @@ export default function RemovableCharge(props) {
                     placeholder="Disposition"
                     value={disposition}
                     onChange={(e) => {setDisposition(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>
             <Col sm={1}>
-            <Button
-                variant={ hovering ? "danger" : "secondary"}
-                onClick={ props.handleRemove }
-                cursor="pointer"
-                disabled={props.disabled || false}
-                onMouseOver={() => {setHovering(true);}}
-                onMouseOut={() => {setHovering(false);}}
-            >
-                X
-            </Button>
+                <Button
+                    variant={ hovering ? "danger" : "secondary"}
+                    onClick={ props.handleRemove }
+                    cursor="pointer"
+                    disabled={props.disabled || false}
+                    onMouseOver={() => {setHovering(true);}}
+                    onMouseOut={() => {setHovering(false);}}
+                >
+                    X
+                </Button>
             </Col>
         </Row>
         <Row>
@@ -97,7 +89,6 @@ export default function RemovableCharge(props) {
                 <Form.Control
                     value={description}
                     onChange={(e) => {setDescription(e.target.value);}}
-                    readOnly={!editing}
                     disabled={props.disabled || false}
                 />
             </Col>

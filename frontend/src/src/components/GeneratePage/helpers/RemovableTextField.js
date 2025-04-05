@@ -9,19 +9,18 @@ export default function RemovableTextField(props) {
         - text
         - handleChange
         - handleRemove
+        - disabled
     */
 
     const [text, setText] = useState(props.text);
-    const [editing, setEditing] = useState(false);
     const [hovering, setHovering] = useState(false);
 
     function save() {
-        setEditing(false);
-        props.handleChange({"text": text, "key": text});
+        props.handleChange({"text": text});
     }
 
     function handleEnterKey(press) {
-        if (editing && press.key === "Enter") {
+        if (press.key === "Enter") {
             save();
         }
     }
@@ -38,11 +37,9 @@ export default function RemovableTextField(props) {
             <Col sm={7}>
             <Form.Control
                 onChange={e => { setText(e.target.value)}}
-                onFocus={() => setEditing(true)}
                 onBlur={() => save()}
                 onKeyDown={(e) => {handleEnterKey(e)}}
                 value={text}
-                readOnly={ !editing }
                 disabled={ props.disabled || false }
             />
             </Col>

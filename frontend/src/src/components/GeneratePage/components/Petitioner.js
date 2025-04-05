@@ -27,7 +27,7 @@ export default function Petitioner(props) {
             return([]);
         }
 
-        return props.aliases.map((a) => ({"text": a, "key": a}));
+        return props.aliases.map((a, idx) => ({"text": a, "key": `${props.aliases.length}-${idx}`}));
     }
 
     function saveAliases(items) {
