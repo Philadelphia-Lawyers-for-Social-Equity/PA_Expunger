@@ -38,7 +38,7 @@ export default function PetitionSummary(props) {
     }
 
     function generatePetition() {
-        props.postGeneratorRequest(petitioner, props.petition)
+        props.postGeneratorRequest(petitioner, props.petition, props.petitionNumber)
         .then((petitionUrl) => {
             if (petitionUrl !== undefined) {
                 let filename = `petition_${props.petitionNumber+1}.docx`;
@@ -103,8 +103,8 @@ export default function PetitionSummary(props) {
                                 </td>
                                 <td className="p-2">
                                     <ListGroup variant="flush">
-                                        <ListGroup.Item className="p-0">{`Paid Fines: $${fines.paid}`}</ListGroup.Item>
-                                        <ListGroup.Item className="p-0">{`Total Fines: $${fines.total}`}</ListGroup.Item>
+                                        <ListGroup.Item className="p-0">{`Paid Fines: $${fines.paid ? fines.paid : 0.00}`}</ListGroup.Item>
+                                        <ListGroup.Item className="p-0">{`Total Fines: $${fines.total ? fines.total : 0.00}`}</ListGroup.Item>
                                     </ListGroup>
                                 </td>
                             </tr>
