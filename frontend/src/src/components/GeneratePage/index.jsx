@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useHistory } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from "react";
+import { useHistory } from 'react-router-dom';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import Petitioner from "./components/Petitioner";
 import Petition from "./components/Petition";
@@ -13,6 +13,7 @@ import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
 import { useIsMounted } from "../../hooks/useIsMounted";
+import NavBlock from "../util/navBlock";
 
 import "./style.css";
 import api from "../../services/api";
@@ -37,6 +38,7 @@ export default function GeneratePage(props) {
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
     const [error, setError] = useState("");
+    let shouldBlockNav = useRef(true);
 
     const formDisabled = busy || success[petitionNumber];
     const totalPetitions = petitions.length;
@@ -197,12 +199,16 @@ export default function GeneratePage(props) {
             setError("");
             if (petitionNumber === totalPetitions - 1) {
                 // TODO: Should this info be saved to page history? delete if not
+
+                // Don't ask the user whether they want to navigate; just navigate
+                shouldBlockNav.current = false;
                 history.push("/review", {
                     "petitionFields": {
                         petitioner,
                         petitions
                     }
                 })
+                shouldBlockNav.current = true;
             } else setPetitionNumber(n => n + 1);
         }
     }
@@ -222,8 +228,15 @@ export default function GeneratePage(props) {
         return (<FallbackMessage/>);
     }
 
+    function startNewPetition() {
+        shouldBlockNav.current = false;
+        history.push("/action");
+        shouldBlockNav.current = true;
+    }
+
     return (
         <Form className="generator">
+            <NavBlock blockNav={shouldBlockNav} />
             <Petitioner {...petitioner} disabled={formDisabled} />
             <Petition petitionNumber={petitionNumber} disabled={formDisabled} />
             <Dockets petitionNumber={petitionNumber} disabled={formDisabled} />
@@ -269,10 +282,7 @@ export default function GeneratePage(props) {
                             <Button onClick={edit}>Edit Petition</Button>
                         </Col>
                         {(petitionNumber === totalPetitions - 1) && <Col>
-                            <Link to={{
-                                pathname: '/',
-                                state: {petitioner: petitioner}
-                            }}><Button>New Petition</Button></Link>
+                            <Button onClick={startNewPetition}>New Petition</Button>
                         </Col>}
                     </Form.Group>
                 </>
