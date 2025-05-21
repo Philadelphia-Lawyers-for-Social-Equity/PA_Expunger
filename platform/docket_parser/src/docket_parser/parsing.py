@@ -351,6 +351,9 @@ def remove_court_summary_page_breaks(extracted_text: str) -> str:
                     # Include anything after '(Continued)' textbox wrap
                     post_page_break = line.split(DocketReader.box_wrap, 1)[1]
                     output_lines.append(post_page_break)
+                elif re.match(printed_date_line_regex, line):
+                    logger.debug(f"begin page break matched: {line}")
+                    in_page_break = True
                 else:
                     output_lines.append(line)
         elif re.match(printed_date_line_regex, line):
