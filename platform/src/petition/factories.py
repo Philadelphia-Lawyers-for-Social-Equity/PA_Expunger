@@ -46,7 +46,6 @@ class PetitionFactory(factory.Factory):
     ratio = factory.fuzzy.FuzzyChoice(PetitionRatio)
     otn = factory.fuzzy.FuzzyInteger(1000000, 9999999)
     judge = factory.Faker("name")
-    defendant_name = factory.Faker("name")
 
 
 class FinesFactory(factory.Factory):

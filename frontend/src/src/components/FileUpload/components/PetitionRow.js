@@ -107,7 +107,7 @@ export default function PetitionRow(props) {
                 </ul>
             </td>
             <td>
-                Commonwealth of Pennsylvania v. {docket_info.defendant_name ? docket_info.defendant_name : props.name}
+                Commonwealth of Pennsylvania v. {props.name}
             </td>
             <td>
                 <input 

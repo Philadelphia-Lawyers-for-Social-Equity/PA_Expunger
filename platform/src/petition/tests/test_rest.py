@@ -44,7 +44,6 @@ class TestPetitionAPI(Authenticated, TestCase):
                 "ratio": petition.ratio.name,
                 "otn": petition.otn,
                 "judge": petition.judge,
-                "defendant_name": petition.defendant_name,
             },
             "dockets": [str(docket)],
             "fines": {
@@ -168,7 +167,6 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 "arrest_date": "1902-04-11",
                 "otn": "T 760873-7",
                 "ratio": "full",
-                "defendant_name": "Real B. Person"
             }
         )
 

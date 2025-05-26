@@ -230,7 +230,6 @@ class DocketParserAPIView(APIView):
                         petition["docket_info"] = petition_from_parser(parsed)
                         if parsed["type"] == "docket":
                             petition["fines"] = models.Fines.from_dict(fines_from_parser(parsed)).to_dict()
-                            petition["docket_info"]["defendant_name"] = parsed.get("defendant_name")
                 if not petition["docket_info"]:
                     petition["docket_info"] = petition_from_parser(parsed)
                 if not petition["fines"] and parsed["type"] == "docket":
