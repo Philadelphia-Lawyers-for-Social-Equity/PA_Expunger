@@ -40,9 +40,18 @@ export default function Petitioner(props) {
         setPetitioner({...petitioner, [attribute]: item[attribute]});
     }
 
+    function showLabel() {
+            if (props.preview) {
+                return <></>;
+            } else {
+                return <h2>{props.label}</h2>;
+            }
+        }
+
     return(
         <>
-            <h2>Petitioner</h2>
+            {showLabel()}
+
             <GeneratorInput
                 label="Full Name"
                 type="text"
@@ -52,6 +61,7 @@ export default function Petitioner(props) {
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
+                previewComponent={props.preview}
             />
 
             <GeneratorInput
@@ -62,6 +72,7 @@ export default function Petitioner(props) {
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
+                previewComponent={props.preview}
             />
 
             <SocialSecurityInput
@@ -73,6 +84,7 @@ export default function Petitioner(props) {
                 handleChange={handleChange}
                 required={true}
                 disabled={props.disabled || false}
+                previewComponent={props.preview}
             />
 
             <EditableList
@@ -83,9 +95,16 @@ export default function Petitioner(props) {
                 handleChange={(e) => {saveAliases(e)}}
                 disabled={props.disabled || false}
                 smallHeader={true}
+                previewComponent={props.preview}
             />
 
-            <Address {...petitioner.address} handleChange={(a) => {handleChange({"address": a});}} disabled={props.disabled || false} />
+            <Address 
+                {...petitioner.address} handleChange={(a) => {
+                    handleChange({"address": a});
+                }} 
+                disabled={props.disabled || false} 
+                previewComponent={props.preview}
+            />
         </>
         );
 }

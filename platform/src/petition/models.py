@@ -169,7 +169,6 @@ class Petition:
         self.date = date
         self.ratio = ratio
         self.otn = otn
-        self.arrest_date = arrest_date
         self.complaint_date = complaint_date
         self.arrest_date = arrest_date
         self.judge = judge

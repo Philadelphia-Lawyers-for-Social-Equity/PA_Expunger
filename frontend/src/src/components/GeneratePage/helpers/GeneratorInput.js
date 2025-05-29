@@ -21,7 +21,10 @@ export default function GeneratorInput(props) {
     let keyName = props.name;
 
     return (
-        <Form.Group as={Row}>
+        <Form.Group 
+            as={Row} 
+            className={props.previewComponent ? "p-0 pl-3 pt-2 mb-0" : ""}
+        >
             <Col sm={2}>
                 <Form.Label>{props.label}</Form.Label>
             </Col>

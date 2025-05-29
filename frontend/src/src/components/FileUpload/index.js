@@ -1,126 +1,111 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import axios from 'axios';
-import { Button, Modal, Col } from 'react-bootstrap';
-import { useAuth } from "../../context/auth";
-import { usePetitions } from '../../context/petitions';
+// import axios from 'axios';
+import { Alert, Button, Card, Container } from 'react-bootstrap';
+
 import { usePetitioner } from '../../context/petitioner';
+import { initialPetitionState, usePetitions } from '../../context/petitions';
+import { useUser } from '../../context/user';
+import Attorney from './components/Attorney';
+import Petitioner from '../GeneratePage/components/Petitioner';
+import PetitionTable from './components/PetitionTable';
+import Organization from './components/Organization';
+import UploadModal from './components/UploadModal';
 
 export default function FileUpload(props) {
     const history = useHistory();
-
-    const [uploadedFiles, setUploadedFiles] = useState([]);
-    const [fileNames, setFileNames] = useState([]);
-    const [isError, setIsError] = useState(false);
-    const { authTokens } = useAuth();
-    const { petitioner, setPetitioner } = usePetitioner();
-    const { setPetitions, setPetitionNumber } = usePetitions();
+    const { user } = useUser();
+    const { petitioner } = usePetitioner();
+    const { petitions, setPetitions } = usePetitions();
     
-    const fileNameList = fileNames.map(name => {
-        return <li key={name}>{name}</li>
-    })
+    const [doNotGenerate, setDoNotGenerate] = useState([]);
+    const [isError, setIsError] = useState(false);
+    const [show, setShow] = useState(false);
+    const [petitionCount, setPetitionCount] = useState(0);
 
-    // On click for the cancel button
-    function returnToChooseAction() {
-        history.push("/");
-    }
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
 
-    // On change for getting files
-    function getFile(uploadedDocs) {
-        setFileNames([])
-        for(const file of uploadedDocs) {
-            setUploadedFiles(files => [...files, file]);
-            if (uploadedDocs.length > 1) {
-                setFileNames(nameList => [...nameList, file.name])
+
+    function continuePetitionGeneration() {
+        // remove petitions from array if user has selected to omit them
+        const petitionsToGenerate = petitions.filter(petition => {
+            if (petition.docket_info.otn && doNotGenerate.includes(petition.docket_info.otn)) {
+                return false
             }
-        }
-    }
-
-    // POST to send PDF file
-    function chooseFile() {
-
-
-        // Need to check if a file is chosen
-        if (uploadedFiles === undefined || uploadedFiles.length === 0) {
-            setIsError(true);
-        }
-        else {
-            let pdfdata = new FormData();
-            pdfdata.append('name', 'docket_file');
-            for (let file of uploadedFiles) {
-                pdfdata.append('docket_file', file);
+            for (const num of petition.docket_numbers) {
+                if (doNotGenerate.includes(num)) {
+                    return false
+                }
             }
-
-            // post to generate profile
-            const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/parse-docket/";
-            const token = `Bearer ${authTokens.access}`;
-            var config = {
-                'headers': { 'Authorization': token }
-            };
-
-            axios.post(url, pdfdata, config)
-                .then(res => {
-                    if (res.status === 200) {
-                        console.log("Ready to generate ..!");
-                        console.info(res.data);
-                        setPetitions(res.data.petitions)
-
-                        // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
-                        if (res.data.petitioner !== null && petitioner !== null && res.data.petitioner.name === petitioner.name) {
-                            let newPetitioner = {};
-                            newPetitioner.name = res.data.petitioner.name;
-                            if (res.data.petitioner.aliases !== null) {
-                                let aliasesSet = new Set(res.data.petitioner.aliases.concat(petitioner.aliases));
-                                newPetitioner.aliases = [...aliasesSet];
-                            } else {
-                                newPetitioner.aliases = petitioner.aliases;
-                            }
-
-                            newPetitioner.dob = res.data.petitioner.dob || petitioner.dob;
-                            newPetitioner.ssn = petitioner.ssn;
-                            newPetitioner.address = petitioner.address;
-                            setPetitioner(newPetitioner);
-                            res.data.petitioner = newPetitioner;
-                        } else {
-                            setPetitioner(res.data.petitioner);
-                        }
-                        
-                        setPetitionNumber(0)
-                        history.push("/generate", {"petitionFields": res.data});
-                    }})
-                .catch(err => {
-                    console.error(err);
-                });
-        }
+            return true
+        })
+        setPetitions(petitionsToGenerate)
+        history.push("/generate", {"petitionFields": {petitions: petitionsToGenerate, petitioner}});
     }
+
+    // show upload modal when page first loads and/or no petitions have been uploaded
+    useEffect(() => {
+        if (petitions === initialPetitionState) {
+            handleShow()
+        }
+        // eslint-disable-next-line
+    }, [])
 
     return (
-        <div className="text-center">
-            <Modal.Dialog>
-                <Modal.Header>
-                    <Modal.Title>Upload File</Modal.Title>
-                </Modal.Header>
+        <div>
+            <Container fluid className="pt-4">
+                <div className="d-flex justify-content-between mb-4">
+                    <h4>Petition Generation Preview</h4>
+                    <div >
+                        <Button 
+                            className="mr-2 d-inline"
+                            onClick={handleShow}
+                        >
+                            Upload Files
+                        </Button>
+                        <Button
+                            className="mr-2 d-inline"
+                            onClick={continuePetitionGeneration}
+                            disabled={petitionCount < 1}
+                        >
+                            Continue to Petition Generation
+                        </Button>
+                    </div>
+                </div>
 
-                <Modal.Body>
-                    <Col>
-                        <input 
-                            type="file" 
-                            name="docket_file" 
-                            multiple 
-                            accept=".pdf" 
-                            onChange={e => { getFile(e.target.files); }}
-                        />
-                        <ul style={{listStyleType: "none"}}>{fileNameList}</ul>
-                        {isError && <div className="alert alert-warning" role="alert">Please select a file</div>}
-                    </Col>
-                </Modal.Body>
+                {(petitions === initialPetitionState) && <Alert
+                    variant="warning"
+                    className="justify-content-md-center text-center mb-4"
+                >
+                    Upload a Court Docket or Court Summary to begin petition generation.
+                </Alert>}
 
-                <Modal.Footer>
-                    <Button id="returnToLoginButton" variant="outline-secondary" onClick={returnToChooseAction}>Cancel</Button>
-                    <Button id="fileButton" onClick={chooseFile}>Submit</Button>
-                </Modal.Footer>
-            </Modal.Dialog>
+                <Organization organization={user.organization}/>
 
+                <Attorney attorney={user.attorney}/>
+
+                <Card className="mb-4">
+                    <Card.Header as="h5" className="pl-3">
+                        Petitioner
+                    </Card.Header>
+                    <Petitioner {...petitioner} preview={true}/>
+                </Card>
+
+                <PetitionTable 
+                    doNotGenerate={doNotGenerate}
+                    setDoNotGenerate={setDoNotGenerate}
+                    petitionCount={petitionCount}
+                    setPetitionCount={setPetitionCount}
+                />
+            </Container>
+
+            <UploadModal 
+                isError={isError}
+                handleClose={handleClose}
+                show={show}
+                setIsError={setIsError}
+            />
         </div >
     );
 }

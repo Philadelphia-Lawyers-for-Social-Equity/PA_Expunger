@@ -18,7 +18,7 @@ class SocialSecurityInput extends Component {
   }
 
   render() {
-    const { label, type, placeholder, name, value, required, disabled } = this.props;
+    const { label, type, placeholder, name, value, required, disabled, previewComponent } = this.props;
     const formattedSSN = this.formatSSN(value);
     return (
       <GeneratorInput
@@ -31,6 +31,7 @@ class SocialSecurityInput extends Component {
         required={required}
         maxLength={5}
         disabled={disabled}
+        previewComponent={previewComponent}
       />
     );
   }

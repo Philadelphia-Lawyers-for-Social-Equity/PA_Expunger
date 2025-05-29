@@ -73,7 +73,10 @@ export default function EditableList(props) {
     }
 
     return (
-        <Form.Group as="div">
+        <Form.Group 
+            as="div" 
+            className={props.previewComponent ? "p-0 pl-3 pt-2 mb-0" : ""}
+        >
             {showLabel()}
             {props.items.map((innerProps, idx) => {
                 return (
