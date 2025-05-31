@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from "react";
 import JSZip from "jszip";
-import axios from "axios";
 import { saveAs } from "file-saver";
 import { Button, Card, Container, ListGroup } from 'react-bootstrap';
+import { useHistory } from "react-router-dom";
 import PetitionSummary from "./components/PetitionSummary";
-import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
 import { initialPetitionerState, usePetitioner } from "../../context/petitioner";
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import "./style.css";
-
-const postPetitionUrl =
-    process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
-
-const postSummaryUrl =
-    process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generator-report/";
+import api from "../../services/api";
+import {useAuth} from "../../context/auth";
+import {useIsMounted} from "../../hooks/useIsMounted";
 
 const initialSummary = {
     name: "",
@@ -34,21 +30,28 @@ const initialSummary = {
 };
 
 export default function ReviewPage(props) {
+    const history = useHistory();
     const { authTokens } = useAuth();
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
     const [ summary, setSummary ] = useState(initialSummary);
+    const getIsMounted = useIsMounted();
     
     useEffect(() => {
-        // re-create petitions state from history after page refresh
-        if (petitions === initialPetitionState) {
-            setPetitions(props.location.state.petitionFields.petitions)
+        try {
+            // re-create petitions state from history after page refresh
+            if (petitions === initialPetitionState) {
+                setPetitions(props.location.state.petitionFields.petitions)
+            }
+            if (petitioner === initialPetitionerState) {
+                setPetitioner(props.location.state.petitionFields.petitioner);
+            }
+            window.scrollTo(0, 0)
+        } catch {
+            // TODO: proper error handling
+            history.push("/");
         }
-        if (petitioner === initialPetitionerState) {
-            setPetitioner(props.location.state.petitionFields.petitioner);
-        }
-        window.scrollTo(0, 0)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -56,7 +59,7 @@ export default function ReviewPage(props) {
         // create data for generation of petitions summary
         let partial = 0
         let full = 0
-        const petitionSummaries = petitions ? petitions.map(petition => {
+        const petitionSummaries = (petitions && Array.isArray(petitions)) ? petitions.map(petition => {
             if (petition.docket_info.ratio === "full") {
                 full++;
             } else {
@@ -81,7 +84,7 @@ export default function ReviewPage(props) {
         })
     }, [petitioner, petitions])
 
-    function postGeneratorRequest(petitioner, petition, index) {
+    async function postGeneratorRequest(petitioner, petition, index) {
         let petitionFields = {
             petitioner: petitioner,
             petition: { ...petition.docket_info, date: today() },
@@ -95,65 +98,33 @@ export default function ReviewPage(props) {
         if (!petitionFields.petition.ratio) {
             petitionFields.petition.ratio = "full";
         }
-    
-        function postRequestConfig() {
-            const token = `Bearer ${authTokens.access}`;
-            return {
-                responseType: "arraybuffer",
-                headers: { Authorization: token },
-            };
-        }
-        console.info(petitionFields);
 
-        return axios
-            .post(postPetitionUrl, petitionFields, postRequestConfig())
-            .then((res) => {
-                if (res.status === 200) {
-                    let blob = new Blob([res.data], {
-                        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    });
-                    const petitionUrl = window.URL.createObjectURL(blob)
-                    return petitionUrl
-                }
-            })
-            .catch((error) => {
-                console.error(error);
-                setSummaryError(index);
-            });
+        console.info("Requesting petition with this data:", petitionFields);
+        try {
+            const blob = await api.generatePetitionBlob(petitionFields, authTokens.access)
+            return window.URL.createObjectURL(blob);
+        } catch {
+            setSummaryError(index);
+        }
     }
 
     function generatePetitions() {
-        const petitionUrls = Promise.all(petitions.map((petition, idx) => {
-            return postGeneratorRequest(petitioner, petition, idx)
+        return Promise.all(petitions.map(async (petition, idx) => {
+            return await postGeneratorRequest(petitioner, petition, idx)
         }))
-        return petitionUrls
     }
 
-    function postSummaryRequest() {
-        
-        let summaryConfig = {
-            responseType: "arraybuffer",
-            headers: { Authorization: `Bearer ${authTokens.access}` },
-        };
-
-        return axios
-            .post(postSummaryUrl, summary, summaryConfig)
-            .then((res) => {
-                if (res.status === 200) {
-                    let blob = new Blob([res.data], {
-                        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    });
-                    const summaryUrl = window.URL.createObjectURL(blob)
-                    return summaryUrl
-                }
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-
+    async function postSummaryRequest() {
+        try {
+            let blob = await api.generatePetitionSummaryBlob(summary, authTokens.access)
+            return window.URL.createObjectURL(blob)
+        } catch (e) {
+            // Additional error handling goes here
+        }
     }
 
     function setSummaryError(errorIndex) {
+        if (!getIsMounted()) return;
         const newPetitionSummaries = summary.petitionSummaries.map((sum, idx) => {
             if (errorIndex === idx) {
                 sum.error = true;
@@ -192,12 +163,13 @@ export default function ReviewPage(props) {
                         setSummaryError(index);
                     }
                 } else {
-                    console.error(`Error fetching pettion ${index}`);
+                    console.error(`Error fetching petition ${index}`);
                 }
             })
         );
-        
+
         const summaryUrl = await postSummaryRequest();
+        if (!getIsMounted()) return;
 
         if (summaryUrl) {
             try {
@@ -240,7 +212,7 @@ export default function ReviewPage(props) {
             </Card>
             {petitionSummaries}
             <Button onClick={saveToZip} className="mr-3 mb-3">Download All Petitions</Button>
-            <Button href="/action" className="mb-3">Start New Petition</Button>
+            <Button href="/" className="mb-3">Start New Petition</Button>
         </Container>
     )
 }

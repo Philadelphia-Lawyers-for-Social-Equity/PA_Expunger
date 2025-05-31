@@ -3,9 +3,19 @@
   --dark-blue: #0a5688;
   --gray: #405664;
   --red: #d55050;
+  --disabled-btn-bg: #ced4da;
+  --disabled-btn-text: #6c757d;
 }
 
 .btn-primary {
   background-color: var(--dark-blue) !important;
   border: 0 !important;
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+  background-color: var(--disabled-btn-bg) !important;
+  color: var(--disabled-btn-text) !important;
+  border: 0 !important;
+  opacity: 1;
 }

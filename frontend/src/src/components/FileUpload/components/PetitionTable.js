@@ -63,7 +63,7 @@ export default function PetitionTable(props) {
                                 <th style={{ width: '40px' }}>#</th>
                                 <th style={{ width: '120px' }}>OTN</th>
                                 <th style={{ width: '220px' }}>Docket No.</th>
-                                <th>Case Name</th>
+                                {/*<th>Case Name</th>*/}
                                 <th style={{ width: '40px' }}>Omit</th>
                             </tr>
                         </thead>
