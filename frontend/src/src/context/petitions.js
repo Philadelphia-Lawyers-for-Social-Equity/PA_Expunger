@@ -26,7 +26,7 @@ export function usePetitions() {
     return useContext(PetitionsContext);
 }
 
-export function PetitionsProvider({children}) {
+export function PetitionsProvider({ children }) {
     const [petitions, setPetitions] = useState(initialPetitionState);
     const [petitionNumber, setPetitionNumber] = useState(0)
     const {isAuthenticated} = useAuth();
@@ -72,7 +72,7 @@ export function PetitionsProvider({children}) {
         setPetitions,
         petitionNumber,
         setPetitionNumber,
-        updatePetitions,
+        updatePetitions
     };
 
     return (
