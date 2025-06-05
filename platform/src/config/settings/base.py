@@ -12,20 +12,20 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from datetime import timedelta
+from pathlib import Path
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))))
+# Assuming this file is in src/config/settings/base.py, and manage.py is in src
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("EXPUNGER_KEY")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 if SECRET_KEY is None or SECRET_KEY.strip() == "":
-    raise ValueError("EXPUNGER_KEY environment variable must be set!")
+    raise ValueError("DJANGO_SECRET_KEY environment variable must be set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'expunger',
     'petition',
     'pa_court_archive',
-    'mod_wsgi.server'
 ]
 
 MIDDLEWARE = [
@@ -64,7 +63,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['frontend'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -77,8 +76,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
@@ -86,14 +83,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('EXPUNGER_DB'),
-        'USER': os.environ.get('EXPUNGER_USER'),
-        'PASSWORD': os.environ.get('EXPUNGER_PASS'),
-        'HOST': os.environ.get('EXPUNGER_DB_HOST'),
-        'PORT': os.environ.get('EXPUNGER_DB_PORT'),
-        'TEST': {
-            'NAME': f"{os.environ.get('EXPUNGER_DB')}_test"
-        },
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
@@ -130,7 +124,7 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -142,7 +136,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = '/static/'
 
 
-LOGIN_URL = '/account/login'
 CORS_ORIGIN_WHITELIST = [os.environ.get("FRONTEND_HOST"),
                          os.environ.get("BACKEND_HOST")]
 

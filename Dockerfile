@@ -1,106 +1,70 @@
-FROM python:3.12
+# Development-only backend image for the Django application.
+# This Dockerfile sets up an environment suitable for local development,
+# prioritizing ease of use, hot-reloading, and debugging.
+FROM python:3.12-slim
 
-ENV INSTALL_DIR /srv/plse/install
-ENV APP_DIR /srv/plse/expunger
+# Environment variables for Python and pip:
+# PYTHONDONTWRITEBYTECODE: Prevents Python from writing .pyc files to disk.
+# PYTHONUNBUFFERED: Forces Python stdout/stderr to be unbuffered, useful for Docker logs.
+# PIP_NO_CACHE_DIR: Disables pip's cache, reducing image size slightly.
+# PIP_DISABLE_PIP_VERSION_CHECK: Disables pip's self-check for new versions.
+# PIP_DEFAULT_TIMEOUT: Default timeout for pip operations.
+# PYTHONUSERBASE: Specifies the base directory for 'pip install --user' packages.
+# PATH: Adds the user's local bin directory (for --user installed scripts) to the system PATH.
+# TZ: Sets the default timezone for the container environment.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    # For --user installs: specifies the base directory for user-specific packages
+    PYTHONUSERBASE=/home/appuser/.local \
+    PATH="/home/appuser/.local/bin:${PATH}" \
+    TZ=America/New_York
 
-ARG EXPUNGER_USER
-ARG EXPUNGER_PASS
-ARG EXPUNGER_KEY
-ARG DJANGO_SETTINGS_MODULE
-ARG REACT_APP_BACKEND_HOST
-ARG BACKEND_ONLY
+# Create a non-root user and group for security best practices.
+# The application will run as this user.
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup --shell /bin/sh --home /home/appuser appuser && \
+    # Ensure the user owns their home directory
+    chown -R appuser:appgroup /home/appuser
 
-ENV PATH "$PATH:/home/${EXPUNGER_USER}/.local/bin"
+# Create application directories and set ownership.
+# These directories will hold docker_parser source code and the main Django application.
+RUN mkdir -p /app/docket_parser /app/src && \
+    chown -R appuser:appgroup /app
 
-# System initialization
+# Switch to the non-root user.
+USER appuser
 
-WORKDIR $INSTALL_DIR
-RUN apt-get update -y -qq && \
-    apt-get upgrade -y -qq && \
-    apt-get install -y -qq \
-    apache2 \
-    apache2-dev \
-    build-essential \
-    git \
-    pkg-config \
-    libcurl4-openssl-dev \
-    libpoppler-cpp-dev \
-    libssl-dev \
-    tzdata \
-    libffi-dev \
-    libpq-dev \
-    vim \
-    # Cleanup
-    && apt-get autoremove -y \
-    && apt-get purge -y \
-    && apt-get clean -y
+# Copy the docket_parser module source into the container.
+COPY --chown=appuser:appgroup ./platform/docket_parser /app/docket_parser
+WORKDIR /app/docket_parser
+# Editable mode (-e) allows changes in the mounted volume (via docker-compose) to be reflected live.
+RUN pip install --user -e .
 
-# TODO: see below about adding this to production build only
-# https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues/47
-# Install Yarn for production frontend build later
-RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash - && \
-    apt-get install -y -qq nodejs
-RUN npm install -g yarn
+# Copy the Django project's requirements.txt.
+COPY ./platform/src/requirements.txt /app/src/requirements.txt
+WORKDIR /app/src
+# Install Python dependencies for the Django project.
+# The '--user' flag installs packages to the user's site-packages directory.
+RUN pip install --user -r requirements.txt
 
-# timezone-related fixes
-RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata
+# Copy the rest of the Django application code.
+# Done after dependencies for Docker cache optimization.
+# docker-compose volume mounts overlay these files for live code editing.
+# The server should restart when changes are detected.
+COPY --chown=appuser:appgroup ./platform/src /app/src
 
-# Provide a local user environment
-# https://jtreminio.com/blog/running-docker-containers-as-current-host-user/#ok-so-what-actually-works
-ARG USER_ID
-ARG GROUP_ID
+# Make the entrypoint script executable
+RUN chmod +x /app/src/dev_entrypoint.sh
 
-RUN if [ ${USER_ID:-0} -ne 0 ] && [ ${GROUP_ID:-0} -ne 0 ];\
-    then \
-        if getent group ${EXPUNGER_USER}; then groupdel ${EXPUNGER_USER}; fi; \
-        if getent passwd ${EXPUNGER_USER}; then userdel -f ${EXPUNGER_USER}; fi; \
-        groupadd -g ${GROUP_ID} ${EXPUNGER_USER} && \
-        useradd -m -l -u ${USER_ID} -g ${EXPUNGER_USER} ${EXPUNGER_USER} \
-    ; else \
-        if ! getent group ${EXPUNGER_USER}; then groupadd ${EXPUNGER_USER}; fi; \
-        if ! getent passwd ${EXPUNGER_USER}; then useradd -m -l -g ${EXPUNGER_USER} ${EXPUNGER_USER}; fi \
-    ; fi
+# Expose the port the Django development server will run on.
+EXPOSE 8000
 
-RUN echo ${EXPUNGER_USER}:${EXPUNGER_PASS} | chpasswd
+# Set the entrypoint script to be executed when the container starts
+ENTRYPOINT ["/app/src/dev_entrypoint.sh"]
 
-USER ${EXPUNGER_USER}
-
-# Library install
-WORKDIR ${INSTALL_DIR}
-
-COPY platform/src/requirements.txt .
-RUN pip3 install -r requirements.txt
-RUN pip3 install --user mod_wsgi
-
-# -- DEV BUILD --
-# Docket parser install
-COPY --chown=${EXPUNGER_USER}:${EXPUNGER_USER} platform/docket_parser ./docket_parser
-RUN pip3 install --user --editable ./docket_parser
-
-# App install
-WORKDIR ${APP_DIR}
-COPY --chown=${EXPUNGER_USER}:${EXPUNGER_USER} platform/src/ .
-
-
-#https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues/47
-# -- PROD BUILD --
-# Frontend install
-
-WORKDIR ${APP_DIR}/frontend/src
-COPY frontend/src/ .
-#Running the command below as root, then switch back to newly created user below
-USER root
-# prod_build.sh will only build the front end if BACKEND_ONLY == "true"
-RUN if [ "$BACKEND_ONLY" = "true" ]; then ./prod_build.sh; else echo "Dev build, frontend not compiled into django."; fi
-
-#Change owner of the newly created files, before running the collectstatic command
-RUN chown --silent --no-dereference --recursive ${EXPUNGER_USER}:${EXPUNGER_USER} ${APP_DIR}
-#Then, switch back to the newly created user - not the root user
-USER ${EXPUNGER_USER}
-
-WORKDIR ${APP_DIR}
-RUN python3 ./manage.py collectstatic --noinput
-
-## -- FINAL BUILD --
-ENTRYPOINT python3 ./manage.py makemigrations && python3 ./manage.py migrate && python3 ./manage.py runmodwsgi --log-to-terminal
+# Default command to run when the container starts.
+# For development, this starts the Django development server.
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

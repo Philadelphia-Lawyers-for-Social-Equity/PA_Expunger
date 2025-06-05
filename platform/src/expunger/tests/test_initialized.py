@@ -7,10 +7,10 @@ from django.contrib.auth.models import Group
 
 class TestSuperUserExists(TestCase):
     """
-    App data migrations must build the EXPUNGER_USER
+    App data migrations must build the SUPERUSER
     """
     def test_expunger_user_is_ready(self):
-        name = os.environ["EXPUNGER_USER"]
+        name = os.environ["SUPERUSER_USERNAME"]
 
         User = get_user_model()
         root = User.objects.get(username=name)

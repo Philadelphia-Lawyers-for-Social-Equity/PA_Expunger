@@ -1,2 +1,0 @@
-# I had to install these via apt
-libpq-dev
