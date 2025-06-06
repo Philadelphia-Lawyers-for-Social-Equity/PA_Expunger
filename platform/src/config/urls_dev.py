@@ -15,7 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from .views import staticbundle
+from django.views.generic.base import RedirectView
+from django.views.defaults import page_not_found
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -26,13 +27,15 @@ urlpatterns = [
          TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v0.2.0/auth/refresh/',
          TokenRefreshView.as_view(), name='token_refresh'),
-    re_path(r'^admin/?', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('account/', include('django.contrib.auth.urls')),
     path('api/v0.2.0/expunger/', include('expunger.urls',
          namespace='expunger')),
     path('api/v0.2.0/petition/', include('petition.urls',
          namespace='petition')),
-    path('api/v0.2.1/pa_court_archive/', include('pa_court_archive.urls',
-         namespace='pa_court_archive')),
-    re_path(r'^(?:.*)/?$', staticbundle),
+    path('', RedirectView.as_view(url='/admin/', permanent=False)),
+    path('admin', RedirectView.as_view(url='/admin/', permanent=False)),
+    # path('api/v0.2.1/pa_court_archive/', include('pa_court_archive.urls',
+    #      namespace='pa_court_archive')),
+    re_path(r'^.*$', page_not_found, {'exception': Exception("Page not found")})
 ]

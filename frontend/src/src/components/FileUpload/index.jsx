@@ -10,10 +10,11 @@ import Petitioner from '../GeneratePage/components/Petitioner';
 import PetitionTable from './components/PetitionTable';
 import Organization from './components/Organization';
 import UploadModal from './components/UploadModal';
+import FallbackMessage from "../FallbackMessage.jsx";
 
 export default function FileUpload(props) {
     const history = useHistory();
-    const { user } = useUser();
+    const { user, initialUserState } = useUser();
     const { petitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
     
@@ -53,6 +54,11 @@ export default function FileUpload(props) {
         }
         // eslint-disable-next-line
     }, [])
+
+    if (!user || user.attorney === initialUserState.attorney || user.organization === initialUserState.organization) {
+        // Wait for attorney and org data, they are required to proceed.
+        return <FallbackMessage/>
+    }
 
     return (
         <div>

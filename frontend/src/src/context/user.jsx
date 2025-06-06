@@ -50,23 +50,10 @@ export function UserProvider({ children }) {
   }, [isAuthenticated, setUser, authenticatedRequest]);
 
   useEffect(() => {
-    async function autoFetchUserProfile() {
-      if (isAuthenticated) {
-        try {
-          const userData = await authenticatedRequest(() => api.getUserProfile());
-          setUser(userData);
-        } catch (error) {
-          setUser(initialUserState);
-        }
-      } else {
-        setUser(initialUserState);
-      }
-    }
+    refreshUserProfile();
+  }, [refreshUserProfile]);
 
-    autoFetchUserProfile();
-  }, [isAuthenticated, setUser, authenticatedRequest]);
-
-  const value = { user, setUser, refreshUserProfile };
+  const value = { user, setUser, refreshUserProfile, initialUserState };
 
   return (
     <UserContext.Provider value={value}>
