@@ -33,13 +33,13 @@ export function useUser() {
 }
 
 export function UserProvider({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authenticatedRequest } = useAuth();
   const [user, setUser] = useState(initialUserState);
 
   const refreshUserProfile = useCallback(async () => {
     if (isAuthenticated) {
       try {
-        const userData = await api.getUserProfile();
+        const userData = await authenticatedRequest(() => api.getUserProfile());
         setUser(userData);
       } catch (error) {
         setUser(initialUserState);
@@ -47,13 +47,13 @@ export function UserProvider({ children }) {
     } else {
       setUser(initialUserState);
     }
-  }, [isAuthenticated, setUser]);
+  }, [isAuthenticated, setUser, authenticatedRequest]);
 
   useEffect(() => {
     async function autoFetchUserProfile() {
       if (isAuthenticated) {
         try {
-          const userData = await api.getUserProfile();
+          const userData = await authenticatedRequest(() => api.getUserProfile());
           setUser(userData);
         } catch (error) {
           setUser(initialUserState);
@@ -65,7 +65,7 @@ export function UserProvider({ children }) {
     }
 
     autoFetchUserProfile();
-  }, [isAuthenticated, setUser]);
+  }, [isAuthenticated, setUser, authenticatedRequest]);
 
   const value = { user, setUser, refreshUserProfile };
 

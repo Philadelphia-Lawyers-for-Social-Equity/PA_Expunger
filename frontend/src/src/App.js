@@ -19,11 +19,11 @@ import {PetitionsProvider} from "./context/petitions";
 
 function App(props) {
     return (
-        <PetitionerProvider>
-            <PetitionsProvider>
-                <AuthProvider>
-                    <UserProvider>
-                        <Router>
+        <Router>
+            <AuthProvider>
+                <PetitionerProvider>
+                    <PetitionsProvider>
+                        <UserProvider>
                             <Nav/>
                             <Switch>
                                 <Route exact path="/login" component={LoginForm}/>
@@ -37,11 +37,11 @@ function App(props) {
                                 <PrivateRoute exact path="/review" component={ReviewPage}/>
                                 <Route path="*" component={PageNotFound}/>
                             </Switch>
-                        </Router>
-                    </UserProvider>
-                </AuthProvider>
-            </PetitionsProvider>
-        </PetitionerProvider>
+                        </UserProvider>
+                    </PetitionsProvider>
+                </PetitionerProvider>
+            </AuthProvider>
+        </Router>
     );
 }
 

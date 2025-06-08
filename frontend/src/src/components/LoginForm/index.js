@@ -13,39 +13,32 @@ export default function LoginForm() {
     const [password, setPassword] = useState("");
     const [logoutMessage, setLogoutMessage] = useState("");
 
-    const {isAuthenticated, setAuthTokens} = useAuth();
+    const {isAuthenticated, login} = useAuth();
     const getIsMounted = useIsMounted();
 
     // Check for logout reason message
     useEffect(() => {
         const reason = sessionStorage.getItem(LOGOUT_REASON_KEY);
-        if (reason) {
-            if (getIsMounted()) {
-                setLogoutMessage(reason);
-            }
+        if (reason && getIsMounted()) {
+            setLogoutMessage(reason);
             sessionStorage.removeItem(LOGOUT_REASON_KEY); // Clear after displaying once
         }
-    }, [getIsMounted]);
+    }, [getIsMounted, setLogoutMessage]);
 
     const handleLoginSubmit = async (event) => {
         // Prevent default form submission
         if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
-
-        if (getIsMounted()) {
-            setIsLoggingIn(true);
-            setLoginError("");
-            setLogoutMessage("");
-        } else {
+        if (!getIsMounted()) {
             return;
         }
+        setIsLoggingIn(true);
+        setLoginError("");
+        setLogoutMessage("");
 
         try {
-            const tokens = await api.login(userName, password);
-            if (getIsMounted()) {
-                setAuthTokens(tokens);
-            }
+            await login(userName, password);
         } catch (error) {
             if (getIsMounted()) {
                 setLoginError(error.response?.data?.detail || error.message ||

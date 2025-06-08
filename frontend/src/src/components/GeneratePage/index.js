@@ -29,7 +29,7 @@ export default function GeneratePage(props) {
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const history = useHistory();
-    const { authTokens } = useAuth();
+    const { authenticatedRequest } = useAuth();
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
@@ -85,7 +85,7 @@ export default function GeneratePage(props) {
         console.info(petitionFields);
         setBusy(true);
         try {
-            let blob = await api.generatePetitionBlob(petitionFields, authTokens.access);
+            let blob = await authenticatedRequest(() => api.generatePetitionBlob(petitionFields));
             let downloadUrl = window.URL.createObjectURL(blob);
             if (getIsMounted()) {
                     setDownloadUrls({

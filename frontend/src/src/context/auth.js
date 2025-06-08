@@ -1,4 +1,6 @@
-import React, {createContext, useCallback, useContext, useEffect, useState} from 'react';
+import React, {createContext, useCallback, useContext, useState, useRef} from 'react';
+import {useHistory} from 'react-router-dom';
+import api from "../services/api"
 
 export const AuthContext = createContext();
 export const TOKEN_STORAGE_KEY = "tokens";
@@ -21,6 +23,9 @@ export function AuthProvider({children}) {
             return null;
         }
     });
+    const isLoggingOut = useRef(false);
+
+    const history = useHistory();
 
     const isAuthenticated = Boolean(authTokens && authTokens.access);
 
@@ -35,41 +40,70 @@ export function AuthProvider({children}) {
         }
     }, []);
 
-    // Handles intentional user logout.
-    const logout = useCallback((userMessage = "You have successfully logged out.") => {
-        sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
-        setAuthTokens(null);
-
-        window.dispatchEvent(new CustomEvent(AUTH_TOKENS_UPDATED_EVENT, {detail: null}));
+    const login = useCallback(async (username, password) => {
+        try {
+            const tokens = await api.login(username, password);
+            setAuthTokens(tokens);
+            isLoggingOut.current = false;
+        } catch (error) {
+            console.error("Login failed:", error);
+            throw error;
+        }
     }, [setAuthTokens]);
 
+    // Handles intentional user logout.
+    const logout = useCallback((userMessage) => {
+        sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
+        setAuthTokens(null);
+        history.push("/login");
+        // window.dispatchEvent(new CustomEvent(AUTH_TOKENS_UPDATED_EVENT, {detail: null}));
+    }, [setAuthTokens, history]);
+
+    const authenticatedRequest = useCallback(async (apiCall) => {
+        if (isLoggingOut.current) {
+            return Promise.reject(new Error("Logout in progress."));
+        }
+
+        try {
+            return await apiCall();
+        } catch (error) {
+            // Check if the error is a 401 Unauthorized
+            if (error.response && error.response.status === 401) {
+                // Token refresh handling will go here
+                isLoggingOut.current = true;
+                logout("Your session has expired. Please log in again.");
+            }
+            throw error;
+        }
+    }, [logout]);
     // Subscribes to the global 'authTokensUpdated' window event.
     // This event is dispatched when auth tokens are externally modified.
     // It allows AuthProvider to synchronize its state (and localStorage via setAuthTokens)
     // with these changes. `event.detail` will be the new tokens object or null for logout.
-    useEffect(() => {
-        const handleExternalTokenUpdate = (event) => {
-            console.log(`AuthContext: Received ${AUTH_TOKENS_UPDATED_EVENT} event.`, event.detail);
-            if (event.detail === null) {
-                setAuthTokens(null);
-            } else if (event.detail && event.detail.access) { // Check for valid token structure
-                setAuthTokens(event.detail);
-            }
-        };
-
-        window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
-
-        // cleanup
-        return () => {
-            window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
-        };
-    }, [setAuthTokens]);
+    // useEffect(() => {
+    //     const handleExternalTokenUpdate = (event) => {
+    //         console.log(`AuthContext: Received ${AUTH_TOKENS_UPDATED_EVENT} event.`, event.detail);
+    //         if (event.detail === null) {
+    //             setAuthTokens(null);
+    //         } else if (event.detail && event.detail.access) { // Check for valid token structure
+    //             setAuthTokens(event.detail);
+    //         }
+    //     };
+    //
+    //     window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
+    //
+    //     // cleanup
+    //     return () => {
+    //         window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
+    //     };
+    // }, [setAuthTokens]);
 
     const value = {
-        authTokens,
-        setAuthTokens,
+        // authTokens,
         isAuthenticated,
-        logout
+        login,
+        logout,
+        authenticatedRequest
     };
 
     return (

@@ -13,7 +13,8 @@ const Navigation = () => {
   const logOutAndReset = () => {
     setPetitioner(initialPetitionerState);
     setPetitions(initialPetitionState);
-    logout();
+    logout("You have successfully logged out.");
+    console.log("Logout navbar button clicked");
   }
 
   return (

@@ -32,46 +32,46 @@ apiClient.interceptors.request.use(
 );
 
 // --- Helper function for logout (called by 401 interceptor) ---
-const performLogout = (userMessage = "You have been logged out.") => {
-    console.warn(`performLogout called with userMessage="${userMessage}"`);
-    sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
-    // Dispatch event for AuthProvider to clear its state and localStorage
-    window.dispatchEvent(new CustomEvent(AUTH_TOKENS_UPDATED_EVENT, {detail: null}));
-};
+// const performLogout = (userMessage = "You have been logged out.") => {
+//     console.warn(`performLogout called with userMessage="${userMessage}"`);
+//     sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
+//     // Dispatch event for AuthProvider to clear its state and localStorage
+//     window.dispatchEvent(new CustomEvent(AUTH_TOKENS_UPDATED_EVENT, {detail: null}));
+// };
 
 // Handles 401 errors for automatic logout
-apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        const originalRequest = error.config;
-
-        if (error.response && error.response.status === 401) {
-            const noLogoutOn401Paths = [
-                '/api/v0.2.0/auth/token/', // Login path
-                // '/api/v0.2.0/auth/refresh/', // Token refresh path
-            ];
-
-            // Check if the request URL is one of the paths where 401 doesn't mean session expiry
-            const isExemptedPath = noLogoutOn401Paths.some(path => originalRequest.url.includes(path));
-
-            if (!isExemptedPath) {
-                // For any other 401, perform logout
-                performLogout("Your session has expired or is invalid. Please log in again.");
-                // Return a new rejected promise to stop further processing in the original call chain.
-                // This makes the original API call fail clearly after logout has been initiated.
-                return Promise.reject(new Error(logout401Message));
-            } else {
-                console.info(`401 on exempted path (${originalRequest.url}), not performing global logout.`);
-            }
-        }
-        return Promise.reject(error);
-    }
-);
+// apiClient.interceptors.response.use(
+//     (response) => response,
+//     (error) => {
+//         const originalRequest = error.config;
+//
+//         if (error.response && error.response.status === 401) {
+//             const noLogoutOn401Paths = [
+//                 '/api/v0.2.0/auth/token/', // Login path
+//                 // '/api/v0.2.0/auth/refresh/', // Token refresh path
+//             ];
+//
+//             // Check if the request URL is one of the paths where 401 doesn't mean session expiry
+//             const isExemptedPath = noLogoutOn401Paths.some(path => originalRequest.url.includes(path));
+//
+//             if (!isExemptedPath) {
+//                 // For any other 401, perform logout
+//                 // performLogout("Your session has expired or is invalid. Please log in again.");
+//                 // Return a new rejected promise to stop further processing in the original call chain.
+//                 // This makes the original API call fail clearly after logout has been initiated.
+//                 return Promise.reject(new Error(logout401Message));
+//             } else {
+//                 console.info(`401 on exempted path (${originalRequest.url}), not performing global logout.`);
+//             }
+//         }
+//         return Promise.reject(error);
+//     }
+// );
 
 function handleError(error) {
-    if (error.message !== logout401Message) {
-        console.error("API error:", error.response?.data || error.message || error);
-    }
+    // if (error.message !== logout401Message) {
+    //     console.error("API error:", error.response?.data || error.message || error);
+    // }
     throw error;
 }
 
