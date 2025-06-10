@@ -47,6 +47,8 @@ The _fastest_ route to a local install should be:
 
 # Setting up the user data
 
+1. A default PLSE user and Attorney are automatically created in the database and can be used during development to access the application. While not necessary for initial development, below are instructions to create a new user and Attorney. 
+
 1. Login to the [Admin Portal](http://localhost:8000/admin)
    - Username: `plse`
    - Password: `defaultTestPassword`
@@ -75,12 +77,11 @@ The Frontend Portal allows users to sign up and associate their account with an 
 1. Login to the [Frontend Portal](http://localhost:3000) using the defaults:
    Username: `plse`
    Password: `defaultTestPassword`
-2. Fill out the sign-up form with your own custom credentials
-3. Select the attorney you created on the backend
+2. Select the default PLSE attorney or a custom attorney you created on the backend. 
 
    ![](https://i.gyazo.com/c6835ea9b7c87e5e8c81326ad4b0febe.png)
 
-4. Post in the #pax Slack channel or DM the project lead to request a test docket, and someone will send you the files. (We are keeping them out of the repo until they are properly anonymized.)
+3. Post in the #pax Slack channel or DM the project lead to request a test docket, and someone will send you the files. (We are keeping them out of the repo until they are properly anonymized.)
 
 ## Settings
 
@@ -94,6 +95,7 @@ Settings are controlled via environment variables, and can be reviewed in the
 - **DJANGO_LOG_LEVEL**=INFO
 - **BACKEND_HOST** sets the hostname and port for the Django backend. Default is `http://localhost:8000`. On production it will need to be changed to match the server URL.
 - **FRONTEND_HOST** sets the hostname and port for the React frontend. Default is `http://localhost:3000`. On production it will need to be changed to gave the server URL.
+- **ENVIRONMENT** Default is `DEV`. When set to Dev, setup scripts are run to initialize the database with default records for development.
 
 ## Troubleshooting:
 
