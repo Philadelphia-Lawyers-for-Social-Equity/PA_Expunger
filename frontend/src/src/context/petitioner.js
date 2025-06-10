@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from "./auth";
 
 export const PetitionerContext = createContext();
 
@@ -15,8 +16,18 @@ export const initialPetitionerState = {
   address: "",
 }
 
-export function PetitionerProvider({ children }) {
+export function PetitionerProvider({children}) {
   const [petitioner, setPetitioner] = useState(initialPetitionerState);
+  const {isAuthenticated} = useAuth();
+
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      if (petitioner !== initialPetitionerState) {
+        setPetitioner(initialPetitionerState);
+      }
+    }
+  }, [isAuthenticated, petitioner, setPetitioner]);
 
   const value = { petitioner, setPetitioner };
 

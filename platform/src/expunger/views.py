@@ -135,14 +135,14 @@ class MyProfileView(APIView):
                 pk=request.data["attorney"])
         except models.Attorney.DoesNotExist:
             return Response(
-                {"detail": "No such attorney"}, status=403)
+                {"detail": "No such attorney"}, status=404)
 
         try:
             organization = models.Organization.objects.get(
                 pk=request.data["organization"])
         except models.Organization.DoesNotExist:
             return Response(
-                {"detail": "No such organization"}, status=403)
+                {"detail": "No such organization"}, status=404)
 
         profile = models.ExpungerProfile(user=request.user, attorney=attorney,
                                          organization=organization)
@@ -172,9 +172,9 @@ class MyProfileView(APIView):
             try:
                 attorney = models.Attorney.objects.get(pk=attorney_id)
             except models.Attorney.DoesNotExist:
-                return Response({"detail": "No such attorney"}, status=403)
+                return Response({"detail": "No such attorney"}, status=404)
         else:
-            return Response({"detail": "Must supply attorney"}, status=403)
+            return Response({"detail": "Must supply attorney"}, status=400)
 
         organization_id = request.data.get("organization", None)
 
@@ -183,9 +183,9 @@ class MyProfileView(APIView):
                 organization = models.Organization.objects.get(
                     pk=organization_id)
             except models.Organization.DoesNotExist:
-                return Response({"detail": "No such organization"}, status=403)
+                return Response({"detail": "No such organization"}, status=404)
         else:
-            return Response({"detail": "Must supply organization"}, status=403)
+            return Response({"detail": "Must supply organization"}, status=400)
 
         if profile is None:
             # Create a new profile if one does not exist for this user

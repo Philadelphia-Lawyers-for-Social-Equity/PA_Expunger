@@ -106,9 +106,9 @@ export default function PetitionRow(props) {
                     {docket_numbers.map((num, i) => <li key={i}>{num}</li>)}
                 </ul>
             </td>
-            <td>
-                Commonwealth of Pennsylvania v. {props.name}
-            </td>
+            {/*<td>*/}
+            {/*    Commonwealth of Pennsylvania v. {props.name}*/}
+            {/*</td>*/}
             <td>
                 <input 
                     type="checkbox"

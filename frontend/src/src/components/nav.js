@@ -6,14 +6,15 @@ import { usePetitioner, initialPetitionerState } from '../context/petitioner';
 import { usePetitions, initialPetitionState } from '../context/petitions';
 
 const Navigation = () => {
-  const { logout, authTokens } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const { setPetitioner } = usePetitioner();
   const { setPetitions } = usePetitions();
 
   const logOutAndReset = () => {
     setPetitioner(initialPetitionerState);
     setPetitions(initialPetitionState);
-    logout();
+    logout("You have successfully logged out.");
+    console.log("Logout navbar button clicked");
   }
 
   return (
@@ -25,7 +26,7 @@ const Navigation = () => {
       inverse="true"
       fluid="true"
     >
-      <Navbar.Brand href="/">
+      <Navbar.Brand as={Link} to="/">
         <img
           src="http://plsephilly.org/wp-content/uploads/2014/11/PLSE_logotype_320.png"
           width="90"
@@ -37,9 +38,9 @@ const Navigation = () => {
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="ml-auto">
-          {authTokens ? (
+          {isAuthenticated ? (
             <>
-              <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
+              {/*<Nav.Link as={Link} to="/profile">Profile</Nav.Link>*/}
               <Nav.Link onClick={logOutAndReset}>Log out</Nav.Link>
             </>
           ) : (

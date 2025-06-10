@@ -12,29 +12,29 @@ import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 import "./style.css";
-import axios from "axios";
 
 import { Button, Form, Row, Col } from "react-bootstrap";
+import api from "../../services/api";
 
 /* TODO:
     - Include ratio.
     - Move components to be imported.
 */
 
-const url =
-    process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/petition/generate/";
-
 export default function GeneratePage(props) {
     /* Props accepts:
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const history = useHistory();
-    const { authTokens } = useAuth();
+    const { authenticatedRequest } = useAuth();
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
+    const getIsMounted = useIsMounted();
+
     const [success, setSuccess] = useState(false);
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
@@ -42,7 +42,7 @@ export default function GeneratePage(props) {
 
     const formDisabled = busy || success[petitionNumber];
     const totalPetitions = petitions.length;
-    const multiPetition = (totalPetitions > 1) ? true : false;
+    const multiPetition = (totalPetitions > 1);
 
     useEffect(() => {
         if (success[petitionNumber] === true) {
@@ -53,16 +53,21 @@ export default function GeneratePage(props) {
 
     // re-create petitions state from history after page refresh
     useEffect(() => {
-        if (petitions === initialPetitionState) {
-            setPetitions(props.location.state.petitionFields.petitions)
+        if (props.location.state && props.location.state.petitionFields) {
+            if (petitions === initialPetitionState && props.location.state.petitionFields.petitions) {
+                setPetitions(props.location.state.petitionFields.petitions);
+            }
+            if (petitioner === initialPetitionerState && props.location.state.petitionFields.petitioner) {
+                setPetitioner(props.location.state.petitionFields.petitioner);
+            }
         }
-        if (petitioner === initialPetitionerState) {
-            setPetitioner(props.location.state.petitionFields.petitioner);
+        else {
+            history.push("/");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    function postGeneratorRequest() {
+    async function postGeneratorRequest() {
         let petitionFields = {
             petitioner: petitioner,
             petition: { ...petitions[petitionNumber].docket_info, date: today() },
@@ -77,48 +82,41 @@ export default function GeneratePage(props) {
             petitionFields.petition.ratio = "full";
         }
 
-        function postRequestConfig() {
-            const token = `Bearer ${authTokens.access}`;
-            return {
-                responseType: "arraybuffer",
-                headers: { Authorization: token },
-            };
-        }
-
         console.info(petitionFields);
         setBusy(true);
-        axios
-            .post(url, petitionFields, postRequestConfig())
-            .then((res) => {
-                if (res.status === 200) {
-                    let blob = new Blob([res.data], {
-                        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    });
-                    let downloadUrl = window.URL.createObjectURL(blob);
+        try {
+            let blob = await authenticatedRequest(() => api.generatePetitionBlob(petitionFields));
+            let downloadUrl = window.URL.createObjectURL(blob);
+            if (getIsMounted()) {
                     setDownloadUrls({
-                        ...downloadUrls,
-                        [petitionNumber]: downloadUrl
-                    });
-                    setSuccess({
-                        ...success,
-                        [petitionNumber]: true
-                    });
-                    setError("");
-                } else {
-                    throw new Error(`${res.status}: ${res.statusText}`)
-                }
-            })
-            .catch((error) => {
+                    ...downloadUrls,
+                    [petitionNumber]: downloadUrl
+                });
                 setSuccess({
+                    ...success,
+                    [petitionNumber]: true
+                });
+                setError("");
+            }
+        } catch (error) {
+            if (getIsMounted()) {
+                    setSuccess({
                     ...success,
                     [petitionNumber]: false
                 });
-                setError("There was an error generating the petition.");
-                console.error(error);
-            })
-            .finally(() => {
+                let displayError =  "There was an error generating the petition.";
+                if (error.response?.detail) {
+                    displayError = error.response?.detail;
+                }
+                setError(displayError);
+
+            }
+
+        } finally {
+            if (getIsMounted()) {
                 setBusy(false);
-            });
+            }
+        }
     }
 
     function edit() {
@@ -129,7 +127,7 @@ export default function GeneratePage(props) {
         setError("");
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
         setError("");
         setSuccess({
             ...success,
@@ -139,7 +137,7 @@ export default function GeneratePage(props) {
         if (!isFormValid()) {
             setErrorMessage()
         } else {
-            postGeneratorRequest();
+            await postGeneratorRequest();
         }
     }
     
@@ -271,7 +269,7 @@ export default function GeneratePage(props) {
                             </div>
                             {(petitionNumber === totalPetitions - 1) && <div className="mr-2 d-inline">
                                 <Link to={{
-                                    pathname: '/action',
+                                    pathname: '/',
                                     state: {petitioner: petitioner}
                                     }} ><Button>New Petition</Button></Link>
                             </div>}

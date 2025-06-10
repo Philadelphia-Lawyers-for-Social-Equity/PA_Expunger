@@ -1,144 +1,119 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Redirect } from "react-router-dom";
-import axios from "axios";
 import Alert from "react-bootstrap/Alert";
-import { Button, Col, Form } from "react-bootstrap";
-import { useAuth } from "../../context/auth";
+import { Button, Form } from "react-bootstrap";
+import { LOGOUT_REASON_KEY, useAuth } from "../../context/auth";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 export default function LoginForm() {
-  const [isError, setIsError] = useState(false);
-  const [is404, setIs404] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const { authTokens, setAuthTokens } = useAuth();
-  const isMounted = useRef(true);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [loginError, setLoginError] = useState("");
+    const [userName, setUserName] = useState("");
+    const [password, setPassword] = useState("");
+    const [logoutMessage, setLogoutMessage] = useState("");
 
-  function onKeyUp(e) {
-    if (e.key === "Enter") {
-      postLogin();
-    }
-  }
+    const { isAuthenticated, login } = useAuth();
+    const getIsMounted = useIsMounted();
 
-  function postLogin() {
-    const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/auth/token/";
-    console.debug("Login url: " + url);
-    axios
-      .post(url, {
-        username: userName,
-        password: password,
-      })
-      .then((res) => {
-        if (isMounted.current) {
-          if (res.status === 200) {
-            setAuthTokens(res.data);
-          } else {
-            setIsError(true);
-          }
+    // TODO: handle the 'next' query parameter, like '/login?next=/upload'
+
+    // Check for logout reason message
+    useEffect(() => {
+        const reason = sessionStorage.getItem(LOGOUT_REASON_KEY);
+        if (reason && getIsMounted()) {
+            setLogoutMessage(reason);
+            sessionStorage.removeItem(LOGOUT_REASON_KEY); // Clear after displaying once
         }
-      })
-      .catch((err) => {
-        if (isMounted.current) {
-          console.error(err);
-          setIsError(true);
+    }, [getIsMounted, setLogoutMessage]);
+
+    const handleLoginSubmit = async (event) => {
+        // Prevent default form submission
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
         }
-      });
-  }
+        if (!getIsMounted()) {
+            return;
+        }
+        setIsLoggingIn(true);
+        setLoginError("");
+        setLogoutMessage("");
 
-  useEffect(() => {
-    if (authTokens && isMounted.current) {
-      const profileurl =
-        process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-      const token = `Bearer ${authTokens.access}`;
-
-      var config = {
-        headers: { Authorization: token },
-      };
-
-      axios
-        .get(profileurl, config)
-        .then((res) => {
-          if (res.status === 200) {
-            setHasProfile(true);
-          }
-        })
-        .catch((err) => {
-          if (err.response.status === 404) {
-            setIs404(true);
-          }
-        });
-    }
-    return () => {
-      isMounted.current = false;
+        try {
+            await login(userName, password);
+        } catch (error) {
+            if (getIsMounted()) {
+                setLoginError(error.response?.data?.detail || error.message ||
+                    "Login failed. Please check your credentials.");
+            }
+        } finally {
+            if (getIsMounted()) {
+                setIsLoggingIn(false);
+            }
+        }
     };
-  }, [authTokens]);
 
-  if (hasProfile || authTokens) {
-    return <Redirect to="/" />;
-  }
+    if (isAuthenticated) {
+        return <Redirect to="/"/>;
+    }
 
-  if (is404) {
-    return <Redirect to="/login" />;
-  }
-
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}>
-      <Form style={{ width: "25em" }}>
-        <Form.Group className="mb-1">
-          <Form.Label column>Username</Form.Label>
-          <Col>
-            <Form.Control
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Username"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-          </Col>
-        </Form.Group>
-        <Form.Group className="mb-4">
-          <Form.Label column>Password</Form.Label>
-          <Col>
-            <Form.Control
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Password"
-              value={password}
-              onKeyDown={(e) => onKeyUp(e)}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </Col>
-        </Form.Group>
-        <Form.Group>
-          <Col>
-            <Button
-              id="SubmitButton"
-              onClick={postLogin}
-              name="action"
-              className="w-100">
-              Submit
-            </Button>
-          </Col>
-        </Form.Group>
-        <Form.Group>
-          <Col>
-            {isError && (
-              <Alert variant="warning">
-                The username or password provided were incorrect.
-              </Alert>
-            )}
-          </Col>
-        </Form.Group>
-      </Form>
-    </div>
-  );
+    return (
+        <div
+            style={{
+                width: "100%",
+                height: "100vh",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }}>
+            <Form style={{width: "100%", maxWidth: "25em"}} onSubmit={handleLoginSubmit}>
+                <h2 className="text-center mb-4">Login</h2>
+                {logoutMessage && (
+                    <Alert variant="info" onClose={() => setLogoutMessage("")} dismissible className="mb-3">
+                        {logoutMessage}
+                    </Alert>
+                )}
+                <Form.Group className="mb-1">
+                    <Form.Label>Username</Form.Label>
+                    <Form.Control
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Username"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        disabled={isLoggingIn}
+                    />
+                </Form.Group>
+                <Form.Group className="mb-4">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoggingIn}
+                    />
+                </Form.Group>
+                <Form.Group>
+                    <Button
+                        id="SubmitButton"
+                        type="submit"
+                        disabled={isLoggingIn || !userName || !password}
+                        // onClick={handleLoginSubmit}
+                        name="action"
+                        className="w-100"
+                    >
+                        {isLoggingIn ? "Logging in..." : "Submit"}
+                    </Button>
+                </Form.Group>
+                {loginError && (
+                    <Alert variant="danger" className="mt-3" onClose={() => setLoginError("")} dismissible>
+                        {loginError}
+                    </Alert>
+                )}
+            </Form>
+        </div>
+    );
 }

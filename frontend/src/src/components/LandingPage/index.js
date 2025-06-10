@@ -1,106 +1,149 @@
-import React, { useState, useEffect } from 'react';
-import { Redirect } from 'react-router-dom';
-import axios from 'axios';
-import { Button, Modal } from 'react-bootstrap';
-import Form from 'react-bootstrap/Form';
+import React, {useCallback, useEffect, useState} from 'react';
+import { useHistory } from 'react-router-dom';
+import { Button, Form, Modal } from 'react-bootstrap';
 import { useAuth } from "../../context/auth";
+import api from "../../services/api";
+import { useIsMounted } from '../../hooks/useIsMounted'
+import { useUser } from "../../context/user";
+
+// TODO: If we add the ability to select an organization, that would happen in this component.
 
 export default function LandingPage() {
     const [attorneyData, setAttorneyData] = useState([]);
-    const [attorneyKey, setAttorneyKey] = useState(0);
-    const [isAttorneyChosen, setAttorneyChosen] = useState(false);
-    const [profileGenerated, setProfileGenerated] = useState(false);
+    const [attorneyKey, setAttorneyKey] = useState(""); // PK of the selected attorney
     const [isError, setIsError] = useState(false);
-    const { authTokens } = useAuth();
+    const [errorMessage, setErrorMessage] = useState("");
 
-    // useEffect is the React Hook equivalent to ComponentDidMount
+    const { isAuthenticated, authenticatedRequest } = useAuth();
+    const { refreshUserProfile } = useUser();
+    const history = useHistory();
+    const getIsMounted = useIsMounted();
+
+    // Fetches the list of attorneys to populate form options.
     useEffect(() => {
-        const token = `Bearer ${authTokens.access}`;
-        var config = {
-            'headers': { 'Authorization': token }
-        };
+        if (isAuthenticated) {
+            (async () => {
+                if (getIsMounted()) {
+                    setIsError(false);
+                    setErrorMessage("");
+                }
 
-        // Get to return all attorneys (PKs are integers)
-        const url = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/attorneys/";
-        axios.get(url, config)
-            .then(
-                res => {
-                    if (res.status === 200) {
-                        // return data
-                        setAttorneyData(res.data);
+                try {
+                    const data = await authenticatedRequest(() => api.getAttorneys());
+                    if (getIsMounted()) {
+                        setAttorneyData(data || []);
+                        if (data && data.length === 0) {
+                            setIsError(true);
+                            setErrorMessage("There are no attorneys registered. Please contact an admin.");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load attorneys:", error);
+                    if (getIsMounted()) {
+                        setIsError(true);
+                        setErrorMessage("Failed to load attorneys. Please try again.");
                     }
                 }
-            )
-    }, [authTokens.access]); // empty array as the second argument will limit to one get call
+            })();
+        } else if (getIsMounted()) {
+            // If not authenticated but the component hasn't been unmounted yet, clear local state.
+            setAttorneyData([]);
+            setIsError(false);
+            setErrorMessage("");
+        }
 
-    // On click for the cancel button
-    function returnLogin() {
-        return <Redirect to="/login" />;
-    }
+    }, [isAuthenticated, getIsMounted, authenticatedRequest]);
 
-    // On click to store the attorney information to local storage
-    function choseAttorney() {
+    const handleAttorneyChange = useCallback((event) => {
+        setAttorneyKey(event.target.value);
+        setIsError(false);
+        setErrorMessage("");
+    }, []);
 
-        // No attorney chosen if blank
-        if (attorneyKey === "") {
+    // On click, submits the selected attorney to update the user's profile and navigate to next route
+    async function handleSubmit() {
+        if (attorneyKey === "" || attorneyKey === "Select one") {
             setIsError(true);
+            setErrorMessage("Please select an attorney.");
+            return;
         }
-        else {
-            setAttorneyChosen(true);
+        setIsError(false);
+        setErrorMessage("");
+
+        const selectedAttorney = attorneyData.find(attorney => `${attorney.pk}` === attorneyKey);
+
+        if (!selectedAttorney) {
+            setIsError(true);
+            setErrorMessage("Selected attorney not found. Please refresh and try again.");
+            console.error("Attorney not found in local data for key:", attorneyKey);
+            return;
+        }
+
+        const profileData = {
+            "attorney": parseInt(attorneyKey),
+            "organization": 1,
+            "user_id": selectedAttorney.user_id
+        };
+        try {
+            const res = await authenticatedRequest(() => api.updateProfile(profileData));
+            console.log("Profile update successful:", res);
+            // Currently, we're skipping the /action route because only one action is implemented
+            // history.push("/action");
+            history.push("/upload");
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            if (getIsMounted()) {
+                const serverError = error.response?.data?.detail || error.message || "Unknown error, try again.";
+                setIsError(true);
+                setErrorMessage(serverError);
+            }
+        } finally {
+            refreshUserProfile();
         }
     }
 
-    if (isAttorneyChosen) {
-
-        const profiledata = {
-            "attorney" : attorneyKey,
-            "organization" : 1,
-            "user_id": attorneyData.filter(attorney => `${attorney.pk}` === attorneyKey)[0]["user_id"]
-        };
-
-        // post to generate profile
-        const profileurl = process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-        const token = `Bearer ${authTokens.access}`;
-        var config = {
-            'headers': { 'Authorization': token }
-        };
-
-        axios.put(profileurl, profiledata, config)
-            .then(res => {
-                if (res.status === 200) {
-                    setProfileGenerated(true);
-                }
-            })
-            .catch(err => { 
-                console.log(err); 
-            });
-    }
-
-    if (profileGenerated) {
-        return <Redirect to="/action" />;
-    }
 
     return (
         <div className="text-center">
             <Modal.Dialog>
-                <Modal.Header closeButton>
+                <Modal.Header>
                     <Modal.Title>Attorneys</Modal.Title>
                 </Modal.Header>
 
                 <Modal.Body>
                     Please select the attorney that you will be filing for:
-                    <Form.Control as="select" id="attorneyNames" value={attorneyKey} onChange={(e) => setAttorneyKey(e.target.value)}>
-                        <option>Select one</option>
-                        {attorneyData.map(item => (
+                    <Form.Control
+                        as="select"
+                        id="attorneyNames"
+                        value={attorneyKey}
+                        onChange={handleAttorneyChange}
+                        disabled={!attorneyData || attorneyData.length === 0}
+                        className="mt-2"
+                    >
+                        <option value="">Select one</option>
+                        {attorneyData?.map(item => (
                             <option value={item.pk} key={item.pk}>{item.name}</option>
                         ))}
                     </Form.Control>
+                    {(!attorneyData || attorneyData.length === 0) && !isError && isAuthenticated &&
+                        <p className="mt-2">Loading attorneys or no attorneys available...</p>
+                    }
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <Button id="cancelButton" variant="outline-secondary" onClick={returnLogin}>Cancel</Button>
-                    <Button id="submitButton" onClick={choseAttorney}>Select</Button>
-                    {isError && <div>Please select an attorney</div>}
+                    <Button
+                        id="submitButton"
+                        onClick={handleSubmit}
+                        disabled={!attorneyKey}
+                    >
+                        Select
+                    </Button>
+                    {isError && <div style={{
+                        color: 'red',
+                        width: '100%',
+                        textAlign: 'center',
+                        marginTop: '10px'
+                    }}>{errorMessage}</div>}
                 </Modal.Footer>
             </Modal.Dialog>
         </div>

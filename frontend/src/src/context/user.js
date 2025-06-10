@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import api from "../services/api"
 
 import { useAuth } from './auth';
 
@@ -33,29 +33,40 @@ export function useUser() {
 }
 
 export function UserProvider({ children }) {
-  const { authTokens } = useAuth();
+  const { isAuthenticated, authenticatedRequest } = useAuth();
   const [user, setUser] = useState(initialUserState);
 
-  const value = { user, setUser };
+  const refreshUserProfile = useCallback(async () => {
+    if (isAuthenticated) {
+      try {
+        const userData = await authenticatedRequest(() => api.getUserProfile());
+        setUser(userData);
+      } catch (error) {
+        setUser(initialUserState);
+      }
+    } else {
+      setUser(initialUserState);
+    }
+  }, [isAuthenticated, setUser, authenticatedRequest]);
 
   useEffect(() => {
-    function fetchUserData() {
-        const token = `Bearer ${authTokens.access}`;
-        var config = {
-          headers: { Authorization: token },
-        };
-    
-        // Get to return user data
-        const url =
-          process.env.REACT_APP_BACKEND_HOST + "/api/v0.2.0/expunger/my-profile/";
-        axios.get(url, config).then((res) => {
-          if (res.status === 200) {
-            setUser(res.data);
-          }
-        })
+    async function autoFetchUserProfile() {
+      if (isAuthenticated) {
+        try {
+          const userData = await authenticatedRequest(() => api.getUserProfile());
+          setUser(userData);
+        } catch (error) {
+          setUser(initialUserState);
+        }
+      } else {
+        setUser(initialUserState);
+      }
     }
-    if (authTokens) fetchUserData();
-  }, [authTokens])
+
+    autoFetchUserProfile();
+  }, [isAuthenticated, setUser, authenticatedRequest]);
+
+  const value = { user, setUser, refreshUserProfile };
 
   return (
     <UserContext.Provider value={value}>

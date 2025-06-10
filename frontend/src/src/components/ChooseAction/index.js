@@ -1,7 +1,6 @@
 import React from "react";
 import { useHistory } from 'react-router-dom';
 import "./style.css";
-//import axios from 'axios';
 import { Button, Modal, Row, Col } from 'react-bootstrap';
 
 

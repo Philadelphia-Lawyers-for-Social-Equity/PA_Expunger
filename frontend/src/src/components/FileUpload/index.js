@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-// import axios from 'axios';
 import { Alert, Button, Card, Container } from 'react-bootstrap';
 
 import { usePetitioner } from '../../context/petitioner';
@@ -19,12 +18,15 @@ export default function FileUpload(props) {
     const { petitions, setPetitions } = usePetitions();
     
     const [doNotGenerate, setDoNotGenerate] = useState([]);
-    const [isError, setIsError] = useState(false);
-    const [show, setShow] = useState(false);
+    const [pageError, setPageError] = useState("");
+    const [showUploadModal, setShowUploadModal] = useState(false);
     const [petitionCount, setPetitionCount] = useState(0);
 
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
+    const handleClose = () => setShowUploadModal(false);
+    const handleShow = () => {
+        setPageError("");
+        setShowUploadModal(true);
+    }
 
 
     function continuePetitionGeneration() {
@@ -80,6 +82,12 @@ export default function FileUpload(props) {
                 >
                     Upload a Court Docket or Court Summary to begin petition generation.
                 </Alert>}
+                {pageError && <Alert
+                    variant="danger"
+                    className="justify-content-md-center text-center mb-4"
+                >
+                    {pageError}
+                </Alert>}
 
                 <Organization organization={user.organization}/>
 
@@ -100,11 +108,10 @@ export default function FileUpload(props) {
                 />
             </Container>
 
-            <UploadModal 
-                isError={isError}
+            <UploadModal
                 handleClose={handleClose}
-                show={show}
-                setIsError={setIsError}
+                show={showUploadModal}
+                setPageError={setPageError}
             />
         </div >
     );

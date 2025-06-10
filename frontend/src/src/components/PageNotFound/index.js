@@ -9,7 +9,7 @@ function PageNotFound() {
                 <Modal.Title>404: Page Not Found</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <p>The page you're looking for doesn't exist.</p>
+                <p>{"The page you're looking for doesn't exist."}</p>
                 <p>Please check the URL or try navigating to a different page.</p>
                 <Link to={{ "pathname": "/" }}>Go Home</Link>
             </Modal.Body>
