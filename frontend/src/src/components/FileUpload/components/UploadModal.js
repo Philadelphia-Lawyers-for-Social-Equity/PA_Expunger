@@ -143,21 +143,13 @@ export default function UploadModal(props) {
             return;
         }
 
-        let updatedCombinedFiles = [...uploadedFiles];
+        let combinedFiles = [...uploadedFiles, ...validPdfArray];
 
-        for (const newFile of validPdfArray) {
-            const existingFileIndex = updatedCombinedFiles.findIndex(
-                (existingFile) => existingFile.name === newFile.name
-            );
-
-            if (existingFileIndex === -1) {
-                // New file name not already in list
-                updatedCombinedFiles.push(newFile);
-            } else {
-                // Replace existing file with new file with same name
-                updatedCombinedFiles[existingFileIndex] = newFile;
-            }
-        }
+        const fileMap = combinedFiles.reduce((accumulator, currentFile) => {
+            accumulator[currentFile.name] = currentFile;
+            return accumulator;
+        }, {});
+        const updatedCombinedFiles = Object.values(fileMap);
         setUploadedFiles(updatedCombinedFiles);
     }
 
