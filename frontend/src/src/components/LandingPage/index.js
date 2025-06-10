@@ -1,10 +1,10 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {useHistory} from 'react-router-dom';
-import {Button, Form, Modal} from 'react-bootstrap';
-import {useAuth} from "../../context/auth";
+import { useHistory } from 'react-router-dom';
+import { Button, Form, Modal } from 'react-bootstrap';
+import { useAuth } from "../../context/auth";
 import api from "../../services/api";
-import {useIsMounted} from '../../hooks/useIsMounted'
-import {useUser} from "../../context/user";
+import { useIsMounted } from '../../hooks/useIsMounted'
+import { useUser } from "../../context/user";
 
 // TODO: If we add the ability to select an organization, that would happen in this component.
 
@@ -14,8 +14,8 @@ export default function LandingPage() {
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
-    const {isAuthenticated, authenticatedRequest} = useAuth();
-    const {refreshUserProfile} = useUser();
+    const { isAuthenticated, authenticatedRequest } = useAuth();
+    const { refreshUserProfile } = useUser();
     const history = useHistory();
     const getIsMounted = useIsMounted();
 

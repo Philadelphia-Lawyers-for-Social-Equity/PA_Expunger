@@ -9,8 +9,8 @@ import { initialPetitionerState, usePetitioner } from "../../context/petitioner"
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import "./style.css";
 import api from "../../services/api";
-import {useAuth} from "../../context/auth";
-import {useIsMounted} from "../../hooks/useIsMounted";
+import { useAuth } from "../../context/auth";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 const initialSummary = {
     name: "",

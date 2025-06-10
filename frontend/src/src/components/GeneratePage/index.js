@@ -12,7 +12,7 @@ import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
-import {useIsMounted} from "../../hooks/useIsMounted";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 import "./style.css";
 
@@ -70,7 +70,7 @@ export default function GeneratePage(props) {
     async function postGeneratorRequest() {
         let petitionFields = {
             petitioner: petitioner,
-            petition: {...petitions[petitionNumber].docket_info, date: today()},
+            petition: { ...petitions[petitionNumber].docket_info, date: today() },
             dockets: petitions[petitionNumber].docket_numbers,
             charges: petitions[petitionNumber].charges,
             fines: petitions[petitionNumber].fines,

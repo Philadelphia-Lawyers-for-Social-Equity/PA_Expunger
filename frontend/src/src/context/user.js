@@ -61,7 +61,6 @@ export function UserProvider({ children }) {
       } else {
         setUser(initialUserState);
       }
-
     }
 
     autoFetchUserProfile();

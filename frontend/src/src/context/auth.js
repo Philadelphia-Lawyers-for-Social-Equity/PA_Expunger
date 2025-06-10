@@ -1,12 +1,10 @@
-import React, {createContext, useCallback, useContext, useState, useRef} from 'react';
-import {useHistory} from 'react-router-dom';
+import React, { createContext, useCallback, useContext, useState, useRef } from 'react';
+import { useHistory } from 'react-router-dom';
 import api from "../services/api"
 
 export const AuthContext = createContext();
 export const TOKEN_STORAGE_KEY = "tokens";
 export const LOGOUT_REASON_KEY = "logoutReason";
-
-export const AUTH_TOKENS_UPDATED_EVENT = 'authTokensUpdated';
 
 export function useAuth() {
     return useContext(AuthContext);
@@ -56,7 +54,6 @@ export function AuthProvider({children}) {
         sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
         setAuthTokens(null);
         history.push("/login");
-        // window.dispatchEvent(new CustomEvent(AUTH_TOKENS_UPDATED_EVENT, {detail: null}));
     }, [setAuthTokens, history]);
 
     const authenticatedRequest = useCallback(async (apiCall) => {
@@ -76,30 +73,8 @@ export function AuthProvider({children}) {
             throw error;
         }
     }, [logout]);
-    // Subscribes to the global 'authTokensUpdated' window event.
-    // This event is dispatched when auth tokens are externally modified.
-    // It allows AuthProvider to synchronize its state (and localStorage via setAuthTokens)
-    // with these changes. `event.detail` will be the new tokens object or null for logout.
-    // useEffect(() => {
-    //     const handleExternalTokenUpdate = (event) => {
-    //         console.log(`AuthContext: Received ${AUTH_TOKENS_UPDATED_EVENT} event.`, event.detail);
-    //         if (event.detail === null) {
-    //             setAuthTokens(null);
-    //         } else if (event.detail && event.detail.access) { // Check for valid token structure
-    //             setAuthTokens(event.detail);
-    //         }
-    //     };
-    //
-    //     window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
-    //
-    //     // cleanup
-    //     return () => {
-    //         window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleExternalTokenUpdate);
-    //     };
-    // }, [setAuthTokens]);
 
     const value = {
-        // authTokens,
         isAuthenticated,
         login,
         logout,

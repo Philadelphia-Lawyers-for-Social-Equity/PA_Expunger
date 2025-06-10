@@ -3,15 +3,15 @@ import { Button, Col, Modal } from 'react-bootstrap';
 
 import api from "../../../services/api";
 import { initialPetitionerState, usePetitioner } from "../../../context/petitioner";
-import {initialPetitionState, usePetitions} from "../../../context/petitions";
-import {useAuth} from "../../../context/auth";
-import {useIsMounted} from "../../../hooks/useIsMounted";
+import { initialPetitionState, usePetitions } from "../../../context/petitions";
+import { useAuth } from "../../../context/auth";
+import { useIsMounted } from "../../../hooks/useIsMounted";
 
 export default function UploadModal(props) {
     const { show, setPageError, handleClose } = props;
     const { petitioner, setPetitioner } = usePetitioner();
     const { setPetitions, setPetitionNumber } = usePetitions();
-    const {authenticatedRequest} = useAuth();
+    const { authenticatedRequest } = useAuth();
 
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [modalError, setModalError] = useState("");

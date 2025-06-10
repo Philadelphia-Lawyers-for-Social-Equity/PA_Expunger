@@ -1,5 +1,5 @@
-import React, {createContext, useContext, useEffect, useState} from "react";
-import {useAuth} from "./auth";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./auth";
 
 export const initialPetitionState = {
     petitions: [
@@ -40,26 +40,6 @@ export function PetitionsProvider({children}) {
         }
     }, [isAuthenticated, petitions, petitionNumber]);
 
-
-    // Effect to listen for the authTokensUpdated event (e.g., on logout)
-    // useEffect(() => {
-    //     const handleAuthChange = (event) => {
-    //         // Check if the event signals a logout (tokens are null)
-    //         if (event.detail === null) {
-    //             console.debug('PetitionsProvider: Auth tokens cleared (logout), resetting petitions data.');
-    //             setPetitions(initialPetitionState);
-    //             setPetitionNumber(0);
-    //         }
-    //     };
-    //
-    //     window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleAuthChange);
-    //
-    //     // Cleanup listener on component unmount
-    //     return () => {
-    //         window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleAuthChange);
-    //     };
-    // }, []);
-
     function updatePetitions(field, petitionNumber, changes) {
         if (['docket_info', 'fines'].includes(field)) {
             let attribute = Object.keys(changes)[0];
@@ -92,7 +72,7 @@ export function PetitionsProvider({children}) {
         setPetitions,
         petitionNumber,
         setPetitionNumber,
-        updatePetitions
+        updatePetitions,
     };
 
     return (

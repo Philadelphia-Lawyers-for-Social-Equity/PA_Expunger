@@ -1,10 +1,9 @@
-import React, {useEffect, useState} from "react";
-import {Redirect} from "react-router-dom";
-import api from "../../services/api"
+import React, { useEffect, useState } from "react";
+import { Redirect } from "react-router-dom";
 import Alert from "react-bootstrap/Alert";
-import {Button, Form} from "react-bootstrap";
-import {LOGOUT_REASON_KEY, useAuth} from "../../context/auth";
-import {useIsMounted} from "../../hooks/useIsMounted";
+import { Button, Form } from "react-bootstrap";
+import { LOGOUT_REASON_KEY, useAuth } from "../../context/auth";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 export default function LoginForm() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -13,8 +12,10 @@ export default function LoginForm() {
     const [password, setPassword] = useState("");
     const [logoutMessage, setLogoutMessage] = useState("");
 
-    const {isAuthenticated, login} = useAuth();
+    const { isAuthenticated, login } = useAuth();
     const getIsMounted = useIsMounted();
+
+    // TODO: handle the 'next' query parameter, like '/login?next=/upload'
 
     // Check for logout reason message
     useEffect(() => {

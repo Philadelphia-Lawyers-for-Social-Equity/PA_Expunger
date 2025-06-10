@@ -1,5 +1,5 @@
 import React from 'react';
-import {Route, Redirect, useLocation} from 'react-router-dom';
+import { Route, Redirect, useLocation } from 'react-router-dom';
 import { useAuth } from "./context/auth";
 
 export default function PrivateRoute({ component: Component, ...rest }) {
@@ -13,8 +13,7 @@ export default function PrivateRoute({ component: Component, ...rest }) {
                 if (isAuthenticated) {
                     return <Component {...props} />;
                 } else {
-                    console.log('PrivateRoute: Not authenticated, redirecting to /login. From:', location.pathname);
-                    return <Redirect to="/login" />;
+                    return <Redirect to={`/login?next=${location.pathname}`} />;
                 }
             }}
         />
