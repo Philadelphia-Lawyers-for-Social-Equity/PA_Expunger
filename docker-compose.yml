@@ -51,7 +51,6 @@ services:
             CI: "false"
             CHOKIDAR_USEPOLLING: "true"
             WATCHPACK_POLLING: "true"
-            GENERATE_SOURCEMAP: "false"
         ports:
             - 3000:3000
         volumes: # not the whole /frontend/src directory because it would overwrite src/.yarn
