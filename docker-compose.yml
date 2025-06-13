@@ -1,70 +1,60 @@
-version: "3.2"
 services:
     postgres:
-        image: postgres:12-alpine
+        image: postgres:17-alpine
         environment:
-            POSTGRES_USER: plse
-            POSTGRES_PASSWORD: ${EXPUNGER_PASS:-defaultTestPassword}
-            POSTGRES_DB: expunger_db
+            POSTGRES_USER: ${DB_USER:-plse}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-defaultTestPassword}
+            POSTGRES_DB: ${DB_NAME:-expunger_db}
         ports:
             - 5432:5432
         restart: on-failure
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
-    expunger:
+    backend:
         build:
             context: ./
             dockerfile: ./Dockerfile
-            args:
-                EXPUNGER_USER: plse
-                EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
-                EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
-                DJANGO_SETTINGS_MODULE: config.settings.dev
-                REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
         depends_on:
             - postgres
-        image: expunger:platform
+        image: pa_expunger-backend:dev
         environment:
-            BACKEND_ONLY: ${BACKEND_ONLY:-"false"}
-            REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
             DJANGO_SETTINGS_MODULE: config.settings.dev
-            EXPUNGER_USER: plse
-            EXPUNGER_PASS: ${EXPUNGER_PASS:-defaultTestPassword}
-            EXPUNGER_KEY: ${EXPUNGER_KEY:-aeiouandyunosetenv}
-            EXPUNGER_DB: expunger_db
-            EXPUNGER_DB_HOST: postgres
-            EXPUNGER_DB_PORT: 5432
-            HOSTNAME: ${BACKEND_HOST:-localhost}
-            FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:3000}
-            BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
+            DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-default_secret_key}
+            DB_NAME: ${DB_NAME:-expunger_db}
+            DB_USER: ${DB_USER:-plse}
+            DB_PASSWORD: ${DB_PASSWORD:-defaultTestPassword}
+            DB_HOST: postgres
+            DB_PORT: 5432
+            FRONTEND_HOST: http://localhost:3000
+            BACKEND_HOST: http://localhost:8000
             DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
+            SUPERUSER_USERNAME: ${SUPERUSER_USERNAME:-plse}
+            SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-defaultTestPassword}
         ports:
             - 8000:8000
         volumes:
-            - ./platform/src/:/srv/plse/expunger
-            - ./platform/docket_parser:/srv/plse/install/docket_parser
+            - ./platform/src:/app/src
+            - ./platform/docket_parser:/app/docket_parser
         restart: on-failure
 
     frontend:
         build:
             context: ./frontend
             dockerfile: Dockerfile
-            args:
-                REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-        depends_on:
-            - expunger
+        image: pa_expunger-frontend:dev
+        stdin_open: true
+        tty: true
         environment:
-            NODE_ENV: production
-            PORT: 3000
-            REACT_APP_BACKEND_HOST: ${BACKEND_HOST:-http://localhost:8000}
-            CI: "true"
+            NODE_ENV: development
+            REACT_APP_BACKEND_HOST: http://localhost:8000
+            CI: "false"
             CHOKIDAR_USEPOLLING: "true"
+            WATCHPACK_POLLING: "true"
         ports:
             - 3000:3000
-        volumes:
-            - ./frontend/src/:/home/node/app/
-            - /home/node/app/node_modules
+        volumes: # not the whole /frontend/src directory because it would overwrite src/.yarn
+            - ./frontend/src/src:/app/src
         restart: on-failure
 volumes:
     postgres_data:

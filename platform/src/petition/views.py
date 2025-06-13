@@ -27,10 +27,6 @@ logger.info(f"DJANGO_LOG_LEVEL: {os.environ.get('DJANGO_LOG_LEVEL')}")
 class PetitionAPIView(APIView):
     def post(self, request, *args, **kwargs):
         logger.debug("PetitionAPIView post")
-        # profile = request.user.expungerprofile
-
-        # logger.debug(f"Profile {profile} found attorney {profile.attorney}")
-
 
         try:
             context = {

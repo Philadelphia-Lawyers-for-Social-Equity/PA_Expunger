@@ -5,8 +5,8 @@ from django.contrib.auth import get_user_model
 
 
 def create_superuser(apps, schema_editor):
-    username = os.environ["EXPUNGER_USER"]
-    password = os.environ["EXPUNGER_PASS"]
+    username = os.environ["SUPERUSER_USERNAME"]
+    password = os.environ["SUPERUSER_PASSWORD"]
 
     User = get_user_model()
     root = User.objects.create_user(username, None, password)

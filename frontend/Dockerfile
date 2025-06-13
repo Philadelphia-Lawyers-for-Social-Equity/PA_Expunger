@@ -1,11 +1,17 @@
-FROM node:13.7.0-alpine3.10
-ARG REACT_APP_BACKEND_HOST
+FROM node:20-alpine
 
-# Pre install node dependencies
-WORKDIR /home/node/app
-COPY ./src/package.json ./
-RUN yarn install
+WORKDIR /app
 
-# Copy and run the app
-COPY ./src/ ./
-CMD yarn run start
+RUN corepack enable
+
+# Copy yarn installation files first for cache optimization
+COPY ./src/package.json ./src/yarn.lock ./src/.pnp* ./src/.yarnrc.yml ./
+COPY ./src/.yarn ./.yarn
+
+RUN yarn install --immutable
+
+COPY ./src ./
+
+EXPOSE 3000
+
+CMD ["yarn", "start", "--host"]

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document will outline guidelines for contributing to the docket-dashboard [codebase](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard).
+This document will outline guidelines for contributing to the PA Expunger [codebase](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger).
 
 ## A note about sensitivity
 
@@ -12,7 +12,7 @@ It is vital to this project that the developers building this value the privacy,
 
 ## Joining the regular meetings
 
-We host biweekly meetings both in person and remotely. This is largely where we make decisions, communicate PLSE's needs, and set up collaborative pairing sessions to get large chunks of work done.
+We host two meetings per month, one at the Code for Philly hacknight, and one remotely. This is largely where we make decisions, communicate PLSE's needs, and set up collaborative pairing sessions to get large chunks of work done.
 
 The best way to find out about our meetings is joining the [#pax](https://app.slack.com/client/T03NV85SZ/CJDHS591S) channel on the [Code for Philly](https://www.codeforphilly.org/) [Slack](https://www.codeforphilly.org/chat/).
 
@@ -154,3 +154,89 @@ git pull
 # Delete the branch from your local machine
 git branch -d <new-branch-name>
 ```
+
+## Managing Frontend Dependencies
+
+Our frontend is built using **Yarn v4** with the **Zero-Installs**. This provides a reliable and consistent development environment for everyone.
+
+### Key Concepts
+
+* **Zero-Installs:** Instead of a `node_modules` folder, all package dependencies are stored as zip archives inside the `.yarn/cache` directory.
+* **Plug'n'Play (PnP):** A file named `.pnp.cjs` tells Node.js how to find and load these packages directly from the cache.
+* **Checked-in Dependencies:** Because of this setup, the `.yarn/cache` directory and the `.pnp.cjs` file are checked directly into Git. This means you don't need to run `yarn install` after cloning the repository—all dependencies are already there.
+
+### The Golden Rule
+
+> **IMPORTANT:** To ensure consistency across all operating systems, any command that modifies dependencies (`yarn add`, `yarn remove`, `yarn up`) **must be run inside a specific Docker container**, not on your host machine (e.g., your Mac or Windows laptop).
+>
+> Running these commands locally can write platform-specific binaries to the cache, which will break the build for other developers or in CI/CD environments.
+
+### The Correct Workflow for Updating Dependencies
+
+Follow these steps precisely whenever you need to add, update, or remove a frontend package.
+
+**1. Run the Dependency Management Container**
+
+From the root of the project, run the following command. This starts a temporary, clean Node.js container and mounts your project directory into it.
+
+```bash
+# On macOS, Linux, or Windows with Git Bash:
+cd frontend/src # location of package.json
+docker run -it --rm -v "${PWD}:/app" -w /app node:20-alpine sh -c "corepack enable && sh"
+
+# On Windows with Command Prompt (CMD):
+cd frontend/src
+docker run -it --rm -v "%CD%:/app" -w /app node:20-alpine sh -c "corepack enable && sh"
+```
+
+**Understanding the Command:**
+
+* `docker run`: Executes a command in a new container.
+* `-it`: Keeps the session interactive, so you can type commands.
+* `--rm`: Automatically removes the container when you exit, keeping your system clean.
+* `-v "${PWD}:/app"`: Mounts your current project directory (represented by `${PWD}`) into the `/app` directory inside the container.
+* `-w /app`: Sets the working directory inside the container to `/app`.
+* `node:20-alpine`: Specifies the image to use, which is the same as our frontend's base image.
+* `sh -c "corepack enable && sh"`: A command that first enables `corepack` (Yarn's modern manager) and then starts an interactive shell (`sh`) for you to use.
+
+**2. Modify Dependencies**
+
+Once you are inside the container's shell (your terminal prompt will change), you can run your Yarn commands as usual.
+
+**To add a new package:**
+
+```sh
+yarn add <package-name>
+```
+
+**To see latest versions of packages and upgrade them:**
+
+```sh
+yarn upgrade-interactive
+```
+
+**To remove a package:**
+
+```sh
+yarn remove <package-name>
+```
+
+**3. Exit the Container**
+
+When you are finished, simply type `exit` and press Enter to close the container.
+
+```sh
+exit
+```
+
+**4. Commit Your Changes**
+
+After exiting the container, you will see that files in your local project directory have been modified. You must commit all of these changes to your pull request. This typically includes:
+
+* `package.json`
+* `yarn.lock`
+* `.pnp.cjs`
+* `.pnp.loader.mjs`
+* New or updated files within the `.yarn/cache` directory.
+
+By following this process, you ensure that the dependency cache remains consistent and platform-agnostic for the entire team.
