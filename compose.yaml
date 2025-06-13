@@ -55,6 +55,7 @@ services:
             - 3000:3000
         volumes: # not the whole /frontend/src directory because it would overwrite src/.yarn
             - ./frontend/src/src:/app/src
+            - ./frontend/src/public:/app/src/public
         restart: on-failure
 volumes:
     postgres_data:

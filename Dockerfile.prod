@@ -1,0 +1,92 @@
+# ---- Stage 1: Frontend Builder ----
+# This stage builds the static React assets using Node.js and Yarn.
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app
+
+# Enable Corepack to use the Yarn version specified in package.json
+RUN corepack enable
+
+# Copy only the necessary files to leverage Docker cache
+COPY ./frontend/src/package.json ./frontend/src/yarn.lock ./frontend/src/.yarnrc.yml ./frontend/src/.pnp* ./
+COPY ./frontend/src/.yarn ./.yarn
+
+# Install dependencies using the committed cache for speed.
+# The --immutable flag ensures yarn.lock isn't modified.
+RUN yarn install --immutable
+
+# Copy the rest of the frontend source code
+COPY ./frontend/src ./
+
+# Build the production static files. For Vite, this creates a 'dist' directory.
+RUN yarn build
+
+
+# ---- Stage 2: Backend Dependency Builder ----
+# This stage installs Python dependencies, including those with C extensions,
+# using build tools. This keeps the final image smaller and more secure.
+FROM python:3.12-slim AS backend-builder
+
+# Create a virtual environment
+RUN python -m venv /opt/venv
+
+# Activate the virtual environment for subsequent commands
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies and our module docket_parser into the virtual environment
+COPY ./platform/src/requirements.txt /app/requirements.txt
+COPY ./platform/docket_parser /app/docket_parser_src
+RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install /app/docket_parser_src
+
+# ---- Stage 3: Final Production Image ----
+# This stage assembles the final, lean image for runtime.
+FROM python:3.12-slim AS final
+
+# Create a non-root user and group for security
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser
+
+# Set environment variables for the runtime environment
+ENV VENV_PATH=/opt/venv
+ENV PATH="$VENV_PATH/bin:$PATH"
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Set production settings file
+    DJANGO_SETTINGS_MODULE=config.settings.prod \
+    # Gunicorn settings can be controlled via env vars
+    WEB_CONCURRENCY=4 \
+    # Set default timezone for the container
+    TZ=America/New_York
+
+# Copy the virtual environment from the backend-builder stage
+COPY --from=backend-builder /opt/venv /opt/venv
+
+# Create application directory
+WORKDIR /app
+RUN mkdir -p /app/src /app/staticfiles_build && chown -R appuser:appgroup /app
+
+# Copy the built static frontend assets from the frontend-builder stage
+COPY --from=frontend-builder --chown=appuser:appgroup /app/dist /app/staticfiles_build
+
+# Copy the backend source code
+COPY --chown=appuser:appgroup ./platform/src /app/src
+
+WORKDIR /app/src
+
+# Run collectstatic. Django will find the app's static files and the
+# React files copied to /app/staticfiles_build
+RUN DJANGO_SECRET_KEY='insecure-key-for-collectstatic-only' python manage.py collectstatic --noinput
+# Switch to the non-root user for runtime
+USER appuser
+
+# Expose the port Gunicorn will run on
+EXPOSE 8000
+
+# Make the entrypoint script executable
+RUN chmod +x /app/src/prod_entrypoint.sh
+
+ENTRYPOINT ["/app/src/prod_entrypoint.sh"]
+
+# Run the application using Gunicorn as the WSGI server
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "config.wsgi:application"]

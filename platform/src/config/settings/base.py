@@ -13,7 +13,12 @@ if SECRET_KEY is None or SECRET_KEY.strip() == "":
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-ALLOWED_HOSTS = ['*']
+
+allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS')
+if allowed_hosts_str:
+    ALLOWED_HOSTS = allowed_hosts_str.split(',')
+else:
+    ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -23,17 +28,15 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
     'expunger',
     'petition',
     # 'pa_court_archive', This app is no longer being used or maintained.
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -111,15 +114,6 @@ TIME_ZONE = 'America/New_York'
 USE_I18N = True
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = '/static/'
-
-
-CORS_ALLOWED_ORIGINS = [os.environ.get("FRONTEND_HOST"),
-                         os.environ.get("BACKEND_HOST")]
 
 LOGGING = {
     'version': 1,

@@ -7,10 +7,10 @@ set -e
 # manual, developer-driven action.
 
 # Apply database migrations
-echo "Backend Dev Entrypoint: Applying database migrations..."
+echo "Backend Production Entrypoint: Applying database migrations..."
 python manage.py migrate --noinput
 
 # Then exec the container's main process (what's specified in CMD in the Dockerfile).
 # This allows the main process to be PID 1 and receive signals correctly.
-echo "Backend Entrypoint: Starting server..."
+echo "Backend Production Entrypoint: Starting Gunicorn..."
 exec "$@"
