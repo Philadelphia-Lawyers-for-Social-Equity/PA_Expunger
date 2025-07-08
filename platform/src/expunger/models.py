@@ -31,6 +31,14 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @staticmethod
+    def from_dict(data):
+        return Organization(
+            name=data["name"],
+            phone=data["phone"],
+            address_id=data["address"]["pk"],
+        )
 
 
 class Attorney(models.Model):
@@ -44,6 +52,13 @@ class Attorney(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
+    
+    @staticmethod
+    def from_dict(data):
+        return Attorney(
+            user_id=data["user_id"],
+            bar=data["bar"],
+        )
 
 
 class ExpungerProfile(models.Model):

@@ -17,11 +17,11 @@ def random_text(length):
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = get_user_model()
+        skip_postgeneration_save = True
 
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     email = factory.Faker("ascii_email")
-    password = factory.LazyAttribute(lambda o: o.set_password(random_text(8)))
 
     @factory.lazy_attribute
     def username(self):
@@ -29,6 +29,8 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def password(obj, created, extracted, *args, **kwargs):
+        if not created:
+            return
 
         if extracted is None:
             password = random_text(8)
@@ -36,6 +38,7 @@ class UserFactory(factory.django.DjangoModelFactory):
             password = extracted
 
         obj.set_password(password)
+        obj.save()
 
 
 class AddressFactory(factory.django.DjangoModelFactory):

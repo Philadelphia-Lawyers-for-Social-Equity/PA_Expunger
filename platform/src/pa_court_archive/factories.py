@@ -47,6 +47,7 @@ class DocketFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Docket
+        skip_postgeneration_save = True
 
     docket_number = factory.Sequence(lambda n: f"MC-51-CR-100{n:04d}-2020")
     case = factory.SubFactory("pa_court_archive.factories.CaseFactory")

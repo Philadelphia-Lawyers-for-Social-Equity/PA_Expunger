@@ -1,10 +1,13 @@
+import logging
 import re
+from contextlib import ExitStack
 
 import pytest
 from django.test import TestCase
 from django.urls import reverse
 from expunger.tests.test_rest import Authenticated
 from petition import factories
+from expunger.factories import OrganizationFactory, AttorneyFactory
 
 from docket_parser import test_data_path
 
@@ -19,6 +22,8 @@ class TestPetitionAPI(Authenticated, TestCase):
         petition = factories.PetitionFactory()
         fines = factories.FinesFactory()
         charges = [factories.ChargeFactory(), factories.ChargeFactory()]
+        organization = OrganizationFactory()
+        attorney = AttorneyFactory()
 
         return {
             "petitioner": {
@@ -37,6 +42,7 @@ class TestPetitionAPI(Authenticated, TestCase):
             "petition": {
                 "date": petition.date,
                 "complaint_date": petition.complaint_date,
+                "arrest_date": petition.arrest_date,
                 "ratio": petition.ratio.name,
                 "otn": petition.otn,
                 "judge": petition.judge,
@@ -62,6 +68,28 @@ class TestPetitionAPI(Authenticated, TestCase):
                 "disposition": charges[1].disposition,
                 }
             ],
+            "category": "Docket",
+            "organization": {
+                "name": organization.name,
+                "address": {
+                    "pk": 1,
+                    "street1": organization.address.street1,
+                    "street2": organization.address.street2,
+                    "city": organization.address.city,
+                    "state": organization.address.state,
+                    "zipcode": organization.address.zipcode
+                },
+                "phone": organization.phone,
+                "pk": 1,
+                "url": "http://localhost:8000/api/v0.2.0/expunger/organization/1",
+            },
+            "attorney": {
+                "name": f"{attorney.user.first_name} {attorney.user.last_name}",
+                "bar": attorney.bar,
+                "pk": 1,
+                "url": "http://localhost:8000/api/v0.2.0/expunger/attorney/1/",
+                "user_id": 1,
+            },
         }
 
     def test_petition(self):
@@ -74,6 +102,40 @@ class TestPetitionAPI(Authenticated, TestCase):
         self.assertEqual(res.status_code, 200)
 
 
+class TestGeneratorReportAPI(Authenticated, TestCase):
+    """Check that the generator report REST API works"""
+
+    def test_generator_report(self):
+        """Generator report can be produced via REST API"""
+        
+        data = {
+            "name": "Jon Doe",
+            "dob": "1900-10-22",
+            "actions": {
+                "partial": 1,
+                "full": 1,
+            },
+            "petitionSummaries": [
+                {
+                    "docket_numbers": ['CP-451-CR-4896578-1000', 'CP-51-MD-7321720-7237'],
+                    "otn": "D 321123-5",
+                    "action": "partial",
+                    "error": False,
+                },
+                {
+                    "docket_numbers": ['CP-51-CR-1562453-2000'],
+                    "otn": "L 741258-3",
+                    "action": "full",
+                    "error": False,
+                },
+            ],
+        }
+
+        url = reverse("petition:generator-report")
+        res = self.authenticated_client.post(url, data, content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+
+
 class TestDocketParserAPI(Authenticated, TestCase):
     """Tests for the REST docket processing API"""
 
@@ -81,7 +143,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
         """Check that posting a specific docket file works and generates expected information."""
         url = reverse("petition:parse-docket")
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
 
         with pdf_path.open("rb") as file:
             res = self.authenticated_client.post(url, {"docket_file": file})
@@ -93,9 +155,9 @@ class TestDocketParserAPI(Authenticated, TestCase):
 
         # Not storing sensitive PII in tests, instead checking that result has correct shape
         petitioner = jsr["petitioner"]
-        assert len(petitioner["name"]) == 15
+        assert len(petitioner["name"]) == 14
         assert len(petitioner["aliases"]) == 1
-        assert len(petitioner["aliases"][0]) == 13
+        assert len(petitioner["aliases"][0]) == 12
         dob = petitioner["dob"]
         assert re.match(r"^\d{4}-\d{2}-\d{2}$", dob), f"Incorrect or missing date of birth: {dob}"
 
@@ -103,15 +165,16 @@ class TestDocketParserAPI(Authenticated, TestCase):
             jsr["petitions"][0]["docket_info"],
             {
                 "judge": "Fleisher, Leslie",
-                "complaint_date": "**REMOVED*",
-                "otn": "**REMOVED*",
-                "ratio": "full"
+                "complaint_date": "1913-11-16",
+                "arrest_date": "1902-04-11",
+                "otn": "T 760873-7",
+                "ratio": "full",
             }
         )
 
         self.assertEqual(
             jsr["petitions"][0]["docket_numbers"],
-            ["*******REMOVED*******", "*******REMOVED*******"]
+            ["CP-51-CR-8442151-4164", "MC-51-CR-2011455-6885"]
         )
 
         self.assertEqual(
@@ -120,49 +183,49 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 {
                     "description": "FORGERY",
                     "statute": "18 § 4101",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY UNLAWFUL TAKING OR DISPOSITION",
                     "statute": "18 § 3921",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY DECEPTION",
                     "statute": "18 § 3922",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "THEFT BY RECEIVING STOLEN PROPERTY",
                     "statute": "18 § 3925",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "TAMPERING WITH RECORDS OR IDENTIFICATION",
                     "statute": "18 § 4104",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 },
                 {
                     "description": "Bad Checks",
                     "statute": "18 § 4105 §§ A1",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": "M2",
                     "disposition": "Guilty Plea"
                 },
                 {
                     "description": "SECURING EXEC DOCUMENTS BY DECEPTION",
                     "statute": "18 § 4114",
-                    "date": "**REMOVED*",
+                    "date": "1917-02-28",
                     "grade": None,
                     "disposition": "Nolle Prossed"
                 }
@@ -172,7 +235,7 @@ class TestDocketParserAPI(Authenticated, TestCase):
     def test_post_fines(self):
         """Get amounts for fines & fees."""
         url = reverse("petition:parse-docket")
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
 
         with pdf_path.open("rb") as f:
             res = self.authenticated_client.post(url, {"docket_file": f})
@@ -188,6 +251,95 @@ class TestDocketParserAPI(Authenticated, TestCase):
             }
         )
 
+    def test_post_court_summary(self):
+        """Check that posting a specific court summary file works and generates
+        expected information"""
+        url = reverse("petition:parse-docket")
+
+        pdf_path = test_data_path / "court_summaries" / "pdfs" / "anon_publicly-available.pdf"
+        with pdf_path.open("rb") as file:
+            res = self.authenticated_client.post(url, {"docket_file": file})
+        self.assertEqual(res.status_code, 200)
+        jsr = res.json()
+
+        petitioner = jsr["petitioner"]
+        assert len(petitioner["name"]) == 12
+        assert len(petitioner["aliases"]) == 3
+        assert len(petitioner["aliases"][0]) == 19
+        dob = petitioner["dob"]
+        assert re.match(r"^\d{4}-\d{2}-\d{2}$", dob), f"Incorrect or missing date of birth: {dob}"
+
+        assert len(jsr["petitions"]) == 2
+
+        self.assertEqual(
+            jsr["petitions"][0]["docket_info"],
+            {
+                "arrest_date": "1912-01-11",
+                "complaint_date": None,
+                "judge": "Hayden, Charles",
+                "otn": "P 975786-5",
+                "ratio": "full"
+            }
+        )
+
+        self.assertEqual(
+            jsr["petitions"][0]["docket_numbers"],
+            ["CP-51-CR-1335055-0346", "MC-51-CR-6340310-2635"]
+        )
+
+        self.assertEqual(
+            jsr["petitions"][0]["charges"],
+            [
+                {
+                    "description": "Robbery-Inflict Threat Imm Bod Inj",
+                    "statute": "18 § 3701",
+                    "date": None,
+                    "grade": None,
+                    "disposition": None
+                },
+                {
+                    "description": "Criminal Attempt - Theft By Unlaw Taking-Movable Prop",
+                    "statute": "18 § 901",
+                    "date": None,
+                    "grade": None,
+                    "disposition": None
+                },
+                {
+                    "description": "Criminal Mischief - Damage Property",
+                    "statute": "18 § 3304",
+                    "date": None,
+                    "grade": None,
+                    "disposition": None
+                },
+                {
+                    "description": "Robbery-Inflict Threat Imm Bod Inj",
+                    "statute": "18 § 3701 §§ A1IV",
+                    "date": "1940-09-27",
+                    "grade": "F2",
+                    "disposition": "Held for Court"
+                },
+                {
+                    "description": "Criminal Attempt - Theft By Unlaw Taking-Movable Prop",
+                    "statute": "18 § 901 §§ A",
+                    "date": "1940-09-27",
+                    "grade": "M1",
+                    "disposition": "Held for Court"
+                },
+                {
+                    "description": "Criminal Mischief - Damage Property",
+                    "statute": "18 § 3304 §§ A5",
+                    "date": "1940-09-27",
+                    "grade": "M2",
+                    "disposition": "Held for Court"
+                }
+            ]
+        )
+
+        self.assertEqual(
+            jsr["petitions"][1]["docket_numbers"],
+            ["MC-51-CR-0515540-5251"]
+        )
+
     @pytest.mark.slow
     def test_all_dockets(self):
         """Check that each test docket can be processed without error. (Does not check for correct result)"""
@@ -199,14 +351,14 @@ class TestDocketParserAPI(Authenticated, TestCase):
                 assert response.status_code == 200
                 expected_keys = {"petitioner", "petitions"}
                 assert set(response.json().keys()) == expected_keys
-                expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines"}
+                expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines", "category"}
                 assert set(response.json()["petitions"][0].keys()) == expected_petition_keys
 
     def test_multidockets_1(self):
-        """Ensure we get relevant docket numbers from merge-cp-01.pdf"""
-        expect = ["*******REMOVED*******", "*******REMOVED*******"]
+        """Ensure we get relevant docket numbers from anon_merge-cp-01.pdf"""
+        expect = ["CP-51-CR-8442151-4164", "MC-51-CR-2011455-6885"]
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-cp-01.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-cp-01.pdf"
         url = reverse("petition:parse-docket")
 
         with pdf_path.open("rb") as f:
@@ -219,10 +371,10 @@ class TestDocketParserAPI(Authenticated, TestCase):
         self.assertEqual(jsr["petitions"][0]["docket_numbers"], expect)
 
     def test_multidockets_2(self):
-        """Ensure we get relevant docket numbers from merge-mc-02.pdf"""
-        expect = ["*******REMOVED*******", "*******REMOVED*******"]
+        """Ensure we get relevant docket numbers from anon_merge-mc-02.pdf"""
+        expect = ["MC-51-CR-5319217-9189", "CP-51-CR-6693526-3219"]
 
-        pdf_path = test_data_path / "dockets" / "pdfs" / "merge-mc-02.pdf"
+        pdf_path = test_data_path / "dockets" / "pdfs" / "anon_merge-mc-02.pdf"
         url = reverse("petition:parse-docket")
 
         with pdf_path.open("rb") as f:
@@ -233,3 +385,39 @@ class TestDocketParserAPI(Authenticated, TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertNotIn("error", jsr, msg=f"Unexpected error: {jsr}")
         self.assertEqual(jsr["petitions"][0]["docket_numbers"], expect)
+
+    def test_all_court_summaries(self):
+        """Check that each test court summary can be processed without error.
+        (Does not check for correct result)"""
+        url = reverse("petition:parse-docket")
+        test_court_summary_paths = (test_data_path / "court_summaries" / "pdfs").glob("*.pdf")
+        for test_court_summary_path in test_court_summary_paths:
+            with test_court_summary_path.open("rb") as f:
+                response = self.authenticated_client.post(url, {"docket_file": f})
+                assert response.status_code == 200
+                expected_keys = {"petitioner", "petitions"}
+                assert set(response.json().keys()) == expected_keys
+                expected_petition_keys = {"charges", "docket_info", "docket_numbers", "fines", "category", "county"}
+                assert set(response.json()["petitions"][0].keys()) == expected_petition_keys
+
+    def test_docket_grouping(self):
+        """Check that records from a court summary and court dockets are correctly grouped by OTN and docket number"""
+        url = reverse("petition:parse-docket")
+        pdf_paths = (test_data_path / "combined_records" / "pdfs").glob("anon_example_01*.pdf")
+        with ExitStack() as stack:
+            files = {"docket_file": [stack.enter_context(open(path, "rb")) for path in pdf_paths]}
+            res = self.authenticated_client.post(url, files)
+        jsr = res.json()
+
+        # We want the OTNs in the order that they appear on the Court Summary
+        OTNs = [petition["docket_info"].get("otn") for petition in jsr["petitions"]]
+        assert OTNs == ["F 372272-1", "P 733709-9", "N 665222-2", "W 900260-2"]
+
+        # Order of docket numbers within each petition doesn't matter, so we use sets
+        docket_number_sets = [set(petition.get("docket_numbers")) for petition in jsr["petitions"]]
+        expected_docket_number_sets = [{"CP-51-CR-3598712-5872", "MC-51-CR-5827715-5723"},
+                                       {"MC-51-CR-2358911-1585"},
+                                       {"MC-51-CR-5587585-2178"},
+                                       {"CP-51-CR-2587279-1518", "MC-51-CR-5899178-1791"}]
+        assert docket_number_sets == expected_docket_number_sets
+        assert len(jsr["petitions"]) == 4

@@ -1,41 +1,37 @@
 {
   "name": "plse-app",
-  "version": "0.1.0",
+  "type": "module",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
-    "axios": "^0.19.2",
-    "bootstrap": "^4.5.3",
-    "react": "^16.14.0",
-    "react-bootstrap": "^1.4.3",
-    "react-currency-input-field": "^3.6.11",
-    "react-dom": "^16.14.0",
-    "react-icons": "^5.2.1",
-    "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1",
-    "uuid": "^8.3.2",
-    "yarn": "^1.22.10",
+    "@popperjs/core": "^2.11.8",
+    "axios": "^1.9.0",
+    "bootstrap": "^5.3.6",
+    "file-saver": "2.0.5",
     "jszip": "3.10.1",
-    "file-saver": "2.0.5"
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.10",
+    "react-currency-input-field": "^3.10.0",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^5.3.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@vitejs/plugin-react": "^4.5.1",
+    "eslint": "^8.22.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5",
+    "vite": "^6.3.5",
+    "vite-plugin-svgr": "^4.3.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "packageManager": "yarn@4.9.1"
 }
