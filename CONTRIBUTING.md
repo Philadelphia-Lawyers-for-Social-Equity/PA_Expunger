@@ -24,7 +24,7 @@ We also use issues for tracking our own team needs (e.g. adding documentation).
 
 ### Add an issue
 
-Navigate to our [issues page on Github](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) and hit the big green `New` button.
+Navigate to our [issues page on Github](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) and hit the big green `New` button.
 
 ### Types of issues
 
@@ -48,11 +48,11 @@ Clear context of why this new feature is needed and clear descriptions of what i
 
 ## Making code changes
 
-Changes to our codebase should always address an [issue](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) and need to be requested to be merged by submitting a pull request that will be reviewed by at least the team lead or two other contributors.
+Changes to our codebase should always address an [issue](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) and need to be requested to be merged by submitting a pull request that will be reviewed by at least the team lead or two other contributors.
 
 ### Choose an issue
 
-Look through the [issues page](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) in the repo.
+Look through the [issues page](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) in the repo.
 
 Find a task that has no current assignees and sounds like a task that either you can confidently take on yourself or involves a new language, framework, or design that you want learn.
 
@@ -104,7 +104,7 @@ git push
 
 In order to merge your work to the `develop` branch you must create a pull request.
 
-Often Github will put up a notification that a new branch has been pushed and give a green "Make a PR" button on any page of the repo. If you don't see this you can go to the [pull requests tab](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/pulls) and hit the big green `New` button.
+Often Github will put up a notification that a new branch has been pushed and give a green "Make a PR" button on any page of the repo. If you don't see this you can go to the [pull requests tab](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/pulls) and hit the big green `New` button.
 
 There is a template to follow to make sure that reviewers have enough context about the changes you made and what they fix.
 
