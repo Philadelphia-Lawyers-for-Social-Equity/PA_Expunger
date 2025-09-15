@@ -25,5 +25,5 @@ Closes ###
 ### Before merging
 
 - [ ] PR has been reviewed and approved
-- [ ] All tests should pass, [testing instructions are here](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard#testing).
-- [ ] Branch has been rebased on `develop` (or the branch being merged to). [See here for rebase instructions](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/CONTRIBUTING.md#reviewed-work)
+- [ ] All tests should pass, [testing instructions are here](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger#testing).
+- [ ] Branch has been rebased on `develop` (or the branch being merged to). [See here for rebase instructions](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/blob/develop/CONTRIBUTING.md#reviewed-work)
