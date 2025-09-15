@@ -15,7 +15,7 @@ The _fastest_ route to a local install should be:
 1. Clone and enter this repository directory.
 
     ```
-    git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/docket_dashboard.git
+    git clone git@github.com:Philadelphia-Lawyers-for-Social-Equity/PA_Expunger.git
     ```
 
 1. Now we create git hooks that will allow us to track changes to .docx files. Run the following in your terminal:
@@ -85,7 +85,7 @@ The Frontend Portal allows users to sign up and associate their account with an 
 ## Settings
 
 Settings are controlled via environment variables, and can be reviewed in the
-[docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/blob/develop/docker-compose.yml) file:
+[docker-compose.yml](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/blob/develop/docker-compose.yml) file:
 
 - The primary admin username is `plse` and is not designed to change.
 - **EXPUNGER_PASS** controls the administrator password for user `plse`. Default is `defaultTestPassword`. It is set on the _first build,_ after which any changes must be made via the back-end.
