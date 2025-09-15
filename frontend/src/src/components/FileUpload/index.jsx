@@ -5,6 +5,8 @@ import { Alert, Button, Card, Container } from 'react-bootstrap';
 import { usePetitioner } from '../../context/petitioner';
 import { initialPetitionState, usePetitions } from '../../context/petitions';
 import { useUser } from '../../context/user';
+import { useNavBlock } from "../../context/navBlockContext.jsx";
+import NavBlock from "../util/navBlock";
 import Attorney from './components/Attorney';
 import Petitioner from '../GeneratePage/components/Petitioner';
 import PetitionTable from './components/PetitionTable';
@@ -16,12 +18,23 @@ export default function FileUpload(props) {
     const history = useHistory();
     const { user, initialUserState } = useUser();
     const { petitioner } = usePetitioner();
-    const { petitions, setPetitions } = usePetitions();
+    const { petitions, setPetitions, setPetitionNumber } = usePetitions();
+    const { blockNavRef, setBlockNav } = useNavBlock();
     
     const [doNotGenerate, setDoNotGenerate] = useState([]);
     const [pageError, setPageError] = useState("");
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [petitionCount, setPetitionCount] = useState(0);
+
+    useEffect(() => {
+        // When this component mounts, turn on nav block
+        setBlockNav(true);
+
+        // cleanup on unmount
+        return () => {
+            setBlockNav(false);
+        };
+    }, [setBlockNav]);
 
     const handleClose = () => setShowUploadModal(false);
     const handleShow = () => {
@@ -34,34 +47,36 @@ export default function FileUpload(props) {
         // remove petitions from array if user has selected to omit them
         const petitionsToGenerate = petitions.filter(petition => {
             if (petition.docket_info.otn && doNotGenerate.includes(petition.docket_info.otn)) {
-                return false
+                return false;
             }
             for (const num of petition.docket_numbers) {
                 if (doNotGenerate.includes(num)) {
-                    return false
+                    return false;
                 }
             }
-            return true
+            return true;
         })
-        setPetitions(petitionsToGenerate)
+        setPetitions(petitionsToGenerate);
+        setPetitionNumber(0);
         history.push("/generate", {"petitionFields": {petitions: petitionsToGenerate, petitioner}});
     }
 
     // show upload modal when page first loads and/or no petitions have been uploaded
     useEffect(() => {
         if (petitions === initialPetitionState) {
-            handleShow()
+            handleShow();
         }
         // eslint-disable-next-line
     }, [])
 
     if (!user || user.attorney === initialUserState.attorney || user.organization === initialUserState.organization) {
         // Wait for attorney and org data, they are required to proceed.
-        return <FallbackMessage/>
+        return <FallbackMessage/>;
     }
 
     return (
         <div>
+            <NavBlock blockNav={blockNavRef} />
             <Container fluid className="pt-4">
                 <div className="d-flex justify-content-between mb-4">
                     <h4>Petition Generation Preview</h4>

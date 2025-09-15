@@ -16,6 +16,7 @@ import ReviewPage from "./components/ReviewPage";
 import Nav from "./components/nav";
 import PageNotFound from "./components/PageNotFound";
 import { PetitionsProvider } from "./context/petitions";
+import {NavBlockProvider} from "./context/navBlockContext.jsx";
 
 function App(props) {
     return (
@@ -24,19 +25,21 @@ function App(props) {
                 <PetitionerProvider>
                     <PetitionsProvider>
                         <UserProvider>
-                            <Nav/>
-                            <Switch>
-                                <Route exact path="/login" component={LoginForm}/>
-                                {/* <Route exact path="/signup" component={SignUp} /> */}
-                                <PrivateRoute exact path="/" component={LandingPage}/>
-                                <PrivateRoute exact path="/action" component={ChooseAction}/>
-                                {/*<PrivateRoute exact path="/search" component={SearchPage} />*/}
-                                {/*<PrivateRoute exact path="/profile" component={ProfilePage}/>*/}
-                                <PrivateRoute exact path="/upload" component={FileUpload}/>
-                                <PrivateRoute exact path="/generate" component={GeneratePage}/>
-                                <PrivateRoute exact path="/review" component={ReviewPage}/>
-                                <Route path="*" component={PageNotFound}/>
-                            </Switch>
+                            <NavBlockProvider>
+                                <Nav/>
+                                <Switch>
+                                    <Route exact path="/login" component={LoginForm}/>
+                                    {/* <Route exact path="/signup" component={SignUp} /> */}
+                                    <PrivateRoute exact path="/" component={LandingPage}/>
+                                    <PrivateRoute exact path="/action" component={ChooseAction}/>
+                                    {/*<PrivateRoute exact path="/search" component={SearchPage} />*/}
+                                    {/*<PrivateRoute exact path="/profile" component={ProfilePage}/>*/}
+                                    <PrivateRoute exact path="/upload" component={FileUpload}/>
+                                    <PrivateRoute exact path="/generate" component={GeneratePage}/>
+                                    <PrivateRoute exact path="/review" component={ReviewPage}/>
+                                    <Route path="*" component={PageNotFound}/>
+                                </Switch>
+                            </NavBlockProvider>
                         </UserProvider>
                     </PetitionsProvider>
                 </PetitionerProvider>

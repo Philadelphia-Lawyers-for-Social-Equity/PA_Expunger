@@ -12,8 +12,9 @@ import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
-import { useIsMounted } from "../../hooks/useIsMounted";
+import { useNavBlock } from "../../context/navBlockContext.jsx";
 import NavBlock from "../util/navBlock";
+import { useIsMounted } from "../../hooks/useIsMounted";
 
 import "./style.css";
 import api from "../../services/api";
@@ -32,13 +33,13 @@ export default function GeneratePage(props) {
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
+    const { blockNavRef, setBlockNav } = useNavBlock();
     const getIsMounted = useIsMounted();
 
     const [success, setSuccess] = useState(false);
     const [busy, setBusy] = useState(false);
     const [downloadUrls, setDownloadUrls] = useState({0: ""});
     const [error, setError] = useState("");
-    let shouldBlockNav = useRef(true);
 
     const formDisabled = busy || success[petitionNumber];
     const totalPetitions = petitions.length;
@@ -65,6 +66,17 @@ export default function GeneratePage(props) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        // When this component mounts, turn on nav block
+        setBlockNav(true);
+
+        // cleanup on unmount
+        return () => {
+            setBlockNav(false);
+        };
+    }, [setBlockNav]);
+
 
     async function postGeneratorRequest() {
         let petitionFields = {
@@ -200,15 +212,13 @@ export default function GeneratePage(props) {
             if (petitionNumber === totalPetitions - 1) {
                 // TODO: Should this info be saved to page history? delete if not
 
-                // Don't ask the user whether they want to navigate; just navigate
-                shouldBlockNav.current = false;
+                // because "/review" is in the list of safe paths, we don't have to change the navBlock ref
                 history.push("/review", {
                     "petitionFields": {
                         petitioner,
                         petitions
                     }
                 })
-                shouldBlockNav.current = true;
             } else setPetitionNumber(n => n + 1);
         }
     }
@@ -229,14 +239,14 @@ export default function GeneratePage(props) {
     }
 
     function startNewPetition() {
-        shouldBlockNav.current = false;
-        history.push("/action");
-        shouldBlockNav.current = true;
+        setBlockNav(false);
+        setPetitions(initialPetitionState);
+        history.push("/");
     }
 
     return (
         <Form className="generator">
-            <NavBlock blockNav={shouldBlockNav} />
+            <NavBlock blockNav={blockNavRef} />
             <Petitioner {...petitioner} disabled={formDisabled} />
             <Petition petitionNumber={petitionNumber} disabled={formDisabled} />
             <Dockets petitionNumber={petitionNumber} disabled={formDisabled} />

@@ -8,6 +8,7 @@ import FallbackMessage from "../FallbackMessage";
 import { useUser } from '../../context/user';
 import { initialPetitionerState, usePetitioner } from "../../context/petitioner";
 import { initialPetitionState, usePetitions } from "../../context/petitions";
+import { useNavBlock } from "../../context/navBlockContext.jsx";
 import NavBlock from "../util/navBlock";
 import "./style.css";
 import api from "../../services/api";
@@ -39,9 +40,19 @@ export default function ReviewPage(props) {
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
     const [ summary, setSummary ] = useState(initialSummary);
+    const { blockNavRef, setBlockNav } = useNavBlock();
     const getIsMounted = useIsMounted();
-    let shouldBlockNav = useRef(true);
-    
+
+    useEffect(() => {
+        // When this component mounts, turn on nav block
+        setBlockNav(true);
+
+        // cleanup on unmount
+        return () => {
+            setBlockNav(false);
+        };
+    }, [setBlockNav]);
+
     useEffect(() => {
         try {
             // re-create petitions state from history after page refresh
@@ -54,6 +65,7 @@ export default function ReviewPage(props) {
             window.scrollTo(0, 0)
         } catch {
             // TODO: proper error handling
+            setBlockNav(false);
             history.push("/");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,9 +101,9 @@ export default function ReviewPage(props) {
     }, [petitioner, petitions])
 
     function startNewPetition() {
-        shouldBlockNav.current = false;
-        history.push("/action");
-        shouldBlockNav.current = true;
+        setBlockNav(false);
+        setPetitions(initialPetitionState);
+        history.push("/");
     }
 
     async function postGeneratorRequest(petitioner, petition, index) {
@@ -213,7 +225,7 @@ export default function ReviewPage(props) {
 
     return (
         <Container fluid className="pt-4">
-            <NavBlock blockNav={shouldBlockNav} />
+            <NavBlock blockNav={blockNavRef} />
             <Card className="mb-4 ">
                 <Card.Header as="h5" className="ps-3">Petitioner</Card.Header>
                 <ListGroup variant="flush">
