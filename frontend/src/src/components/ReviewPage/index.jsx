@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { Button, Card, Container, ListGroup } from 'react-bootstrap';
@@ -8,6 +8,8 @@ import FallbackMessage from "../FallbackMessage";
 import { useUser } from '../../context/user';
 import { initialPetitionerState, usePetitioner } from "../../context/petitioner";
 import { initialPetitionState, usePetitions } from "../../context/petitions";
+import { useNavBlock } from "../../context/navBlockContext.jsx";
+import NavBlock from "../util/navBlock";
 import "./style.css";
 import api from "../../services/api";
 import { useAuth } from "../../context/auth";
@@ -38,8 +40,19 @@ export default function ReviewPage(props) {
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
     const [ summary, setSummary ] = useState(initialSummary);
+    const { blockNavRef, setBlockNav } = useNavBlock();
     const getIsMounted = useIsMounted();
-    
+
+    useEffect(() => {
+        // When this component mounts, turn on nav block
+        setBlockNav(true);
+
+        // cleanup on unmount
+        return () => {
+            setBlockNav(false);
+        };
+    }, [setBlockNav]);
+
     useEffect(() => {
         try {
             // re-create petitions state from history after page refresh
@@ -52,6 +65,7 @@ export default function ReviewPage(props) {
             window.scrollTo(0, 0)
         } catch {
             // TODO: proper error handling
+            setBlockNav(false);
             history.push("/");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,6 +99,12 @@ export default function ReviewPage(props) {
             petitionSummaries,
         })
     }, [petitioner, petitions])
+
+    function startNewPetition() {
+        setBlockNav(false);
+        setPetitions(initialPetitionState);
+        history.push("/");
+    }
 
     async function postGeneratorRequest(petitioner, petition, index) {
         let petitionFields = {
@@ -205,6 +225,7 @@ export default function ReviewPage(props) {
 
     return (
         <Container fluid className="pt-4">
+            <NavBlock blockNav={blockNavRef} />
             <Card className="mb-4 ">
                 <Card.Header as="h5" className="ps-3">Petitioner</Card.Header>
                 <ListGroup variant="flush">
@@ -214,7 +235,7 @@ export default function ReviewPage(props) {
             </Card>
             {petitionSummaries}
             <Button onClick={saveToZip} className="me-3 mb-3">Download All Petitions</Button>
-            <Button href="/" className="mb-3">Start New Petition</Button>
+            <Button onClick={startNewPetition} className="mb-3">Start New Petition</Button>
         </Container>
     )
 }
