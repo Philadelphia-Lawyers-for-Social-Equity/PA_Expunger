@@ -56,13 +56,12 @@ RUN pip install --user -r requirements.txt
 # The server should restart when changes are detected.
 COPY --chown=appuser:appgroup ./platform/src /app/src
 
-# Make the entrypoint script executable
-RUN chmod +x /app/src/dev_entrypoint.sh
-
 # Expose the port the Django development server will run on.
 EXPOSE 8000
 
 # Set the entrypoint script to be executed when the container starts
+# Keep dev_entrypoint.sh executable in git. docker-compose bind-mounts
+# ./platform/src over /app/src, so runtime permissions come from the host file.
 ENTRYPOINT ["/app/src/dev_entrypoint.sh"]
 
 # Default command to run when the container starts.
