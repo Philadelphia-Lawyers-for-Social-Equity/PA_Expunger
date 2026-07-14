@@ -1,0 +1,41 @@
+aliases: []
+arrest_date: 1906-11-05
+complaint_date: 1906-11-05
+cross_court_docket_numbers: CP-51-CR-2587279-1518
+defendant_name: Gdausd Ftrseds
+defendant_name_reversed: Ftrseds, Gdausd
+dob: 1900-10-13
+docket_number: MC-51-CR-5899178-1791
+judge: Margiotti, Charles
+originating_docket_number: '6235245146'
+otn: W 900260-2
+section_disposition:
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: ARD - County
+    sequence: '1'
+    statute: 18 § 3925
+  - charge_description: Unauth Use Motor/Other Vehicles
+    grade: M2
+    offense_disposition: ARD - County
+    sequence: '2'
+    statute: 18 § 3928 §§ A
+  disposition_date: 1909-09-26
+  disposition_finality: Final Disposition
+  event_disposition: Held for Court
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 3925
+  - charge_description: Unauth Use Motor/Other Vehicles
+    grade: M2
+    offense_disposition: Held for Court
+    sequence: '2'
+    statute: 18 § 3928 §§ A
+  disposition_date: 1910-02-16
+  disposition_finality: Final Disposition
+  event_disposition: Held for Court
+type: docket

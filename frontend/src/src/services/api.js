@@ -1,7 +1,8 @@
 import axios from "axios";
 import { TOKEN_STORAGE_KEY } from "../context/auth";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_HOST || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_BACKEND_HOST || window.location.origin;
+// TODO: get the backend URL from the config.json instead.
 
 const apiClient = axios.create({
     baseURL: BASE_URL,

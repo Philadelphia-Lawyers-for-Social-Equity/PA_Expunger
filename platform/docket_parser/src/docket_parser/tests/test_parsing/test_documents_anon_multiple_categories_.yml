@@ -1,0 +1,252 @@
+aliases:
+- Rvesisu Pdymot
+- Atasdfu Pdymot
+- Rvesisu Nrrni
+- Rvesisu Jsaduvc
+- Rvesisu F. Pdymot
+- Rvesisu F. Sovesc
+- Rvesisu Sovesc
+- Tesfgs Sovesc
+- Pndvpv Pdymot
+defendant_name: Rvesisu Sovesc
+defendant_name_reversed: Sovesc, Rvesisu
+dob: 1234-11-15
+dockets:
+- arrest_date: 1906-10-13
+  category: Closed
+  charges:
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Guilty Plea
+    grade: M
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A16
+  - charge_description: MFG/DEL/ OR POSS W/I MFG OR DEL CONTRL SUBS
+    disposition: Guilty Plea
+    sequence_number: '2'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '5972062576'
+  disposition_date: 1931-10-13
+  docket_number: CP-51-CR-0946119-8478
+  judge: Lord, G. Craig
+  otn: A 123451-9
+  proc_status: Completed
+- arrest_date: 1956-08-31
+  category: Closed
+  charges:
+  - charge_description: DEAL IN VEHICLE-REM OR FALSE NO. FRAUD INT
+    disposition: Quashed
+    sequence_number: '1'
+    statute: 75 § 7103
+  - charge_description: REMOVAL OR FALSIFICATION-I.D. NO. FRAUD INT
+    disposition: Quashed
+    sequence_number: '2'
+    statute: 75 § 7102
+  - charge_description: Unauth Use Motor/Other Vehicles
+    disposition: Quashed
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 3928 §§ A
+  county: Philadelphia
+  dcn: '8185736288'
+  disposition_date: 1975-05-05
+  docket_number: CP-51-CR-0903686-8715
+  judge: Younge, John M.
+  otn: A 123452-9
+  proc_status: Completed
+- arrest_date: 1904-09-05
+  category: Closed
+  charges:
+  - charge_description: Carrying Firearm Without A License
+    disposition: Guilty
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 6106 §§ A
+  - charge_description: Carry Firearms Public In Phila
+    disposition: Guilty
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 6108
+  county: Philadelphia
+  dcn: '5992947479'
+  disposition_date: 1924-08-25
+  docket_number: MC-51-CR-7440228-6756
+  judge: Brady, William
+  otn: A 123453-9
+  proc_status: Completed
+- arrest_date: 1906-10-13
+  category: Closed
+  charges:
+  - charge_description: MFG/DEL/ OR POSS W/I MFG OR DEL CONTRL SUBS
+    disposition: Held for Court
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Held for Court
+    grade: M
+    sequence_number: '2'
+    statute: 35 § 780-113 §§ A16
+  county: Philadelphia
+  dcn: '5972062576'
+  disposition_date: 1920-01-22
+  docket_number: MC-51-CR-0303347-0229
+  judge: Kirkland, Lydia Y.
+  otn: A 123451-9
+  proc_status: Completed
+- arrest_date: 1914-12-18
+  category: Closed
+  charges:
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Guilty
+    grade: M
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A16
+  county: Philadelphia
+  dcn: '8781726418'
+  disposition_date: 1930-06-10
+  docket_number: MC-51-CR-7378306-3096
+  judge: Robbins, Harvey W.
+  otn: A 123454-9
+  proc_status: Completed
+- arrest_date: 1936-11-26
+  category: Closed
+  charges:
+  - charge_description: Carry Firearms Public In Phila
+    disposition: Guilty
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 6108
+  - charge_description: Carrying Firearm Without A License
+    disposition: Guilty
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 6106 §§ A
+  county: Philadelphia
+  dcn: '6611376748'
+  disposition_date: 1955-10-25
+  docket_number: MC-51-CR-0230588-2976
+  judge: Lillian, Eric L.
+  otn: A 123455-9
+  proc_status: Completed
+- arrest_date: 1977-06-08
+  category: Closed
+  charges:
+  - charge_description: AGGRAVATED ASSAULT
+    disposition: Withdrawn
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2705
+  - charge_description: POSSESSING INSTRUMENTS OF CRIME WEAPON
+    disposition: Withdrawn
+    sequence_number: '3'
+    statute: 18 § 907
+  - charge_description: SIMPLE ASSAULT
+    disposition: Withdrawn
+    sequence_number: '4'
+    statute: 18 § 2701
+  - charge_description: TERRORISTIC THREATS
+    disposition: Withdrawn
+    sequence_number: '5'
+    statute: 18 § 2706
+  - charge_description: CRIMINAL CONSPIRACY
+    disposition: Withdrawn
+    sequence_number: '6'
+    statute: 18 § 903
+  county: Philadelphia
+  dcn: '9634571903'
+  disposition_date: 1978-04-25
+  docket_number: MC-51-CR-1800670-4784
+  judge: Brady, Frank T.
+  otn: A 123456-9
+  proc_status: Completed
+- arrest_date: 1980-01-26
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Withdrawn
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '2'
+    statute: 35 § 780-113 §§ A16
+  - charge_description: 'DUI: Gen Imp/Inc of Driving Safely - 1st Off'
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '3'
+    statute: 75 § 3802 §§ A1*
+  - charge_description: Use/Poss Of Drug Paraph
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '4'
+    statute: 35 § 780-113 §§ A32
+  county: Philadelphia
+  dcn: '1941657325'
+  disposition_date: 1988-08-08
+  docket_number: MC-51-CR-5532073-4288
+  judge: Pittman, Joffie C. III
+  otn: A 123457-9
+  proc_status: Completed
+- arrest_date: 1991-03-22
+  category: Closed
+  charges:
+  - charge_description: Purc/Rec Of Cont Substby Unauth Per
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A19
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '2'
+    statute: 35 § 780-113 §§ A16
+  county: Philadelphia
+  dcn: '6713012877'
+  disposition_date: 1991-10-24
+  docket_number: MC-51-CR-0890970-7737
+  judge: McCloskey, Francis W. Jr.
+  otn: A 123458-9
+  proc_status: Completed
+- arrest_date: 1975-05-05
+  category: Physical Case File Destroyed
+  charges:
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    disposition: Dismissed
+    sequence_number: '1'
+    statute: 18 § 3925
+  - charge_description: REMOVAL OR FALSIFICATION-IDENTIFICATION NO.
+    disposition: Dismissed
+    sequence_number: '2'
+    statute: 75 § 7102
+  - charge_description: Unauth Use Motor/Other Vehicles
+    disposition: Dismissed
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 3928 §§ A
+  - charge_description: DEAL IN VEHICLE-REM OR FALSE NO. FRAUD INT
+    disposition: Dismissed
+    sequence_number: '4'
+    statute: 75 § 7103
+  county: Philadelphia
+  dcn: '8185736288'
+  disposition_date: 1959-07-04
+  docket_number: MC-51-CR-2536600-4344
+  judge: McCaffery, Seamus P.
+  otn: A 123452-9
+  proc_status: Completed
+- category: Archived
+  docket_number: CP-51-CR-5515594-5109
+- category: Archived
+  docket_number: MC-51-CR-6028852-7994
+- category: Archived
+  docket_number: MC-51-CR-1933798-1863
+- category: Archived
+  docket_number: MC-51-CR-0080093-3068
+type: court summary

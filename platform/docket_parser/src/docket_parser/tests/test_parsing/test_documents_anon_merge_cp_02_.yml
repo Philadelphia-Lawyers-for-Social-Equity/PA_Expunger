@@ -1,0 +1,139 @@
+adjustments: -10.0
+arrest_date: 1914-07-26
+assessment: 1446.44
+complaint_date: 1913-01-01
+defendant_name: Some Somebody
+defendant_name_reversed: Somebody, Some
+dob: 1909-01-14
+docket_number: CP-51-CR-6693526-3219
+judge: Coleman, Robert P.
+non_monetary: 0.0
+originating_docket_number: MC-51-CR-5319217-9189
+otn: Q 109324-4
+payments: -810.0
+section_disposition:
+- case_event: Preliminary Hearing
+  charges:
+  - charge_description: Aggravated Assault
+    grade: F2
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Endangering Welfare of Children - Parent/Guardian/Other Commits
+      Offense
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '2'
+    statute: 18 § 4304 §§ A1
+  - charge_description: Poss Instrument Of Crime W/Int
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '3'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    grade: M2
+    offense_disposition: Held for Court
+    sequence: '4'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Held for Court
+    sequence: '5'
+    statute: 18 § 2705
+  - charge_description: Harassment - Subject Other to Physical Contact
+    grade: S
+    offense_disposition: Held for Court
+    sequence: '6'
+    statute: 18 § 2709 §§ A1
+  - charge_description: Terroristic Threats W/ Int To Terrorize Another
+    grade: M1
+    offense_disposition: Dismissed - LOE
+    sequence: 99,999
+    statute: 18 § 2706 §§ A1
+  disposition_date: 1921-09-04
+  disposition_finality: Not Final
+  event_disposition: Lower Court Proceeding (generic)
+- case_event: Information Filed
+  charges:
+  - charge_description: Aggravated Assault
+    grade: F2
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Endangering Welfare of Children - Parent/Guardian/Other Commits
+      Offense
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '2'
+    statute: 18 § 4304 §§ A1
+  - charge_description: Poss Instrument Of Crime W/Int
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '3'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    grade: M2
+    offense_disposition: Held for Court
+    sequence: '4'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Held for Court
+    sequence: '5'
+    statute: 18 § 2705
+  - charge_description: Harassment - Subject Other to Physical Contact
+    grade: S
+    offense_disposition: Held for Court
+    sequence: '6'
+    statute: 18 § 2709 §§ A1
+  - charge_description: Terroristic Threats W/ Int To Terrorize Another
+    grade: M1
+    offense_disposition: Disposed at Lower Court
+    sequence: 99,999
+    statute: 18 § 2706 §§ A1
+  disposition_date: 1922-11-24
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court
+- case_event: Pre-Trial Conference
+  charges:
+  - charge_description: Aggravated Assault
+    grade: F2
+    offense_disposition: Nolle Prossed
+    sequence: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Endangering Welfare of Children - Parent/Guardian/Other Commits
+      Offense
+    grade: M1
+    offense_disposition: Nolle Prossed
+    sequence: '2'
+    statute: 18 § 4304 §§ A1
+  - charge_description: Poss Instrument Of Crime W/Int
+    grade: M1
+    offense_disposition: Nolle Prossed
+    sequence: '3'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    grade: M2
+    offense_disposition: Guilty Plea - Negotiated
+    sequence: '4'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Nolle Prossed
+    sequence: '5'
+    statute: 18 § 2705
+  - charge_description: Harassment - Subject Other to Physical Contact
+    grade: S
+    offense_disposition: Nolle Prossed
+    sequence: '6'
+    statute: 18 § 2709 §§ A1
+  - charge_description: Terroristic Threats W/ Int To Terrorize Another
+    grade: M1
+    offense_disposition: Disposed at Lower Court
+    sequence: 99,999
+    statute: 18 § 2706 §§ A1
+  disposition_date: 1933-08-05
+  disposition_finality: Final Disposition
+  event_disposition: Guilty Plea - Negotiated
+total: 626.44
+type: docket

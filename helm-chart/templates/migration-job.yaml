@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-migrations"
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    # This is a Helm hook, which runs this Job before installing/upgrading
+    # the main application deployment.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrations
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "pa-expunger.backendSecretName" . | quote }}
+          env:
+            - name: DB_HOST
+              value: {{ .Release.Name }}-postgres-svc
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_USER
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_DB
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_PASSWORD
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+          command: ["python", "manage.py", "migrate", "--noinput"]
+      restartPolicy: OnFailure
+  backoffLimit: 10

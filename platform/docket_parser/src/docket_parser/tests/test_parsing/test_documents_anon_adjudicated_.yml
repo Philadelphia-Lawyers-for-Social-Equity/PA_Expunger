@@ -1,0 +1,22 @@
+aliases:
+- Rvtptat G. Ajvtrh
+defendant_name: Rvtptat G. Ajvtrh
+defendant_name_reversed: Ajvtrh, Rvtptat G.
+dob: 1914-05-02
+dockets:
+- arrest_date: 1972-05-23
+  category: Adjudicated
+  charges:
+  - charge_description: Employee-False Stmts To Obtain U.C. Benefits
+    disposition: Guilty
+    grade: S
+    sequence_number: '1'
+    statute: 43 § 871 §§ A
+  county: Philadelphia
+  dcn: '4826723834'
+  disposition_date: 1974-01-01
+  docket_number: MC-51-SU-8840652-0010
+  judge: Moss, Bradley K.
+  otn: ''
+  proc_status: Sentenced/Awaiting Status Com
+type: court summary

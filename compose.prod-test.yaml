@@ -9,7 +9,7 @@ services:
       - postgres_test_prod_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
+      interval: 5s
       timeout: 3s
       retries: 5
 
@@ -25,15 +25,22 @@ services:
       DB_NAME: ${TEST_DB_NAME}
       DB_PORT: 5432
       DJANGO_SECRET_KEY: ${TEST_DJANGO_SECRET_KEY}
-      DJANGO_ALLOWED_HOSTS: ${TEST_DJANGO_ALLOWED_HOSTS}
       SUPERUSER_USERNAME: ${TEST_SUPERUSER_USERNAME}
       SUPERUSER_PASSWORD: ${TEST_SUPERUSER_PASSWORD}
-      DJANGO_LOG_LEVEL: INFO
+      DJANGO_LOG_LEVEL: ${TEST_DJANGO_LOG_LEVEL}
+      DJANGO_DEBUG: ${TEST_DJANGO_DEBUG}
+      FRONTEND_URL: "http://localhost:8000"
+      BACKEND_API_URL: "http://localhost:8000"
+      DJANGO_ALLOWED_HOSTS: "localhost"
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
+      
 
 volumes:
   postgres_test_prod_data:

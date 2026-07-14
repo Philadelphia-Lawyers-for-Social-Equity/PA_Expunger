@@ -1,0 +1,33 @@
+postgres:
+  persistence:
+    size: 1Gi
+
+backend:
+  image:
+    repository: pa_expunger-backend
+    tag: "local-test"
+    pullPolicy: Never
+
+  allowedHosts:
+    extra:
+      - "localhost"
+
+  config:
+    DJANGO_LOG_LEVEL: "DEBUG"
+
+apiUrlOverride: "http://localhost:8000"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: "localhost"
+  tls:
+    - secretName: "pa-expunger-local-tls"
+      hosts:
+        - "localhost"
+
+secrets:
+  create: true

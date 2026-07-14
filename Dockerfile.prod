@@ -77,14 +77,22 @@ WORKDIR /app/src
 # Run collectstatic. Django will find the app's static files and the
 # React files copied to /app/staticfiles_build
 RUN DJANGO_SECRET_KEY='insecure-key-for-collectstatic-only' python manage.py collectstatic --noinput
+
+# Make the entrypoint script executable
+RUN chmod +x /app/src/prod_entrypoint.sh
+
+# Environment variable to tell the entrypoint script where the config.json should go
+ENV CONFIG_DIR=/app/src/staticfiles_collected
+# Give the appuser ownership of that directory so it can make the config.json there
+RUN chown -R appuser:appgroup $CONFIG_DIR
+
 # Switch to the non-root user for runtime
 USER appuser
 
 # Expose the port Gunicorn will run on
 EXPOSE 8000
 
-# Make the entrypoint script executable
-RUN chmod +x /app/src/prod_entrypoint.sh
+
 
 ENTRYPOINT ["/app/src/prod_entrypoint.sh"]
 

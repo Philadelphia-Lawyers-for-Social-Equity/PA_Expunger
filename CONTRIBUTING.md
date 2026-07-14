@@ -12,7 +12,7 @@ It is vital to this project that the developers building this value the privacy,
 
 ## Joining the regular meetings
 
-We host two meetings per month, one at the Code for Philly hacknight, and one remotely. This is largely where we make decisions, communicate PLSE's needs, and set up collaborative pairing sessions to get large chunks of work done.
+We host two meetings per month, one at the Code for Philly hack night, and one remotely. This is largely where we make decisions, communicate PLSE's needs, and set up collaborative pairing sessions to get large chunks of work done.
 
 The best way to find out about our meetings is joining the [#pax](https://app.slack.com/client/T03NV85SZ/CJDHS591S) channel on the [Code for Philly](https://www.codeforphilly.org/) [Slack](https://www.codeforphilly.org/chat/).
 
@@ -24,7 +24,7 @@ We also use issues for tracking our own team needs (e.g. adding documentation).
 
 ### Add an issue
 
-Navigate to our [issues page on Github](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) and hit the big green `New` button.
+Navigate to our [issues page on Github](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) and hit the big green `New` button.
 
 ### Types of issues
 
@@ -48,11 +48,11 @@ Clear context of why this new feature is needed and clear descriptions of what i
 
 ## Making code changes
 
-Changes to our codebase should always address an [issue](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) and need to be requested to be merged by submitting a pull request that will be reviewed by at least the team lead or two other contributors.
+Changes to our codebase should always address an [issue](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) and need to be requested to be merged by submitting a pull request that will be reviewed by at least the team lead or two other contributors.
 
 ### Choose an issue
 
-Look through the [issues page](https://github.com/Philadelphia-Lawyers-for-Social-Equity/docket_dashboard/issues) in the repo.
+Look through the [issues page](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) in the repo.
 
 Find a task that has no current assignees and sounds like a task that either you can confidently take on yourself or involves a new language, framework, or design that you want learn.
 

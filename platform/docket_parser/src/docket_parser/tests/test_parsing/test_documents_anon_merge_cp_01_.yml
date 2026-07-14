@@ -1,0 +1,52 @@
+adjustments: -1519.48
+aliases:
+- Person, Real
+arrest_date: 1902-04-11
+assessment: 7842.12
+complaint_date: 1913-11-16
+defendant_name: Real B. Person
+defendant_name_reversed: Person, Real B.
+dob: 1901-05-02
+docket_number: CP-51-CR-8442151-4164
+judge: Fleisher, Leslie
+non_monetary: 0.0
+originating_docket_number: MC-51-CR-2011455-6885
+otn: T 760873-7
+payments: -1196.0
+section_disposition:
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: FORGERY
+    offense_disposition: Nolle Prossed
+    sequence: '1'
+    statute: 18 § 4101
+  - charge_description: THEFT BY UNLAWFUL TAKING OR DISPOSITION
+    offense_disposition: Nolle Prossed
+    sequence: '2'
+    statute: 18 § 3921
+  - charge_description: THEFT BY DECEPTION
+    offense_disposition: Nolle Prossed
+    sequence: '3'
+    statute: 18 § 3922
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: Nolle Prossed
+    sequence: '4'
+    statute: 18 § 3925
+  - charge_description: TAMPERING WITH RECORDS OR IDENTIFICATION
+    offense_disposition: Nolle Prossed
+    sequence: '5'
+    statute: 18 § 4104
+  - charge_description: Bad Checks
+    grade: M2
+    offense_disposition: Guilty Plea
+    sequence: '6'
+    statute: 18 § 4105 §§ A1
+  - charge_description: SECURING EXEC DOCUMENTS BY DECEPTION
+    offense_disposition: Nolle Prossed
+    sequence: '7'
+    statute: 18 § 4114
+  disposition_date: 1917-02-28
+  disposition_finality: Final Disposition
+  event_disposition: Guilty Plea
+total: 5126.64
+type: docket

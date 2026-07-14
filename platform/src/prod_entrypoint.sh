@@ -3,14 +3,16 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-# NOTE: We don't run makemigrations automatically. That should be a
-# manual, developer-driven action.
+CONFIG_FILE_PATH="$CONFIG_DIR/config.json"
 
-# Apply database migrations
-echo "Backend Production Entrypoint: Applying database migrations..."
-python manage.py migrate --noinput
+# Create the dedicated directory if it doesn't exist
+mkdir -p "$CONFIG_DIR"
 
-# Then exec the container's main process (what's specified in CMD in the Dockerfile).
-# This allows the main process to be PID 1 and receive signals correctly.
-echo "Backend Production Entrypoint: Starting Gunicorn..."
+cat > $CONFIG_FILE_PATH << _end_config
+{
+  "BACKEND_API_URL": "${BACKEND_API_URL}"
+}
+_end_config
+
+# Execute the main command of the container
 exec "$@"

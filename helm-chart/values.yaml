@@ -1,0 +1,81 @@
+# Default values for pa-expunger.
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+backend:
+  existingSecret: pa-expunger-backend-secret
+  replicaCount: 1
+  image:
+    repository: ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  probes:
+    liveness:
+      path: "/health/liveness/"
+      initialDelaySeconds: 25
+      periodSeconds: 10
+    readiness:
+      path: "/health/readiness/"
+      initialDelaySeconds: 15
+      periodSeconds: 30
+    startup:
+      path: "/health/readiness/"
+      failureThreshold: 15
+      periodSeconds: 5
+  config:
+    DJANGO_LOG_LEVEL: "INFO"
+  allowedHosts:
+    extra:
+      - "localhost"
+
+
+postgres:
+  existingSecret: pa-expunger-postgres-secret
+  image:
+    repository: "postgres"
+    tag: "17-alpine"
+    pullPolicy: IfNotPresent
+  port: "5432"
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClassName: ""
+
+secrets:
+  # SECURITY WARNING: Only set 'create: true' for local development.
+  # This will fail deployment if ingress host is not localhost.
+  create: false
+
+  # Configuration for the dummy secrets created ONLY when 'create' is true.
+  backendSecretName: "pa-expunger-backend-local-secret"
+  postgresSecretName: "pa-expunger-postgres-local-secret"
+
+  dummyData:
+    djangoSecretKey: "default_secret_key"
+    superuserUsername: "plse"
+    superuserPassword: "defaultTestPassword"
+    postgresUser: "plse"
+    postgresPassword: "defaultTestPassword"
+    postgresDb: "expunger_db"
+
+# If this isn't empty, it will be used for the backend API url instead of the first ingress host.
+apiUrlOverride: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: pa-expunger-tls
+      hosts:
+        - chart-example.local

@@ -14,6 +14,11 @@ if SECRET_KEY is None or SECRET_KEY.strip() == "":
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Variable that will be overwritten by settings files importing this.
+# This lets us check what environment we're running in elsewhere in code
+ENVIRONMENT_NAME = None
+
+
 allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS')
 if allowed_hosts_str:
     ALLOWED_HOSTS = allowed_hosts_str.split(',')
@@ -28,13 +33,17 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'expunger',
     'petition',
     # 'pa_court_archive', This app is no longer being used or maintained.
+    "health_check"
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -46,6 +55,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+STATIC_URL = '/static/'
 
 TEMPLATES = [
     {
@@ -96,6 +107,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CORS headers
+# CORS_ALLOWED_ORIGINS = [os.environ.get("FRONTEND_URL"),
+#                         os.environ.get("BACKEND_API_URL")]
+CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (

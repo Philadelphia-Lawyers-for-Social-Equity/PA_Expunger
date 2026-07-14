@@ -1,0 +1,25 @@
+arrest_date: 1956-12-21
+defendant_name: Haleoi Phmchiuh
+defendant_name_reversed: Phmchiuh, Haleoi
+dob: 1922-05-25
+docket_number: MC-51-CR-8949440-9589
+judge: ''
+originating_docket_number: MC-51-CR-8949440-9589
+otn: N 266691-2
+section_disposition:
+- case_event: Preliminary Arraignment
+  charges: []
+  disposition_date: 1956-12-21
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court
+- case_event: Status
+  charges:
+  - charge_description: Disorder Conduct Hazardous/Physi Off
+    grade: S
+    offense_disposition: Guilty
+    sequence: '5'
+    statute: 18 § 5503 §§ A4
+  disposition_date: 1960-04-22
+  disposition_finality: Final Disposition
+  event_disposition: Guilty
+type: docket

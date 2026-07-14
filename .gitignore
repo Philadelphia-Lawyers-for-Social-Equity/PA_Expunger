@@ -11,3 +11,5 @@ dist
 .vscode
 .env
 .env.*
+.secrets
+!.env.example

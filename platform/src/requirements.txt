@@ -7,12 +7,13 @@ psycopg2-binary >= 2.9.9
 whitenoise
 gunicorn
 django-health-check
+psutil # required by one of the health checks
 pymysql >= 1.1.1
 jinja2 >= 3.1.4
 docxtpl >= 0.16.8
 markdown >= 3.6
 dateparser >= 1.2.0
-setuptools >= 70.1.1
+setuptools < 81 # remove this line when docxtpl releases a build that includes this commit https://github.com/elapouya/python-docx-template/commit/7a6ddbcc5420ccb5418557e43cab2e497fde33d1
 
 # Testing dependencies
 pytest >= 8.2.2

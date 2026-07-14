@@ -1,0 +1,93 @@
+aliases:
+- Reolbf, Ofnt
+- Reolbf, Rmte C.
+- Reolbf, Lnkcdik
+arrest_date: 1913-11-13
+complaint_date: 1912-02-22
+cross_court_docket_numbers: CP-51-CR-0760718-9783, 100 ABC 1950
+defendant_name: Rmte Reolbf
+defendant_name_reversed: Reolbf, Rmte
+dob: 1907-10-23
+docket_number: MC-51-CR-3383742-3351
+judge: ''
+originating_docket_number: MC-51-CR-3383742-3351
+otn: M 465640-1
+section_disposition:
+- case_event: Preliminary Arraignment
+  charges:
+  - charge_description: Unlawful Contact With Minor - Sexual Offenses
+    grade: F3
+    offense_disposition: Proceed to Court
+    sequence: '1'
+    statute: 18 § 6318 §§ A1
+  - charge_description: Corruption Of Minors
+    grade: M1
+    offense_disposition: Proceed to Court
+    sequence: '2'
+    statute: 18 § 6301 §§ A1i
+  - charge_description: Indecent Assault Person Less than 13 Years of Age
+    grade: M1
+    offense_disposition: Proceed to Court
+    sequence: '3'
+    statute: 18 § 3126 §§ A7
+  - charge_description: Simple Assault - Grading - Victim Under 12 Defendant 21 Or
+      Older
+    grade: M1
+    offense_disposition: Proceed to Court
+    sequence: '4'
+    statute: 18 § 2701 §§ B2
+  - charge_description: Terroristic Threats W/ Int To Terrorize Another
+    grade: M1
+    offense_disposition: Proceed to Court
+    sequence: '5'
+    statute: 18 § 2706 §§ A1
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Proceed to Court
+    sequence: '6'
+    statute: 18 § 2705
+  disposition_date: 1913-11-13
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court
+- case_event: Preliminary Hearing
+  charges:
+  - charge_description: Unlawful Contact With Minor - Sexual Offenses
+    grade: F3
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 6318 §§ A1
+  - charge_description: Corruption Of Minors
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '2'
+    statute: 18 § 6301 §§ A1i
+  - charge_description: Indecent Assault Person Less than 13 Years of Age
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '3'
+    statute: 18 § 3126 §§ A7
+  - charge_description: Simple Assault - Grading - Victim Under 12 Defendant 21 Or
+      Older
+    grade: M1
+    offense_disposition: Dismissed - LOE
+    sequence: '4'
+    statute: 18 § 2701 §§ B2
+  - charge_description: Terroristic Threats W/ Int To Terrorize Another
+    grade: M1
+    offense_disposition: Held for Court
+    sequence: '5'
+    statute: 18 § 2706 §§ A1
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Dismissed - LOE
+    sequence: '6'
+    statute: 18 § 2705
+  - charge_description: Intim Wit/Vit - Refrain From Report
+    grade: F3
+    offense_disposition: Held for Court
+    sequence: '7'
+    statute: 18 § 4952 §§ A1
+  disposition_date: 1928-11-11
+  disposition_finality: Final Disposition
+  event_disposition: Held for Court
+type: docket

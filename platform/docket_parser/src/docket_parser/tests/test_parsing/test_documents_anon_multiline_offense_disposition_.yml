@@ -1,0 +1,83 @@
+adjustments: 0.0
+arrest_date: 1912-12-04
+assessment: 974.5
+defendant_name: Person Anyperson
+defendant_name_reversed: Anyperson, Person
+dob: 1901-10-15
+docket_number: MC-51-CR-8830566-8170
+judge: ''
+non_monetary: 0.0
+originating_docket_number: MC-51-CR-8830566-8170
+otn: Y 295456-2
+payments: -35.0
+section_disposition:
+- case_event: Preliminary Arraignment
+  charges:
+  - charge_description: Firearm Not To Be Carried W/O License-No Crim Viol
+    offense_disposition: Proceed to Court
+    sequence: '1'
+    statute: 18 § 6106
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: Proceed to Court
+    sequence: '2'
+    statute: 18 § 6108
+  - charge_description: Fail To Yield Right Of Way To Ped
+    offense_disposition: Proceed to Court
+    sequence: '3'
+    statute: 75 § 3542
+  disposition_date: 1912-12-04
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court
+- case_event: Preliminary Hearing
+  charges:
+  - charge_description: Firearm Not To Be Carried W/O License-No Crim Viol
+    offense_disposition: Remanded to Municipal Court
+    sequence: '1'
+    statute: 18 § 6106
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: Remanded to Municipal Court
+    sequence: '2'
+    statute: 18 § 6108
+  - charge_description: Fail To Yield Right Of Way To Ped
+    offense_disposition: Remanded to Municipal Court
+    sequence: '3'
+    statute: 75 § 3542
+  disposition_date: 1920-12-21
+  disposition_finality: Not Final
+  event_disposition: Remanded to Municipal Court
+- case_event: Refiling of Charges/Preliminary Hearing
+  charges:
+  - charge_description: Firearm Not To Be Carried W/O License-No Crim Viol
+    offense_disposition: Proceed to Court (Complaint Refiled)
+    sequence: '1'
+    statute: 18 § 6106
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: Remanded to Municipal Court
+    sequence: '2'
+    statute: 18 § 6108
+  - charge_description: Fail To Yield Right Of Way To Ped
+    offense_disposition: Remanded to Municipal Court
+    sequence: '3'
+    statute: 75 § 3542
+  disposition_date: 1934-06-15
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court (Complaint Refiled)
+- case_event: Status
+  charges:
+  - charge_description: Firearm Not To Be Carried W/O License-No Crim Viol
+    offense_disposition: ARD - County Open
+    sequence: '1'
+    statute: 18 § 6106
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: ARD - County Open
+    sequence: '2'
+    statute: 18 § 6108
+  - charge_description: Fail To Yield Right Of Way To Ped
+    offense_disposition: ARD - County Open
+    sequence: '3'
+    statute: 75 § 3542
+  disposition_date: 1988-07-08
+  disposition_finality: Not Final
+  event_disposition: ARD - County Open
+total: 939.5
+type: docket

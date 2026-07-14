@@ -1,0 +1,46 @@
+aliases: []
+arrest_date: 1924-09-19
+complaint_date: 1925-10-13
+defendant_name: Gdausd P. Ftrseds
+defendant_name_reversed: Ftrseds, Gdausd P.
+dob: 1900-10-13
+docket_number: CP-51-CR-3598712-5872
+judge: Byrd, Sandy L.V.
+originating_docket_number: '21030813210'
+otn: F 372272-1
+section_disposition:
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: AGGRAVATED ASSAULT
+    offense_disposition: Nolle Prossed
+    sequence: '1'
+    statute: 18 § 2702
+  - charge_description: THEFT BY UNLAWFUL TAKING OR DISPOSITION
+    offense_disposition: Nolle Prossed
+    sequence: '2'
+    statute: 18 § 3921
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: Nolle Prossed
+    sequence: '3'
+    statute: 18 § 3925
+  - charge_description: CRIMINAL MISCHIEF
+    offense_disposition: Nolle Prossed
+    sequence: '4'
+    statute: 18 § 3304
+  - charge_description: POSSESSING INSTRUMENTS OF CRIME
+    offense_disposition: Nolle Prossed
+    sequence: '5'
+    statute: 18 § 907
+  - charge_description: SIMPLE ASSAULT
+    offense_disposition: Nolle Prossed
+    sequence: '6'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    grade: M2
+    offense_disposition: Nolle Prossed
+    sequence: '7'
+    statute: 18 § 2705
+  disposition_date: 1925-10-19
+  disposition_finality: Final Disposition
+  event_disposition: Migrated Disposition
+type: docket
