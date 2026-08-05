@@ -1,0 +1,47 @@
+name: Build and smoke test the production image
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+
+jobs:
+  prod-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Create .env
+        # compose.prod-test.yaml declares no defaults, so a .env is required.
+        # A unique TEST_APP_VERSION lets the check below confirm the build arg
+        # reached the image and is served at /static/config.json.
+        run: |
+          cp .env.example .env
+          echo "TEST_APP_VERSION=ci-${GITHUB_SHA}" >> .env
+
+      - name: Build the image and start the stack
+        run: ./scripts/prod-test.sh up --build -d --wait
+
+      - name: Run the backend tests on the production image
+        run: ./scripts/prod-test.sh exec -T backend pytest
+
+      # --wait returns once the container is running, which can precede gunicorn
+      # binding.
+      - name: Check the SPA and the admin site respond
+        run: |
+          curl -sf --retry 10 --retry-delay 2 --retry-connrefused \
+            -o /dev/null -w 'SPA   %{http_code}\n' http://localhost:8000/
+          curl -sfL --retry 10 --retry-delay 2 --retry-connrefused \
+            -o /dev/null -w 'admin %{http_code}\n' http://localhost:8000/admin/
+
+      - name: Check the image reports the version it was built with
+        run: |
+          curl -sf --retry 10 --retry-delay 2 --retry-connrefused \
+            http://localhost:8000/static/config.json | tee /dev/stderr \
+            | grep -q "\"APP_VERSION\": \"ci-${GITHUB_SHA}\""
+
+      - name: Show container logs on failure
+        if: failure()
+        run: ./scripts/prod-test.sh logs

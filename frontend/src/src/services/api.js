@@ -1,7 +1,10 @@
 import axios from "axios";
 import { TOKEN_STORAGE_KEY } from "../context/auth";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_HOST || "http://localhost:8000";
+// Deliberately same-origin: Django serves the SPA and the API from one host in
+// production, so there is no separate backend URL to configure there. VITE_BACKEND_HOST
+// covers the dev case, where the Vite server and Django run on different ports.
+const BASE_URL = import.meta.env.VITE_BACKEND_HOST || window.location.origin;
 
 const apiClient = axios.create({
     baseURL: BASE_URL,

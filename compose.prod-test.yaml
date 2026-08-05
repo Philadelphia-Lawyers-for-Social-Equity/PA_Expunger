@@ -1,0 +1,66 @@
+name: pa_expunger_prodtest
+
+# Shared by the backend and the migrations service, which run the same image
+# against the same database.
+x-backend-env: &backend-env
+  DB_HOST: postgres
+  DB_USER: ${TEST_DB_USER}
+  DB_PASSWORD: ${TEST_DB_PASSWORD}
+  DB_NAME: ${TEST_DB_NAME}
+  DB_PORT: 5432
+  DJANGO_SECRET_KEY: ${TEST_DJANGO_SECRET_KEY}
+  SUPERUSER_USERNAME: ${TEST_SUPERUSER_USERNAME}
+  SUPERUSER_PASSWORD: ${TEST_SUPERUSER_PASSWORD}
+  DJANGO_LOG_LEVEL: ${TEST_DJANGO_LOG_LEVEL}
+  DJANGO_DEBUG: ${TEST_DJANGO_DEBUG}
+  BACKEND_API_URL: ${TEST_BACKEND_API_URL}
+  DJANGO_ALLOWED_HOSTS: ${TEST_DJANGO_ALLOWED_HOSTS}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
+      POSTGRES_DB: ${TEST_DB_NAME}
+    volumes:
+      - postgres_test_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Mirrors the Helm migration Job: the same image run to completion before the
+  # app starts, rather than folded into the backend's startup command.
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        APP_VERSION: ${TEST_APP_VERSION:-dev}
+        STATIC_URL: ${TEST_STATIC_URL:-/static/}
+    image: pa_expunger-backend:local-test
+    environment: *backend-env
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        APP_VERSION: ${TEST_APP_VERSION:-dev}
+        STATIC_URL: ${TEST_STATIC_URL:-/static/}
+    image: pa_expunger-backend:local-test
+    environment: *backend-env
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_test_prod_data:

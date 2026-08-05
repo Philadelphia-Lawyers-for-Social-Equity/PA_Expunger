@@ -10,3 +10,7 @@ dist
 .DS_Store
 .vscode
 .env
+.env.*
+.secrets
+!.env.example
+local-secret-source*.yaml
