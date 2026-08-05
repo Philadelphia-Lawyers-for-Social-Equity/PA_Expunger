@@ -294,7 +294,6 @@ def get_document_type(text) -> DocumentType:
 def remove_docket_page_breaks(extracted_text: str) -> str:
     """Remove all page breaks text extracted from a docket.
     This allows us to simplify grammar by not needing to check for page breaks everywhere"""
-    # This function may be useful in the future but is not currently used.
     input_lines = extracted_text.split(DocketReader.terminator)
     output_lines = [input_lines[0]]
     in_page_break = False
@@ -470,8 +469,7 @@ def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | date
 
     ppeg_path = document_type.grammar_path()
     grammar = get_grammar_from_file(ppeg_path)
-    if document_type == DocumentType.COURT_SUMMARY:
-        text = remove_page_breaks(text)
+    text = remove_page_breaks(text)
 
     try:
         tree = grammar.parse(text)
@@ -487,5 +485,9 @@ def parse_extracted_text(text: str) -> dict[str, str | list[dict] | float | date
     except VisitationError as e:
         msg = "VisitationError caused by:\n" + get_cause_without_context(e)
         logger.error(msg)
-    parsed["defendant_name"] = reversed_name_to_normal(parsed["defendant_name_reversed"])
+    try:
+        parsed["defendant_name"] = reversed_name_to_normal(parsed["defendant_name_reversed"])
+    except KeyError as err:
+        err.add_note("No defendant name found, this likely means we failed to parse the text properly.")
+        raise
     return parsed

@@ -32,7 +32,7 @@ section_case_information =
     / judge_segment
     / otn_segment
     / originating_docket_segment
-    / (page_break case_information_header)
+    / case_information_header
     / (!generic_header junk_segment)
     )+
 case_information_header = "CASE INFORMATION" properties_bold terminator
@@ -53,7 +53,7 @@ section_status_information =
     status_information_header
     ( arrest_date_lines
     / complaint_date_segment
-    / (page_break status_information_header)
+    / status_information_header
     / (!generic_header junk_segment)
     )+
 
@@ -68,7 +68,7 @@ section_defendant_information =
     defendant_information_header
     ( dob_lines
     / aliases
-    / (page_break defendant_information_header)
+    / defendant_information_header
     / (!generic_header junk_segment)
     )+
 
@@ -81,13 +81,14 @@ dob = date{1}
 # If necessary, could use fact that aliases have x coordinate < 100
 aliases =
     aliases_start
-    ( alias_segment
-    / (!generic_header junk_segment)
-    )+
+    ( defendant_information_header
+    / (!generic_header !alias_segment junk_segment)
+    )*
+    alias_segment
 aliases_start = "Alias Name" properties_normal terminator
-# Sometimes there are multiple columns for aliases (separated by tab)
-# Need to find an example with >1 alias and multiple columns to possibly correct grammar.
-alias_segment = alias (box_wrap alias)* (tab content_char+)* properties_03x_normal terminator
+# Sometimes there are multiple columns for aliases (separated by tab), and a column's
+# content can itself box-wrap onto another line.
+alias_segment = alias (box_wrap alias)* (tab content_char+ (box_wrap content_char+)*)* properties_03x_normal terminator
 alias = content_char+
 
 properties_03x_normal = props_open &'03' coordinates normal props_close
@@ -103,11 +104,11 @@ section_disposition =
             (!case_event_date_finality_segment junk_segment)*
             case_event_date_finality_segment
                 ( charge_info
-                / mid_disposition_page_break
+                / disposition_full_header
                 / (!generic_header !event_disposition_segment junk_segment)
                 )*
         )
-    / mid_disposition_page_break
+    / disposition_full_header
     / (!generic_header !event_disposition_segment junk_segment)
     )+
 
@@ -132,8 +133,6 @@ disposition_grade_statute = offense_disposition_part (box_wrap offense_dispositi
 offense_disposition_part = content_char+
 statute = content_char+
 grade = content_char{,3}
-
-mid_disposition_page_break = page_break disposition_full_header
 
 # All the underlined field names directly under disposition header:
 disposition_full_header =
@@ -169,23 +168,11 @@ payments = content_char+
 # guess: if it has 700 > y coord > 600 and comes immediately after a bold segment, it is part of page header
 # and if it comes after a normal segment it's a section header (not "DOCKET" page header)
 
-generic_header = (header_content generic_header_properties1 terminator) /
-                 (&(properties_normal terminator) header_content generic_header_properties2 terminator)
+generic_header = header_content generic_header_properties terminator
 
-# y coord < 600:
-generic_header_properties1 = props_open coordinate comma !('7'/'6') coordinate comma bold props_close
-
-# y coord starts with 6:
-generic_header_properties2 = props_open coordinate comma &'6' coordinate comma bold props_close
+generic_header_properties = props_open coordinate comma !('7'/'68') coordinate comma bold props_close
 
 header_content = (~r"[A-Z]" / space / slash)+
-
-page_break =
-    printed_on_segment
-    (!end_of_page_header junk_segment)+
-    end_of_page_header
-
-printed_on_segment = "Printed:" space* junk_date space* properties_normal terminator
 
 end_of_page_header = "v" dot space* properties_normal terminator
                      junk_segment # This is defendant name, but it's more convenient for parsing to get name from unique place

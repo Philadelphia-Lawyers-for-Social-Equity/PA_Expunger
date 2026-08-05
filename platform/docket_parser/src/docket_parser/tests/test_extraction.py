@@ -5,7 +5,7 @@ from pypdf.errors import PdfReadError
 
 from docket_parser import test_data_path
 from docket_parser.extraction import DocketReader, logger as extraction_logger
-from docket_parser.tests import get_pdf_paths
+from docket_parser.tests import get_pdf_paths, get_ids
 
 MODIFIED_PDFS_PATH = test_data_path / "modified_pdfs"
 
@@ -22,7 +22,7 @@ class TestExtraction:
 
     def test_proper_output_format(self):
         """Check that every line/segment of extracted text has the format expected by the grammar."""
-        document_paths = get_pdf_paths()[0]
+        document_paths = get_pdf_paths()
         for test_file_path in document_paths:
             reader = DocketReader(test_file_path)
             extracted_text = reader.extract_text()
@@ -46,7 +46,7 @@ class TestExtraction:
         """Check that DocketReader throws an error if one of its special characters appears in a PDF it tries to read"""
         original_tab = DocketReader.tab
         test_content_characters = ' aA,.:'
-        for test_file in get_pdf_paths()[0]:
+        for test_file in get_pdf_paths():
             for test_content_character in test_content_characters:
                 DocketReader.tab = test_content_character
                 with pytest.raises(expected_exception=PdfReadError):
@@ -55,7 +55,7 @@ class TestExtraction:
         # This feels very hacky.
         DocketReader.tab = original_tab
 
-    @pytest.mark.parametrize('pdf_path', get_pdf_paths()[0], ids=get_pdf_paths()[1])
+    @pytest.mark.parametrize('pdf_path', paths := get_pdf_paths(), ids=get_ids(paths))
     def test_documents(self, data_regression, pdf_path):
         """Regression test, check that the extracted text from given document matches expected text."""
         reader = DocketReader(pdf_path)

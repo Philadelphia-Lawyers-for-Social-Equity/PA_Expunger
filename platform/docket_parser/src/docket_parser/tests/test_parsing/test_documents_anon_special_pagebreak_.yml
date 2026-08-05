@@ -1,0 +1,109 @@
+aliases:
+- Twygmra S. Cdvneo
+- Twygmra Cdvneo
+defendant_name: Twygmra Cdvneo
+defendant_name_reversed: Cdvneo, Twygmra
+dob: 1903-05-02
+dockets:
+- arrest_date: 1909-02-18
+  category: Active
+  charges:
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 3925 §§ A
+  - charge_description: Theft From A Motor Vehicle
+    grade: M1
+    sequence_number: '3'
+    statute: 18 § 3934 §§ A
+  - charge_description: Theft By Decep-False Impression
+    sequence_number: '4'
+    statute: 18 § 3922 §§ A1
+  - charge_description: Stalking - Repeatedly Commit Acts To Cause Fear
+    grade: M1
+    sequence_number: '5'
+    statute: 18 § 2709.1 §§ A1
+  - charge_description: Harassment - Subject Other to Physical Contact
+    grade: S
+    sequence_number: '6'
+    statute: 18 § 2709 §§ A1
+  county: Delaware
+  dcn: '1471874789'
+  docket_number: CP-23-MD-8011293-3131
+  otn: Y 210284-2
+  proc_status: Transfer Case
+- arrest_date: 1970-05-03
+  category: Closed
+  charges:
+  - charge_description: Theft Property Lost Etc By Mistake
+    disposition: Dismissed
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 3924
+  - charge_description: Receiving Stolen Property
+    disposition: Guilty Plea - Negotiated
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 3925 §§ A
+  - charge_description: Driv While Oper Priv Susp Or Revoked
+    disposition: Dismissed
+    grade: M1
+    sequence_number: '3'
+    statute: 75 § 1543 §§ A
+  - charge_description: Dr Unregist Veh
+    disposition: Dismissed
+    grade: S
+    sequence_number: '4'
+    statute: 75 § 1301 §§ A
+  - charge_description: Display Plate Card In Improp Veh
+    disposition: Dismissed
+    grade: S
+    sequence_number: '5'
+    statute: 75 § 1372 §§ 3
+  - charge_description: Oper Veh W/O Req'd Financ Resp
+    disposition: Guilty Plea - Negotiated
+    grade: S
+    sequence_number: '6'
+    statute: 75 § 1786 §§ F
+  - charge_description: Operat Veh W/O Valid Inspect
+    disposition: Dismissed
+    grade: S
+    sequence_number: '7'
+    statute: 75 § 4703 §§ A
+  county: Delaware
+  dcn: ''
+  disposition_date: 2000-10-13
+  docket_number: CP-23-CR-9555886-5408
+  judge: Mallon, Gregory M.
+  otn: X 834676-6
+  proc_status: Sentenced/Penalty Imposed
+- arrest_date: 1909-02-18
+  category: Closed
+  charges:
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Guilty
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Withdrawn
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 3925 §§ A
+  - charge_description: Theft From A Motor Vehicle
+    disposition: Withdrawn
+    grade: M1
+    sequence_number: '3'
+    statute: 18 § 3934 §§ A
+  county: Philadelphia
+  dcn: '1471874789'
+  disposition_date: 1913-09-20
+  docket_number: MC-51-CR-6622291-2323
+  judge: Gehret, Thomas F.
+  otn: Y 210284-2
+  proc_status: Completed
+type: court summary

@@ -4,7 +4,8 @@ import pytest
 from deepdiff import DeepDiff
 
 from docket_parser import test_data_path, document_types
-from docket_parser.parsing import flatten, parse_extracted_text, remove_page_breaks
+from docket_parser.parsing import flatten, parse_extracted_text, remove_page_breaks, get_document_type, DocumentType
+from docket_parser.tests import get_ids
 
 DATA_PATH = test_data_path
 
@@ -18,13 +19,18 @@ def check_expect(check, expected, msg=''):
         pytest.fail(message)
 
 
-def get_extracted_document_paths() -> tuple[list[Path], list[str]]:
+def get_extracted_document_paths() -> list[Path]:
     extracted_document_paths = []
     for document_type in document_types:
         paths = (DATA_PATH / document_type / 'extracted').glob("*.txt")
         extracted_document_paths.extend(paths)
-    ids = [path.stem for path in extracted_document_paths]
-    return extracted_document_paths, ids
+    return extracted_document_paths
+
+
+def is_court_summary(path: Path) -> bool:
+    with open(path, 'r', encoding='utf-8') as file:
+        text = file.read()
+    return get_document_type(text) == DocumentType.COURT_SUMMARY
 
 
 class TestParsing:
@@ -58,13 +64,27 @@ class TestParsing:
     #                       f" from {expected_result_path.name}"
     #         check_expect(result, expected, failure_msg)
 
-    @pytest.mark.parametrize('extracted_document_path', get_extracted_document_paths()[0],
-                             ids=get_extracted_document_paths()[1])
+    @pytest.mark.parametrize('extracted_document_path', paths := get_extracted_document_paths(), ids=get_ids(paths))
     def test_documents(self, data_regression, extracted_document_path):
         with open(extracted_document_path, 'r', encoding='utf-8') as file:
             extracted_text = file.read()
         result = parse_extracted_text(extracted_text)
         data_regression.check(result)
+
+    @pytest.mark.parametrize('extracted_court_summary_path',
+                             paths := list(filter(is_court_summary, get_extracted_document_paths())),
+                             ids=get_ids(paths))
+    def test_no_duplicate_docket_numbers(self, extracted_court_summary_path):
+        """Ensure that the parsed output of a court summary doesn't have duplicated docket numbers.
+        Regression test for the bug fixed by PR #65"""
+        with open(extracted_court_summary_path, 'r', encoding='utf-8') as file:
+            extracted_text = file.read()
+        result = parse_extracted_text(extracted_text)
+        docket_numbers = [docket['docket_number'] for docket in result['dockets']]
+        duplicates = {number for number in docket_numbers if docket_numbers.count(number) > 1}
+        assert not duplicates, \
+            f"Duplicate docket_number(s) found: {duplicates}. This could mean a case's " \
+            "charges spanning a page break failed to merge with a repeated case header."
 
     @pytest.mark.parametrize('document_type', document_types)
     def test_remove_page_breaks(self, document_type):

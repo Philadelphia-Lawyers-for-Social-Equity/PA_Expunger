@@ -1,0 +1,72 @@
+aliases:
+- Rcdai Jrcynl Iysafi
+- Rcdai Jrcynl Iysafi Jo.
+- Rcdai Iysafi
+defendant_name: Rcdai Iysafi
+defendant_name_reversed: Iysafi, Rcdai
+dob: 1901-10-20
+dockets:
+- arrest_date: 1912-01-11
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Threat Imm Bod Inj
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Criminal Attempt - Theft By Unlaw Taking-Movable Prop
+    sequence_number: '2'
+    statute: 18 § 901
+  - charge_description: Criminal Mischief - Damage Property
+    sequence_number: '3'
+    statute: 18 § 3304
+  county: Philadelphia
+  dcn: '8430024582'
+  docket_number: CP-51-CR-1335055-0346
+  otn: P 975786-5
+  proc_status: Awaiting Pre-Trial Conference
+- arrest_date: 1902-04-14
+  category: Active
+  charges:
+  - charge_description: Aggravated Assault - Attempts to cause SBI or causes injury
+      with extreme indifference
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '2'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '3'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '4'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: 0218549650
+  docket_number: MC-51-CR-0515540-5251
+  otn: F 371970-2
+  proc_status: Awaiting Preliminary Hearing
+- arrest_date: 1912-01-11
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Threat Imm Bod Inj
+    disposition: Held for Court
+    grade: F2
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1IV
+  - charge_description: Criminal Attempt - Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 901 §§ A
+  - charge_description: Criminal Mischief - Damage Property
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 3304 §§ A5
+  county: Philadelphia
+  dcn: '8430024582'
+  disposition_date: 1940-09-27
+  docket_number: MC-51-CR-6340310-2635
+  judge: Hayden, Charles
+  otn: P 975786-5
+  proc_status: Completed
+type: court summary

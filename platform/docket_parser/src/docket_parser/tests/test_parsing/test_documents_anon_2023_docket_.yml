@@ -1,0 +1,50 @@
+aliases:
+- Moscnke, Pskrib
+- Nowroon, Hnuki
+- Lstcm, Megk
+- Lstcm, Stbk
+- Lstcmon, Demdrsr
+arrest_date: 1923-04-28
+defendant_name: Megk Lstcm
+defendant_name_reversed: Lstcm, Megk
+dob: 1917-03-18
+docket_number: CP-51-CR-2860301-1118
+judge: ''
+originating_docket_number: MC-51-CR-2154063-6386
+otn: G 569603-6
+section_disposition:
+- case_event: Preliminary Hearing
+  charges:
+  - charge_description: Possession Of Firearm Prohibited
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 6105
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: Withdrawn
+    sequence: 99,999
+    statute: 18 § 6108
+  - charge_description: Firearms Not To Be Carried W/O License
+    offense_disposition: Withdrawn
+    sequence: 99,999
+    statute: 18 § 6106
+  disposition_date: 1938-01-15
+  disposition_finality: Not Final
+  event_disposition: Lower Court Proceeding (generic)
+- case_event: Information Filed
+  charges:
+  - charge_description: Possession Of Firearm Prohibited
+    offense_disposition: Proceed to Court
+    sequence: '1'
+    statute: 18 § 6105
+  - charge_description: Carry Firearms Public In Phila
+    offense_disposition: Disposed at Lower Court
+    sequence: 99,999
+    statute: 18 § 6108
+  - charge_description: Firearms Not To Be Carried W/O License
+    offense_disposition: Disposed at Lower Court
+    sequence: 99,999
+    statute: 18 § 6106
+  disposition_date: 1961-11-07
+  disposition_finality: Not Final
+  event_disposition: Proceed to Court
+type: docket

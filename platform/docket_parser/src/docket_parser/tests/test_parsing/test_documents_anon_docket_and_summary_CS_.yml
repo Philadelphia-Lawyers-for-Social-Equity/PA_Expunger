@@ -1,0 +1,129 @@
+aliases:
+- Gdausd Ftrsed
+- Gdausd Ftrseds
+- Gdausd P. Ftrseds
+defendant_name: Gdausd Ftrseds
+defendant_name_reversed: Ftrseds, Gdausd
+dob: 1900-10-13
+dockets:
+- arrest_date: 1924-09-19
+  category: Closed
+  charges:
+  - charge_description: AGGRAVATED ASSAULT
+    disposition: Nolle Prossed
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: THEFT BY UNLAWFUL TAKING OR DISPOSITION
+    disposition: Nolle Prossed
+    sequence_number: '2'
+    statute: 18 § 3921
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    disposition: Nolle Prossed
+    sequence_number: '3'
+    statute: 18 § 3925
+  - charge_description: CRIMINAL MISCHIEF
+    disposition: Nolle Prossed
+    sequence_number: '4'
+    statute: 18 § 3304
+  - charge_description: POSSESSING INSTRUMENTS OF CRIME
+    disposition: Nolle Prossed
+    sequence_number: '5'
+    statute: 18 § 907
+  - charge_description: SIMPLE ASSAULT
+    disposition: Nolle Prossed
+    sequence_number: '6'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: 0840591565
+  disposition_date: 1925-10-19
+  docket_number: CP-51-CR-3598712-5872
+  judge: Byrd, Sandy L.V.
+  otn: F 372272-1
+  proc_status: Completed
+- arrest_date: 1923-01-17
+  category: Closed
+  charges:
+  - charge_description: SIMPLE ASSAULT
+    disposition: Dismissed
+    sequence_number: '1'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Dismissed
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '4242302611'
+  disposition_date: 1923-07-27
+  docket_number: MC-51-CR-2358911-1585
+  judge: Lillian, Eric L.
+  otn: P 733709-9
+  proc_status: Completed
+- arrest_date: 1924-09-19
+  category: Closed
+  charges:
+  - charge_description: AGGRAVATED ASSAULT
+    disposition: Held for Court
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: ROBBERY
+    disposition: Withdrawn
+    sequence_number: '2'
+    statute: 18 § 3701
+  - charge_description: POSSESSING INSTRUMENTS OF CRIME
+    disposition: Held for Court
+    sequence_number: '3'
+    statute: 18 § 907
+  - charge_description: CRIMINAL MISCHIEF
+    disposition: Held for Court
+    sequence_number: '4'
+    statute: 18 § 3304
+  - charge_description: SIMPLE ASSAULT
+    disposition: Held for Court
+    sequence_number: '5'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '6'
+    statute: 18 § 2705
+  - charge_description: THEFT BY UNLAWFUL TAKING OR DISPOSITION
+    disposition: Held for Court
+    sequence_number: '7'
+    statute: 18 § 3921
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    disposition: Held for Court
+    sequence_number: '8'
+    statute: 18 § 3925
+  county: Philadelphia
+  dcn: 0840591565
+  disposition_date: 1924-10-03
+  docket_number: MC-51-CR-5827715-5723
+  judge: Daher, Georganne V.
+  otn: F 372272-1
+  proc_status: Completed
+- arrest_date: 1927-05-19
+  category: Closed
+  charges:
+  - charge_description: Driving Under The Influence Of Alcohol
+    disposition: Guilty
+    grade: M2
+    sequence_number: '1'
+    statute: 75 § 3731 §§ A1*
+  county: Philadelphia
+  dcn: '5517444601'
+  disposition_date: 1928-08-16
+  docket_number: MC-51-CR-5587585-2178
+  judge: Kirkland, Lydia Y.
+  otn: N 665222-2
+  proc_status: Sentenced/Penalty Imposed
+- category: Archived
+  docket_number: CP-51-CR-2587279-1518
+- category: Archived
+  docket_number: MC-51-CR-5899178-1791
+type: court summary

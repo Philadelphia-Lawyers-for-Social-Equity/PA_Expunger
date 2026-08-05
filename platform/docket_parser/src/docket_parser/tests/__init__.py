@@ -3,22 +3,24 @@ from pathlib import Path
 from docket_parser import document_types, test_data_path
 
 
-def get_pdf_paths() -> tuple[list[Path], list[str]]:
+def get_ids(paths: list[Path]) -> list[str]:
+    return [path.stem for path in paths]
+
+
+def get_pdf_paths() -> list[Path]:
     pdf_paths = []
     for document_type in document_types:
         paths = (test_data_path / document_type / 'pdfs').glob("*.pdf")
         pdf_paths.extend(paths)
-    ids = [path.stem for path in pdf_paths]
-    return pdf_paths, ids
+    return pdf_paths
 
 
-def get_anon_replacement_paths() -> tuple[list[Path], list[str]]:
+def get_anon_replacement_paths() -> list[Path]:
     anon_replacement_paths = []
     for document_type in document_types:
         paths = (test_data_path / document_type / 'anonymization').glob("*.anonymize")
         anon_replacement_paths.extend(paths)
-    ids = [path.stem for path in anon_replacement_paths]
-    return anon_replacement_paths, ids
+    return anon_replacement_paths
 
 
 def find_anonymization_file(pdf_path: Path) -> Path:

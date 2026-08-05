@@ -1,0 +1,26 @@
+aliases: []
+arrest_date: 1906-11-05
+complaint_date: 1910-03-23
+defendant_name: Gdausd Ftrseds
+defendant_name_reversed: Ftrseds, Gdausd
+dob: 1900-10-13
+docket_number: CP-51-CR-2587279-1518
+judge: Akers, William L.
+originating_docket_number: '38976217578'
+otn: W 900260-2
+section_disposition:
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: Not Guilty
+    sequence: '1'
+    statute: 18 § 3925
+  - charge_description: Unauth Use Motor/Other Vehicles
+    grade: M2
+    offense_disposition: Not Guilty
+    sequence: '2'
+    statute: 18 § 3928 §§ A
+  disposition_date: 1921-05-01
+  disposition_finality: Final Disposition
+  event_disposition: Migrated Disposition
+type: docket
