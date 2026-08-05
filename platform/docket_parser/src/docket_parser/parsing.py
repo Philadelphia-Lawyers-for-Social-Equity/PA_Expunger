@@ -333,15 +333,28 @@ def remove_court_summary_page_breaks(extracted_text: str) -> str:
     props_close = re.escape(DocketReader.properties_close)
     not_props_close = '[^' + props_close + ']*'
     properties_regex = props_open + not_props_close + props_close
+    normal_properties_regex = props_open + not_props_close + "normal" + props_close
     bold_properties_regex = props_open + not_props_close + 'bold' + props_close
     continuation_regex = not_props_open + r'\(Continued\)' + bold_properties_regex
+    in_repeat_case_header = False
+    assumed_docket_number = "PLACEHOLDER"
     # Fix case where (Continued) is in a text box with line below it:
     continuation_textbox_regex = not_props_open + r'\(Continued\)' + box_wrap + not_props_open + bold_properties_regex
     date_regex = r"\d{1,2}/\d{1,2}/\d{4}"
     printed_date_line_regex = re.compile(r"Printed:\s*" + date_regex + not_props_open + properties_regex)
 
     for index, line in enumerate(input_lines[1:], start=1):
-        if in_page_break:
+        if in_repeat_case_header:
+            if (
+                re.search(bold_properties_regex, input_lines[index - 1])
+                and re.search(normal_properties_regex, line)
+                and assumed_docket_number not in input_lines[index - 1]
+            ):
+                in_repeat_case_header = False
+                in_page_break = False
+                output_lines.append(line)
+
+        elif in_page_break:
             if re.match(continuation_regex, input_lines[index - 1]) and \
                     not re.match(continuation_regex, line):
                 logger.debug(f"end page break matched: {input_lines[index - 1]}")
@@ -350,6 +363,15 @@ def remove_court_summary_page_breaks(extracted_text: str) -> str:
                 if re.match(continuation_textbox_regex, line):
                     # Include anything after '(Continued)' textbox wrap
                     post_page_break = line.split(DocketReader.box_wrap, 1)[1]
+                    if re.search(f"{DocketReader.tab}{bold_properties_regex}$", post_page_break):
+                        _content = post_page_break.split(DocketReader.tab, 1)[0].strip()
+                        for output_line in output_lines:
+                            if _content in output_line:
+                                assumed_docket_number = _content
+                                in_repeat_case_header = True
+                                break
+                        if in_repeat_case_header:
+                            continue
                     output_lines.append(post_page_break)
                 elif re.match(printed_date_line_regex, line):
                     logger.debug(f"begin page break matched: {line}")
