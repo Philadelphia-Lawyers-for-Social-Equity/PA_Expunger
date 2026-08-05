@@ -138,7 +138,9 @@ LOGGING = {
 }
 
 SIMPLE_JWT = {
-    # TODO: set access token lifetime to 10 minutes after implementing refresh tokens on frontend
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    # The frontend refreshes the access token shortly before it expires, so it can be
+    # short-lived. The refresh token sets the length of a session: once it expires the
+    # user is sent back to the login page.
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(hours=3)
 }
