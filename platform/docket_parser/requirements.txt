@@ -1,8 +1,8 @@
-parsimonious >= 0.8.1
-pypdf >= 3.2.1
-pikepdf >= 8.5.1
-numpy >= 1.24.2
-deepdiff >= 6.3.0
-pytest >= 7.2
-pytest-regressions >= 2
-faker >= 36.0.0
+parsimonious == 0.11.0
+pypdf == 6.15.0
+pikepdf == 10.11.0
+numpy == 2.5.1
+deepdiff == 9.1.0
+pytest == 9.1.1
+pytest-regressions == 2.11.0
+faker == 40.36.0
