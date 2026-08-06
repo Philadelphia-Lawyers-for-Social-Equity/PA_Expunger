@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getTokens, setTokens } from "./tokenStore";
+import { clearTokens, getTokens, setTokens, SESSION_ENDED } from "./tokenStore";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_HOST || "http://localhost:8000";
 
@@ -29,34 +29,41 @@ apiClient.interceptors.request.use(
     }
 );
 
-// One refresh at a time: every request that hits a 401 while a refresh is in flight waits
-// on that same promise instead of spending another refresh of its own.
+// One refresh at a time. Not an optimization: the backend rotates refresh tokens and
+// blacklists the one it just consumed, so a second concurrent refresh would present an
+// already-blacklisted token, get a 401, and end the session. A request that 401s while a
+// refresh is in flight waits on this same promise instead of starting its own.
 let refreshRequest = null;
 
 async function requestNewTokens() {
     const tokens = getTokens();
     if (!tokens?.refresh) {
+        // An access token on its own cannot be renewed, so there is nothing to recover.
+        clearTokens(SESSION_ENDED.CREDENTIALS_REJECTED);
         throw new Error("No refresh token is stored.");
     }
-    const res = await authClient.post(`${BASE_URL}/api/v0.2.0/auth/refresh/`, {refresh: tokens.refresh});
-    // The response carries a new access token, and a new refresh token too if the backend
-    // is configured to rotate them.
-    const refreshedTokens = {...tokens, ...res.data};
-    setTokens(refreshedTokens);
-    return refreshedTokens;
-}
-
-function refreshTokens() {
-    if (!refreshRequest) {
-        refreshRequest = requestNewTokens().finally(() => {
-            refreshRequest = null;
-        });
+    try {
+        const res = await authClient.post(`${BASE_URL}/api/v0.2.0/auth/refresh/`, {refresh: tokens.refresh});
+        // The response carries a new access token, and a new refresh token too if the backend
+        // is configured to rotate them.
+        const refreshedTokens = {...tokens, ...res.data};
+        setTokens(refreshedTokens);
+        return refreshedTokens;
+    } catch (error) {
+        // Nothing but the refresh token authenticates this endpoint, so a response at all
+        // means it was refused — expired, malformed, or blacklisted by a rotation
+        // elsewhere — and none of that is recoverable. Dropping the pair is as far as this
+        // layer decides; what the user is told about it is the auth context's call. No
+        // response is a network failure instead, which the caller retries.
+        if (error.response) {
+            clearTokens(SESSION_ENDED.CREDENTIALS_REJECTED);
+        }
+        throw error;
     }
-    return refreshRequest;
 }
 
 // Retries a request once against a freshly refreshed access token. If the refresh itself
-// fails the original 401 surfaces, which is what authenticatedRequest logs out on.
+// fails the original 401 surfaces, by which point the pair has already been cleared.
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -67,7 +74,7 @@ apiClient.interceptors.response.use(
         request.retriedAfterRefresh = true;
 
         try {
-            await refreshTokens();
+            await api.refreshTokens();
         } catch (refreshError) {
             console.error("Could not refresh the access token:", refreshError);
             return Promise.reject(error);
@@ -83,7 +90,15 @@ const api = {
     },
 
     // Exchanges the stored refresh token for a new access token and stores the result.
-    refreshTokens,
+    // Not async: concurrent callers must all receive the same promise. See refreshRequest comment.
+    refreshTokens: () => {
+        if (!refreshRequest) {
+            refreshRequest = requestNewTokens().finally(() => {
+                refreshRequest = null;
+            });
+        }
+        return refreshRequest;
+    },
 
     parseDocket: async (formData) => {
         const res = await apiClient.post(`${BASE_URL}/api/v0.2.0/petition/parse-docket/`, formData);

@@ -1,7 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useSyncExternalStore, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import api from "../services/api"
-import { getTokenExpiry, getTokens, setTokens, subscribeToTokens } from "../services/tokenStore";
+import {
+    clearTokens,
+    getSessionEndReason,
+    getTokenExpiry,
+    getTokens,
+    SESSION_ENDED,
+    setTokens,
+    subscribeToTokens
+} from "../services/tokenStore";
 
 export const AuthContext = createContext();
 export const LOGOUT_REASON_KEY = "logoutReason";
@@ -24,38 +32,42 @@ export function useAuth() {
 }
 
 export function AuthProvider({children}) {
-    const [authTokens, setTokensState] = useState(getTokens);
+    // The axios layer refreshes tokens on its own, so subscribe to the store rather than
+    // keeping a copy here that can fall behind what is stored.
+    const authTokens = useSyncExternalStore(subscribeToTokens, getTokens);
     const isLoggingOut = useRef(false);
 
     const history = useHistory();
 
     const isAuthenticated = Boolean(authTokens && authTokens.access);
 
-    // The axios layer refreshes tokens on its own, so follow the store rather than
-    // assuming what is in state is still what is stored.
-    useEffect(() => subscribeToTokens(setTokensState), []);
-
-    const setAuthTokens = useCallback((tokens) => {
-        setTokens(tokens); // the subscription above feeds this back into state
-    }, []);
+    // The api layer drops the pair when the server stops accepting it, which is all it is
+    // in a position to know. Deciding what that means for the user is this layer's job, so
+    // the wording lives here. Subscribing rather than watching isAuthenticated in an effect
+    // keeps this ahead of the redirect: it runs inside clearTokens, before React re-renders
+    // and PrivateRoute sends anyone to the login page to read the message.
+    useEffect(() => subscribeToTokens((tokens) => {
+        if (!tokens && getSessionEndReason() === SESSION_ENDED.CREDENTIALS_REJECTED) {
+            sessionStorage.setItem(LOGOUT_REASON_KEY, SESSION_EXPIRED_MESSAGE);
+        }
+    }), []);
 
     const login = useCallback(async (username, password) => {
         try {
             const tokens = await api.login(username, password);
-            setAuthTokens(tokens);
+            setTokens(tokens);
             isLoggingOut.current = false;
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
         }
-    }, [setAuthTokens]);
+    }, []);
 
     // Handles intentional user logout.
     const logout = useCallback((userMessage) => {
         sessionStorage.setItem(LOGOUT_REASON_KEY, userMessage);
-        setAuthTokens(null);
-        history.push("/login");
-    }, [setAuthTokens, history]);
+        clearTokens(SESSION_ENDED.USER_LOGGED_OUT);
+    }, [history]);
 
     // Keep the access token fresh for as long as the app is open. A successful refresh
     // replaces authTokens, which re-runs this effect and schedules the next one.
@@ -80,9 +92,11 @@ export function AuthProvider({children}) {
                     if (cancelled) {
                         return;
                     }
-                    if (error.response) {
-                        logout(SESSION_EXPIRED_MESSAGE);
-                    } else {
+                    // A refusal of the token itself has already cleared the pair, which
+                    // unwinds the session on its own. Still holding one means the failure
+                    // was something else — a network drop, a refusal from in front of the
+                    // backend — so keep trying rather than letting the session lapse.
+                    if (getTokens()) {
                         console.error("Scheduled token refresh failed:", error);
                         scheduleRefresh(REFRESH_RETRY_DELAY_MS);
                     }
@@ -97,7 +111,7 @@ export function AuthProvider({children}) {
             cancelled = true;
             clearTimeout(timer);
         };
-    }, [authTokens, logout]);
+    }, [authTokens]);
 
     const authenticatedRequest = useCallback(async (apiCall) => {
         if (isLoggingOut.current) {
