@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'expunger',
     'petition',
@@ -139,8 +140,11 @@ LOGGING = {
 
 SIMPLE_JWT = {
     # The frontend refreshes the access token shortly before it expires, so it can be
-    # short-lived. The refresh token sets the length of a session: once it expires the
-    # user is sent back to the login page.
+    # short-lived. Refresh tokens rotate on every use and the old one is blacklisted, so
+    # an active session's refresh lifetime keeps sliding forward; three hours is how long
+    # a session can sit idle before the user is logged out (and their work is lost).
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=3)
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=3),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }

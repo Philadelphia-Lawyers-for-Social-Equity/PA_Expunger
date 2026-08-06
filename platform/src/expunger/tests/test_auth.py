@@ -55,3 +55,35 @@ class TestTokens(TestCase):
         )
 
         self.assertEqual(res.status_code, 401)
+
+    def test_refresh_rotates_the_refresh_token(self):
+        """Each refresh issues a new refresh token, so an active session can slide forward"""
+        tokens = self.obtain_tokens()
+        res = self.client.post(
+            reverse("token_refresh"),
+            {"refresh": tokens["refresh"]},
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        rotated = res.json()
+
+        self.assertIn("refresh", rotated)
+        self.assertNotEqual(rotated["refresh"], tokens["refresh"])
+
+    def test_a_rotated_refresh_token_cannot_be_reused(self):
+        """The old refresh token is blacklisted once rotated, so it can't buy a second pair"""
+        tokens = self.obtain_tokens()
+        first_refresh = self.client.post(
+            reverse("token_refresh"),
+            {"refresh": tokens["refresh"]},
+            content_type="application/json",
+        )
+        self.assertEqual(first_refresh.status_code, 200)
+
+        reused = self.client.post(
+            reverse("token_refresh"),
+            {"refresh": tokens["refresh"]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(reused.status_code, 401)
