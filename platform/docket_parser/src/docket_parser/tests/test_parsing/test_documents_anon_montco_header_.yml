@@ -1,0 +1,170 @@
+aliases:
+- Amdci P. Lderqc
+- Amdci Slrnaauiu Lderqc
+- Amdci Lderqc
+defendant_name: Amdci Slrnaauiu Lderqc
+defendant_name_reversed: Lderqc, Amdci Slrnaauiu
+dob: 1919-08-08
+dockets:
+- category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Nolle Prossed
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A1
+  - charge_description: Simple Assault
+    disposition: Guilty Plea
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2701 §§ A1
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2705
+  - charge_description: Conspiracy - Harassment - Subject Other to Physical Contact
+    disposition: Nolle Prossed
+    grade: S
+    sequence_number: '4'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Aggravated Assault
+    disposition: Nolle Prossed
+    grade: F1
+    sequence_number: '5'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Simple Assault
+    disposition: Guilty Plea
+    grade: M2
+    sequence_number: '6'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Recklessly Endangering Another Person
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 903
+  - charge_description: Harassment - Subject Other to Physical Contact
+    disposition: Nolle Prossed
+    grade: S
+    sequence_number: '8'
+    statute: 18 § 2709 §§ A1
+  - charge_description: Hinder App/Prosec-False Info To Leo
+    disposition: Nolle Prossed
+    grade: F3
+    sequence_number: '9'
+    statute: 18 § 5105 §§ A5
+  county: Montgomery
+  dcn: ''
+  disposition_date: 1982-05-24
+  docket_number: CP-46-CR-7100034-4895
+  judge: Carpenter, William R.
+  otn: D 501699-0
+  proc_status: Completed
+- category: Closed
+  county: Philadelphia
+  dcn: ''
+  disposition_date: 1960-07-24
+  docket_number: CP-51-DP-2007653-3873
+  judge: Cipriani, Nicholas A.
+  otn: ''
+  proc_status: Completed
+- arrest_date: 1963-05-26
+  category: Closed
+  charges:
+  - charge_description: Criminal Conspiracy Engaging - Aggravated Assault
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Simple Assault
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Recklessly Endangering Another
+      Person
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Possession Of Weapon
+    grade: M1
+    sequence_number: '4'
+    statute: 18 § 903 §§ A1
+  county: Philadelphia
+  dcn: '9410965273'
+  docket_number: CP-51-JV-4635548-0816
+  judge: ''
+  otn: W 183625-6
+  proc_status: Completed
+- arrest_date: 1963-05-26
+  category: Closed
+  charges:
+  - charge_description: Criminal Conspiracy Engaging - Aggravated Assault
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Simple Assault
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Recklessly Endangering Another
+      Person
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 903 §§ A1
+  - charge_description: Criminal Conspiracy Engaging - Possession Of Weapon
+    grade: M1
+    sequence_number: '4'
+    statute: 18 § 903 §§ A1
+  county: Philadelphia
+  dcn: 0708990808
+  docket_number: CP-51-JV-9911627-8587
+  judge: ''
+  otn: W 183625-6
+  proc_status: Completed
+- arrest_date: 1974-08-31
+  category: Closed
+  charges:
+  - charge_description: Criminal Conspiracy Engaging - Retail Theft-Take Mdse
+    sequence_number: '1'
+    statute: 18 § 903 §§ A1
+  county: Philadelphia
+  dcn: '9723111765'
+  docket_number: CP-51-JV-6965639-2448
+  judge: ''
+  otn: L 738964-1
+  proc_status: Completed
+- category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: Simple Assault
+    sequence_number: '2'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '3'
+    statute: 18 § 2705
+  - charge_description: Conspiracy - Harassment - Subject Other to Physical Contact
+    sequence_number: '4'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Aggravated Assault
+    sequence_number: '5'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Simple Assault
+    sequence_number: '6'
+    statute: 18 § 903
+  - charge_description: Conspiracy - Recklessly Endangering Another Person
+    sequence_number: '7'
+    statute: 18 § 903
+  - charge_description: Harassment - Subject Other to Physical Contact
+    sequence_number: '8'
+    statute: 18 § 2709
+  - charge_description: Hinder App/Prosec-False Info To Leo
+    sequence_number: '9'
+    statute: 18 § 5105
+  county: Philadelphia
+  dcn: ''
+  docket_number: CP-51-MD-5192626-7893
+  judge: ''
+  otn: D 501699-0
+  proc_status: Completed
+type: court summary

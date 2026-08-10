@@ -50,7 +50,7 @@ def main():
         logger.setLevel(args.log_level)
 
     if args.anonymize_all_tests:
-        for anon_replacement_path in get_anon_replacement_paths()[0]:
+        for anon_replacement_path in get_anon_replacement_paths():
             pdf_path = (anon_replacement_path.parent.parent / "pdfs" / anon_replacement_path.name).with_suffix(".pdf")
             anonymized_pdf = anonymize_pdfs([pdf_path], [anon_replacement_path])[0]
             output_path = pdf_path.parent.parent / "output" / pdf_path.name.replace(".pdf", "_anonymized.pdf")

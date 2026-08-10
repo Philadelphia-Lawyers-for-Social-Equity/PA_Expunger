@@ -1,0 +1,46 @@
+aliases:
+- Person, Real
+arrest_date: 1902-04-11
+complaint_date: 1901-08-13
+cross_court_docket_numbers: CP-51-CR-8442151-4164
+defendant_name: Real B. Person
+defendant_name_reversed: Person, Real B.
+dob: 1901-05-02
+docket_number: MC-51-CR-2011455-6885
+judge: DeLeon, James M.
+otn: T 760873-7
+section_disposition:
+- case_event: Migrated Dispositional Event
+  charges:
+  - charge_description: THEFT BY UNLAWFUL TAKING OR DISPOSITION
+    offense_disposition: Held for Court
+    sequence: '1'
+    statute: 18 § 3921
+  - charge_description: THEFT BY DECEPTION
+    offense_disposition: Held for Court
+    sequence: '2'
+    statute: 18 § 3922
+  - charge_description: THEFT BY RECEIVING STOLEN PROPERTY
+    offense_disposition: Held for Court
+    sequence: '3'
+    statute: 18 § 3925
+  - charge_description: FORGERY
+    offense_disposition: Dismissed
+    sequence: '4'
+    statute: 18 § 4101
+  - charge_description: TAMPERING WITH RECORDS OR IDENTIFICATION
+    offense_disposition: Held for Court
+    sequence: '5'
+    statute: 18 § 4104
+  - charge_description: BAD CHECKS
+    offense_disposition: Held for Court
+    sequence: '6'
+    statute: 18 § 4105
+  - charge_description: SECURING EXEC DOCUMENTS BY DECEPTION
+    offense_disposition: Held for Court
+    sequence: '7'
+    statute: 18 § 4114
+  disposition_date: 1913-01-14
+  disposition_finality: Final Disposition
+  event_disposition: Held for Court
+type: docket

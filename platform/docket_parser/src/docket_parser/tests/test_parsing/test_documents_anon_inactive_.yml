@@ -1,0 +1,429 @@
+aliases:
+- MYU CHYDFGSRM
+- MYU IBBSTR JYUFTURS
+- Myu Jyufturs
+- Myu Ibbstr Jyufturs
+defendant_name: Myu Jyufturs
+defendant_name_reversed: Jyufturs, Myu
+dob: 1901-11-19
+dockets:
+- arrest_date: 1930-04-18
+  category: Closed
+  charges:
+  - charge_description: Arson-Danger Of Death Or Bodily Inj
+    disposition: Guilty Plea - Negotiated
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3301 §§ A1I
+  - charge_description: Risking Catastrophe
+    disposition: Nolle Prossed
+    grade: F3
+    sequence_number: '2'
+    statute: 18 § 3302 §§ B
+  - charge_description: Criminal Mischief - Damage Property
+    disposition: Nolle Prossed
+    grade: F3
+    sequence_number: '3'
+    statute: 18 § 3304 §§ A5
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Guilty Plea - Negotiated
+    grade: M2
+    sequence_number: '4'
+    statute: 18 § 2705
+  - charge_description: Causing Catastrophe
+    disposition: Charge Changed
+    grade: F1
+    sequence_number: '99999'
+    statute: 18 § 3302 §§ A
+  - charge_description: Burglary
+    disposition: Disposed at Lower Court
+    grade: F1
+    sequence_number: '99999'
+    statute: 18 § 3502 §§ A
+  - charge_description: Crim Tres-Enter Structure
+    disposition: Disposed at Lower Court
+    sequence_number: '99999'
+    statute: 18 § 3503 §§ A1I
+  - charge_description: Criminal Mischief
+    disposition: Charge Changed
+    grade: F3
+    sequence_number: '99999'
+    statute: 18 § 3304 §§ A4
+  county: Philadelphia
+  dcn: '1586507267'
+  disposition_date: 1933-01-07
+  docket_number: CP-51-CR-2764451-2840
+  judge: Cohen, Denis P.
+  otn: O 393900-5
+  proc_status: Completed
+- arrest_date: 1944-12-21
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Guilty Plea - Negotiated
+    grade: F2
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Simple Assault
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '3879195339'
+  disposition_date: 1950-05-10
+  docket_number: CP-51-CR-6428821-2588
+  judge: Palumbo, Frank
+  otn: N 959560-1
+  proc_status: Completed
+- arrest_date: 1965-05-08
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Guilty Plea - Negotiated
+    grade: F2
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Simple Assault
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Nolle Prossed
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '1342186307'
+  disposition_date: 1972-12-25
+  docket_number: CP-51-CR-3514036-5917
+  judge: Palumbo, Frank
+  otn: P 320500-2
+  proc_status: Completed
+- arrest_date: 1915-02-21
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Withdrawn
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Withdrawn
+    grade: M1
+    sequence_number: '2'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '4'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '5577441734'
+  disposition_date: 1923-09-08
+  docket_number: MC-51-CR-9519762-1371
+  judge: Brady, Frank T.
+  otn: R 809904-8
+  proc_status: Completed
+- arrest_date: 1919-03-23
+  category: Closed
+  charges:
+  - charge_description: Purc/Rec Of Cont Substby Unauth Per
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A19
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Nolo Contendere
+    grade: M
+    sequence_number: '2'
+    statute: 35 § 780-113 §§ A16
+  county: Philadelphia
+  dcn: '4830047900'
+  disposition_date: 1925-09-21
+  docket_number: MC-51-CR-1929396-5263
+  judge: Waters, Joseph C.
+  otn: G 427088-8
+  proc_status: Sentenced/Penalty Imposed
+- arrest_date: 1925-09-19
+  category: Closed
+  charges:
+  - charge_description: Simple Assault
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '1'
+    statute: 18 § 2701 §§ A
+  - charge_description: Retail Theft-Take Mdse
+    disposition: Withdrawn
+    grade: S
+    sequence_number: '2'
+    statute: 18 § 3929 §§ A1
+  county: Philadelphia
+  dcn: '3240508300'
+  disposition_date: 1929-12-12
+  docket_number: MC-51-CR-7748455-6083
+  judge: Meehan, William Austin Jr.
+  otn: F 813669-6
+  proc_status: Completed
+- arrest_date: 1930-04-18
+  category: Closed
+  charges:
+  - charge_description: Arson-Danger Of Death Or Bodily Inj
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3301 §§ A1I
+  - charge_description: Causing Catastrophe
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 3302 §§ A
+  - charge_description: Burglary
+    disposition: Dismissed - LOE
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 3502 §§ A
+  - charge_description: Crim Tres-Enter Structure
+    disposition: Dismissed - LOE
+    sequence_number: '4'
+    statute: 18 § 3503 §§ A1I
+  - charge_description: Criminal Mischief
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3304 §§ A4
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '6'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '1586507267'
+  disposition_date: 1931-12-20
+  docket_number: MC-51-CR-2125460-7515
+  judge: DeLeon, James M.
+  otn: O 393900-5
+  proc_status: Completed
+- arrest_date: 1944-12-21
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Held for Court
+    grade: F2
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '3879195339'
+  disposition_date: 1947-04-27
+  docket_number: MC-51-CR-4714930-9587
+  judge: Sawyer, Stephanie M.
+  otn: N 959560-1
+  proc_status: Completed
+- arrest_date: 1965-02-23
+  category: Closed
+  charges:
+  - charge_description: Retail Theft-Take Mdse
+    disposition: Dismissed - LOP
+    grade: M1
+    sequence_number: '1'
+    statute: 18 § 3929 §§ A1
+  county: Philadelphia
+  dcn: '3360102877'
+  disposition_date: 1972-03-26
+  docket_number: MC-51-CR-3676136-8696
+  judge: DeLeon, James M.
+  otn: B 375968-5
+  proc_status: Completed
+- arrest_date: 1965-05-08
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault
+    disposition: Held for Court
+    grade: F2
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '3'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '1342186307'
+  disposition_date: 1972-12-16
+  docket_number: MC-51-CR-7326190-8118
+  judge: Coleman, Martin S.
+  otn: P 320500-2
+  proc_status: Completed
+- arrest_date: 1974-03-11
+  category: Closed
+  charges:
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Withdrawn
+    grade: M3
+    sequence_number: '1'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Withdrawn
+    grade: M3
+    sequence_number: '2'
+    statute: 18 § 3925 §§ A
+  county: Philadelphia
+  dcn: '5535803533'
+  disposition_date: 1996-07-27
+  docket_number: MC-51-CR-7514817-9610
+  judge: Frazier-Lyde, Jacquelyn
+  otn: B 094794-0
+  proc_status: Completed
+- arrest_date: 1976-03-27
+  category: Closed
+  charges:
+  - charge_description: Simple Assault
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '1'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Withdrawn
+    grade: M2
+    sequence_number: '2'
+    statute: 18 § 2705
+  - charge_description: Harassment - Subject Other to Physical Contact
+    disposition: Withdrawn
+    grade: S
+    sequence_number: '3'
+    statute: 18 § 2709 §§ A1
+  - charge_description: Disorder Conduct Hazardous/Physi Off
+    disposition: Withdrawn
+    grade: S
+    sequence_number: '4'
+    statute: 18 § 5503 §§ A4
+  county: Philadelphia
+  dcn: '1974416358'
+  disposition_date: 1976-05-05
+  docket_number: MC-51-CR-1363236-0777
+  judge: Dugan, Patrick F.
+  otn: L 335451-2
+  proc_status: Completed
+- arrest_date: 1939-12-15
+  category: Closed
+  charges:
+  - charge_description: Retail Theft-Take Mdse
+    disposition: Guilty Plea
+    grade: S
+    sequence_number: '1'
+    statute: 18 § 3929 §§ A1
+  county: Philadelphia
+  dcn: '5066096092'
+  disposition_date: 1942-11-15
+  docket_number: MC-51-SU-0344632-6215
+  judge: Deni, Teresa Carr
+  otn: G 533496-6
+  proc_status: Sentenced/Penalty Imposed
+- arrest_date: 1941-06-16
+  category: Closed
+  charges:
+  - charge_description: Retail Theft-Take Mdse
+    disposition: Withdrawn
+    grade: S
+    sequence_number: '1'
+    statute: 18 § 3929 §§ A1
+  county: Philadelphia
+  dcn: '7202796934'
+  disposition_date: 1953-09-05
+  docket_number: MC-51-SU-5126132-5938
+  judge: Gordon, Roger F.
+  otn: Y 105063-1
+  proc_status: Completed
+- arrest_date: 1936-05-06
+  category: Closed
+  charges:
+  - charge_description: Smoking
+    disposition: Guilty Plea
+    grade: S
+    sequence_number: '1'
+    statute: CO § 10602
+  - charge_description: Theft Of Services-Acquis Of Service
+    disposition: Guilty Plea
+    grade: S
+    sequence_number: '2'
+    statute: 18 § 3926 §§ A1
+  county: Philadelphia
+  dcn: '7609540460'
+  disposition_date: 1945-12-13
+  docket_number: MC-51-SU-6758922-6990
+  judge: Deni, Teresa Carr
+  otn: ''
+  proc_status: Sentenced/Penalty Imposed
+- arrest_date: 1952-04-16
+  category: Closed
+  charges:
+  - charge_description: Alcoholic Beverages
+    disposition: Guilty Plea
+    grade: S
+    sequence_number: '1'
+    statute: CO § 10604
+  county: Philadelphia
+  dcn: '2340000835'
+  disposition_date: 1958-09-26
+  docket_number: MC-51-SU-4951543-3660
+  judge: Dugan, Patrick F.
+  otn: ''
+  proc_status: Sentenced/Penalty Imposed
+- arrest_date: 1988-01-31
+  category: Inactive
+  charges:
+  - charge_description: Aggravated Assault - Attempts to cause SBI or causes injury
+      with extreme indifference
+    sequence_number: '1'
+    statute: 18 § 2702
+  - charge_description: Simple Assault
+    sequence_number: '2'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '3'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '6747263422'
+  docket_number: MC-51-CR-8482400-2098
+  otn: N 830568-0
+  proc_status: Active Bench Warrant
+- arrest_date: 1984-08-09
+  category: Inactive
+  charges:
+  - charge_description: Simple Assault
+    sequence_number: '1'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '2'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9180289676'
+  docket_number: MC-51-CR-8649773-0940
+  otn: D 950426-8
+  proc_status: Active Bench Warrant
+type: court summary

@@ -1,0 +1,893 @@
+aliases:
+- PENNI REDFORD
+- PENNY REDFORD-STERNER
+- PENNY REDFORD-STORNER
+- Penny Redford
+defendant_name: Penny Redford
+defendant_name_reversed: Redford, Penny
+dob: 1903-04-14
+dockets:
+- arrest_date: 1942-10-28
+  category: Active
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    sequence_number: '1'
+    statute: 35 § 780-113
+  - charge_description: Conspiracy
+    sequence_number: '2'
+    statute: 18 § 903
+  - charge_description: Corrupt Organizations
+    disposition: Withdrawn
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 911 §§ B1
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Withdrawn
+    grade: F2
+    sequence_number: '4'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '5'
+    statute: 35 § 780-113 §§ A16
+  - charge_description: Use/Poss Of Drug Paraph
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '6'
+    statute: 35 § 780-113 §§ A32
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Withdrawn
+    grade: M1
+    sequence_number: '7'
+    statute: 18 § 907 §§ A
+  county: Philadelphia
+  dcn: '5773159631'
+  docket_number: CP-51-CR-0413430-8134
+  otn: B 585982-3
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '1390711315'
+  docket_number: CP-51-CR-1485414-3867
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  county: Philadelphia
+  dcn: '9381669241'
+  docket_number: CP-51-CR-2069076-3416
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9399272635'
+  docket_number: CP-51-CR-1081600-4903
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    sequence_number: '1'
+    statute: 35 § 780-113
+  - charge_description: Deal In Proc Unl Act/Intent To Promote
+    sequence_number: '2'
+    statute: 18 § 5111
+  - charge_description: Corrupt Organizations
+    sequence_number: '3'
+    statute: 18 § 911
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '4'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '5'
+    statute: 18 § 903
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    sequence_number: '6'
+    statute: 35 § 780-113
+  county: Philadelphia
+  dcn: '4844377005'
+  docket_number: CP-51-CR-6700392-3249
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  - charge_description: Aggravated Assault - Attempts to cause SBI or causes injury
+      with extreme indifference
+    sequence_number: '9'
+    statute: 18 § 2702
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '10'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '11'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '12'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '13'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '14'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '15'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '16'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '17'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '6789863970'
+  docket_number: CP-51-CR-3838137-8673
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '5992285013'
+  docket_number: CP-51-CR-7090236-7969
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9355200766'
+  docket_number: CP-51-CR-6384025-1858
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1965-07-23
+  category: Active
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    sequence_number: '1'
+    statute: 18 § 3701
+  - charge_description: Possession Of Firearm Prohibited
+    sequence_number: '2'
+    statute: 18 § 6105
+  - charge_description: Conspiracy
+    sequence_number: '3'
+    statute: 18 § 903
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    sequence_number: '4'
+    statute: 18 § 3921
+  - charge_description: Receiving Stolen Property
+    sequence_number: '5'
+    statute: 18 § 3925
+  - charge_description: Poss Instrument Of Crime W/Int
+    sequence_number: '6'
+    statute: 18 § 907
+  - charge_description: Simple Assault
+    sequence_number: '7'
+    statute: 18 § 2701
+  - charge_description: Recklessly Endangering Another Person
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '2427422447'
+  docket_number: CP-51-CR-3739574-3837
+  otn: Y 980614-5
+  proc_status: Awaiting Scheduling Conferenc
+- arrest_date: 1915-09-09
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Guilty Plea - Negotiated
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '2786010291'
+  disposition_date: 1932-05-17
+  docket_number: CP-51-CR-2924273-1046
+  judge: Shaffer, Zachary C.
+  otn: N 298824-7
+  proc_status: Awaiting Violation of Probation
+- arrest_date: 1923-01-01
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Guilty Plea - Negotiated
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '8427610699'
+  disposition_date: 1932-05-17
+  docket_number: CP-51-CR-1695658-3425
+  judge: Shaffer, Zachary C.
+  otn: A 600956-1
+  proc_status: Awaiting Violation of Probation
+- arrest_date: 1903-12-15
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Guilty Plea - Negotiated
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '1560210627'
+  disposition_date: 1932-05-17
+  docket_number: CP-51-CR-8877496-6507
+  judge: Shaffer, Zachary C.
+  otn: P 001393-2
+  proc_status: Awaiting Violation of Probation
+- arrest_date: 1903-12-15
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Held for Court
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '1560210627'
+  disposition_date: 1926-02-22
+  docket_number: MC-51-CR-5401713-5001
+  judge: Shields, T. Francis
+  otn: P 001393-2
+  proc_status: Completed
+- arrest_date: 1915-09-09
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Held for Court
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '2786010291'
+  disposition_date: 1925-07-09
+  docket_number: MC-51-CR-8358509-1281
+  judge: Frazier-Lyde, Jacquelyn
+  otn: N 298824-7
+  proc_status: Completed
+- arrest_date: 1923-01-01
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Held for Court
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  county: Philadelphia
+  dcn: '8427610699'
+  disposition_date: 1925-11-02
+  docket_number: MC-51-CR-7527829-0687
+  judge: Frazier-Lyde, Jacquelyn
+  otn: A 600956-1
+  proc_status: Completed
+- arrest_date: 1942-10-28
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Held for Court
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F
+    sequence_number: '2'
+    statute: 18 § 903 §§ C
+  - charge_description: Corrupt Organizations
+    disposition: Withdrawn
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 911 §§ B1
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Withdrawn
+    grade: F2
+    sequence_number: '4'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '5'
+    statute: 35 § 780-113 §§ A16
+  - charge_description: Use/Poss Of Drug Paraph
+    disposition: Withdrawn
+    grade: M
+    sequence_number: '6'
+    statute: 35 § 780-113 §§ A32
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Withdrawn
+    grade: M1
+    sequence_number: '7'
+    statute: 18 § 907 §§ A
+  county: Philadelphia
+  dcn: '5773159631'
+  disposition_date: 1949-11-04
+  docket_number: MC-51-CR-7335504-4154
+  judge: Moss, Bradley K.
+  otn: B 585982-3
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '1390711315'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-5740511-4578
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9381669241'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-2386539-7645
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9399272635'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-8580456-5537
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Manufacture, Delivery, or Possession With Intent to Manufacture
+      or Deliver
+    disposition: Held for Court
+    grade: F
+    sequence_number: '1'
+    statute: 35 § 780-113 §§ A30
+  - charge_description: Deal In Proc Unl Act/Intent To Promote
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 5111 §§ A1
+  - charge_description: Corrupt Organizations
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 911 §§ B1
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '4'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '5'
+    statute: 18 § 903 §§ C
+  - charge_description: Int Poss Contr Subst By Per Not Reg
+    disposition: Held for Court
+    grade: M
+    sequence_number: '6'
+    statute: 35 § 780-113 §§ A16
+  county: Philadelphia
+  dcn: '4844377005'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-4673066-2607
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Aggravated Assault - Attempts to cause SBI or causes injury
+      with extreme indifference
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 2702 §§ A1
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '4'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '6'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '7'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '9'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '6789863970'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-5031939-0266
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '6789863970'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-2028259-3853
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '5992285013'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-8489066-0300
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F3
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '9355200766'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-1477173-9349
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+- arrest_date: 1965-07-23
+  category: Closed
+  charges:
+  - charge_description: Robbery-Inflict Serious Bodily Injury
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '1'
+    statute: 18 § 3701 §§ A1I
+  - charge_description: Possession Of Firearm Prohibited
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '2'
+    statute: 18 § 6105 §§ A1
+  - charge_description: Conspiracy
+    disposition: Held for Court
+    grade: F1
+    sequence_number: '3'
+    statute: 18 § 903 §§ C
+  - charge_description: Theft By Unlaw Taking-Movable Prop
+    disposition: Held for Court
+    grade: F2
+    sequence_number: '4'
+    statute: 18 § 3921 §§ A
+  - charge_description: Receiving Stolen Property
+    disposition: Held for Court
+    grade: F2
+    sequence_number: '5'
+    statute: 18 § 3925 §§ A
+  - charge_description: Poss Instrument Of Crime W/Int
+    disposition: Held for Court
+    grade: M1
+    sequence_number: '6'
+    statute: 18 § 907 §§ A
+  - charge_description: Simple Assault
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '7'
+    statute: 18 § 2701 §§ A
+  - charge_description: Recklessly Endangering Another Person
+    disposition: Held for Court
+    grade: M2
+    sequence_number: '8'
+    statute: 18 § 2705
+  county: Philadelphia
+  dcn: '2427422447'
+  disposition_date: 1967-08-13
+  docket_number: MC-51-CR-9139047-8959
+  judge: Conroy, David H.
+  otn: Y 980614-5
+  proc_status: Completed
+type: court summary
