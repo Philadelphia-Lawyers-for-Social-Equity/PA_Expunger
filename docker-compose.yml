@@ -7,6 +7,14 @@ services:
             POSTGRES_DB: ${DB_NAME:-expunger_db}
         ports:
             - 5432:5432
+        # -h forces a TCP check. During first-run initialization the image
+        # starts a temporary server on the unix socket only, which a socket
+        # check would report as ready before the database is really up.
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DB_USER:-plse} -d ${DB_NAME:-expunger_db}"]
+            interval: 1s
+            timeout: 5s
+            retries: 15
         restart: on-failure
         volumes:
             - postgres_data:/var/lib/postgresql/data
@@ -16,7 +24,8 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
         image: pa_expunger-backend:dev
         environment:
             DJANGO_SETTINGS_MODULE: config.settings.dev

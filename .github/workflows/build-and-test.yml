@@ -7,13 +7,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Build images
-        run: docker compose build --no-cache
+        run: docker compose build
 
       - name: Start containers
         run: docker compose up -d
