@@ -11,7 +11,7 @@ services:
         # starts a temporary server on the unix socket only, which a socket
         # check would report as ready before the database is really up.
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DB_USER:-plse} -d ${DB_NAME:-expunger_db}"]
+            test: pg_isready -h 127.0.0.1 -U ${DB_USER:-plse} -d ${DB_NAME:-expunger_db}
             interval: 1s
             timeout: 5s
             retries: 15
