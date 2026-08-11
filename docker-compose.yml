@@ -37,7 +37,7 @@ services:
             DB_PORT: 5432
             FRONTEND_HOST: http://localhost:3000
             BACKEND_HOST: http://localhost:8000
-            DJANGO_LOG_LEVEL: ${LOGLEVEL:-INFO}
+            DJANGO_LOG_LEVEL: ${DJANGO_LOG_LEVEL:-INFO}
             SUPERUSER_USERNAME: ${SUPERUSER_USERNAME:-plse}
             SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-defaultTestPassword}
         ports:
