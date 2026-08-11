@@ -90,21 +90,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# abort commit if pandoc is not installed
-pandoc -v >/dev/null 2>&1 || {
-    echo >&2 "I require pandoc to keep track of changes in .docx files but it's not installed. Aborting.";
-    exit 1;
-}
-
 # go to the top directory of this project, because filenames will be
 # referred to that location
 cd `git rev-parse --show-toplevel`
+
+# the .docx files in this commit, kept for modified and deleted separately
+docx_modified=`git diff --cached --name-only --diff-filter=d | grep "\.docx$"`
+docx_deleted=`git diff --cached --name-only --diff-filter=D | grep "\.docx$"`
+
+# a commit that touches no .docx has nothing for this hook to do, and must not
+# require pandoc to be installed
+if [ -z "$docx_modified" ] && [ -z "$docx_deleted" ]
+then
+    exit 0
+fi
+
+# abort commit if pandoc is not installed
+pandoc -v >/dev/null 2>&1 || {
+    echo >&2 "This commit changes a .docx file, which requires pandoc to update the";
+    echo >&2 "Markdown copy that makes the change reviewable. pandoc is not installed.";
+    echo >&2 "Install it from https://www.pandoc.org/installing.html and commit again.";
+    exit 1;
+}
 
 # delete temp file with list of Mardown files to amend commit
 rm -f .commit-amend-markdown
 
 # create a Markdown copy of every .docx file that is committed, excluding deleted files
-for file in `git diff --cached --name-only --diff-filter=d | grep "\.docx$"`
+for file in $docx_modified
 do
     # name of Markdown file
     mdfile="${file%.docx}.md"
@@ -126,7 +139,7 @@ do
 done
 
 # remove the Markdown copy of any file that is to be deleted from the repo
-for file in `git diff --cached --name-only --diff-filter=D | grep "\.docx$"`
+for file in $docx_deleted
 do
     # name of Markdown file
     mdfile="${file%.docx}.md"
