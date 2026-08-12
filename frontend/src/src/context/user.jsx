@@ -33,13 +33,13 @@ export function useUser() {
 }
 
 export function UserProvider({ children }) {
-  const { isAuthenticated, authenticatedRequest } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [user, setUser] = useState(initialUserState);
 
   const refreshUserProfile = useCallback(async () => {
     if (isAuthenticated) {
       try {
-        const userData = await authenticatedRequest(() => api.getUserProfile());
+        const userData = await api.getUserProfile();
         setUser(userData);
       } catch (error) {
         setUser(initialUserState);
@@ -47,7 +47,7 @@ export function UserProvider({ children }) {
     } else {
       setUser(initialUserState);
     }
-  }, [isAuthenticated, setUser, authenticatedRequest]);
+  }, [isAuthenticated, setUser]);
 
   useEffect(() => {
     refreshUserProfile();

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useSyncExternalStore, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from 'react';
 import { useHistory } from 'react-router-dom';
 import api from "../services/api"
 import {
@@ -35,7 +35,6 @@ export function AuthProvider({children}) {
     // The axios layer refreshes tokens on its own, so subscribe to the store rather than
     // keeping a copy here that can fall behind what is stored.
     const authTokens = useSyncExternalStore(subscribeToTokens, getTokens);
-    const isLoggingOut = useRef(false);
 
     const history = useHistory();
 
@@ -56,7 +55,6 @@ export function AuthProvider({children}) {
         try {
             const tokens = await api.login(username, password);
             setTokens(tokens);
-            isLoggingOut.current = false;
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
@@ -113,29 +111,15 @@ export function AuthProvider({children}) {
         };
     }, [authTokens]);
 
-    const authenticatedRequest = useCallback(async (apiCall) => {
-        if (isLoggingOut.current) {
-            return Promise.reject(new Error("Logout in progress."));
-        }
-
-        try {
-            return await apiCall();
-        } catch (error) {
-            // A 401 here means the api layer already tried to refresh and could not, so
-            // the session is genuinely over.
-            if (error.response && error.response.status === 401) {
-                isLoggingOut.current = true;
-                logout(SESSION_EXPIRED_MESSAGE);
-            }
-            throw error;
-        }
-    }, [logout]);
-
+    // Callers just call api.* directly. A 401 that survives the api layer means the refresh
+    // was refused, and refusing it already cleared the pair — which drops isAuthenticated,
+    // redirects through PrivateRoute, and leaves the message above for the login page. There
+    // is nothing left for a wrapper here to add, and a wrapper that treated every 401 as a
+    // dead session would end one that a network blip had only interrupted.
     const value = {
         isAuthenticated,
         login,
-        logout,
-        authenticatedRequest
+        logout
     };
 
     return (

@@ -12,7 +12,6 @@ import { useNavBlock } from "../../context/navBlockContext.jsx";
 import NavBlock from "../util/navBlock";
 import "./style.css";
 import api from "../../services/api";
-import { useAuth } from "../../context/auth";
 import { useIsMounted } from "../../hooks/useIsMounted";
 
 
@@ -35,7 +34,6 @@ const initialSummary = {
 
 export default function ReviewPage(props) {
     const history = useHistory();
-    const { authenticatedRequest } = useAuth();
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions } = usePetitions();
@@ -123,7 +121,7 @@ export default function ReviewPage(props) {
 
         console.info("Requesting petition with this data:", petitionFields);
         try {
-            const blob = await authenticatedRequest(() => api.generatePetitionBlob(petitionFields));
+            const blob = await api.generatePetitionBlob(petitionFields);
             return window.URL.createObjectURL(blob);
         } catch {
             setSummaryError(index);
@@ -138,7 +136,7 @@ export default function ReviewPage(props) {
 
     async function postSummaryRequest() {
         try {
-            let blob = await authenticatedRequest(() => api.generatePetitionSummaryBlob(summary));
+            let blob = await api.generatePetitionSummaryBlob(summary);
             return window.URL.createObjectURL(blob)
         } catch (e) {
             // Additional error handling goes here
