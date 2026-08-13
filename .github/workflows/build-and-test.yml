@@ -21,3 +21,6 @@ jobs:
 
       - name: Run backend tests
         run: docker compose exec -T backend pytest
+
+      - name: Run frontend tests
+        run: docker compose exec -T frontend yarn test
