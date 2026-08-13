@@ -32,6 +32,7 @@ const RAW_RUNTIME_STATE =
           ["@testing-library/dom", "npm:10.4.1"],\
           ["@testing-library/jest-dom", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:7.0.1"],\
           ["@testing-library/react", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:16.3.2"],\
+          ["@testing-library/user-event", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:14.6.4"],\
           ["@types/react", "npm:18.3.23"],\
           ["@vitejs/plugin-react", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:4.5.1"],\
           ["axios", "npm:1.9.0"],\
@@ -1693,6 +1694,28 @@ const RAW_RUNTIME_STATE =
           "@types/testing-library__dom",\
           "react-dom",\
           "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@testing-library/user-event", [\
+      ["npm:14.6.4", {\
+        "packageLocation": "./.yarn/cache/@testing-library-user-event-npm-14.6.4-1532248d3b-2460efb88c.zip/node_modules/@testing-library/user-event/",\
+        "packageDependencies": [\
+          ["@testing-library/user-event", "npm:14.6.4"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:14.6.4", {\
+        "packageLocation": "./.yarn/__virtual__/@testing-library-user-event-virtual-9ffa65beed/0/cache/@testing-library-user-event-npm-14.6.4-1532248d3b-2460efb88c.zip/node_modules/@testing-library/user-event/",\
+        "packageDependencies": [\
+          ["@testing-library/dom", "npm:10.4.1"],\
+          ["@testing-library/user-event", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:14.6.4"],\
+          ["@types/testing-library__dom", null]\
+        ],\
+        "packagePeers": [\
+          "@testing-library/dom",\
+          "@types/testing-library__dom"\
         ],\
         "linkType": "HARD"\
       }]\
@@ -4333,6 +4356,7 @@ const RAW_RUNTIME_STATE =
           ["@testing-library/dom", "npm:10.4.1"],\
           ["@testing-library/jest-dom", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:7.0.1"],\
           ["@testing-library/react", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:16.3.2"],\
+          ["@testing-library/user-event", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:14.6.4"],\
           ["@types/react", "npm:18.3.23"],\
           ["@vitejs/plugin-react", "virtual:89424be3b07e80abdf1af753370d5c15b8ab013852141452a687a8d9343cfe5f0404292b419ed2a1de6abdf27a20c834514da9d7cf5fbd23e696388bfc47c1de#npm:4.5.1"],\
           ["axios", "npm:1.9.0"],\
