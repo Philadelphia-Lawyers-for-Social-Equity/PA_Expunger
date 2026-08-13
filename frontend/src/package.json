@@ -23,12 +23,16 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.1",
     "@vitejs/plugin-react": "^4.5.1",
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "globals": "^16.2.0",
+    "jsdom": "^30.0.1",
     "prettier": "^3.5.3",
     "typescript": "^5",
     "vite": "^6.3.5",
