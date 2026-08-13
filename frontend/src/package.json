@@ -19,7 +19,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
@@ -31,7 +32,8 @@
     "prettier": "^3.5.3",
     "typescript": "^5",
     "vite": "^6.3.5",
-    "vite-plugin-svgr": "^4.3.0"
+    "vite-plugin-svgr": "^4.3.0",
+    "vitest": "^4.1.10"
   },
   "packageManager": "yarn@4.9.1"
 }
