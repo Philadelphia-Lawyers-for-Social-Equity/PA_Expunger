@@ -14,7 +14,7 @@ export default function LandingPage() {
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
-    const { isAuthenticated, authenticatedRequest } = useAuth();
+    const { isAuthenticated } = useAuth();
     const { refreshUserProfile } = useUser();
     const history = useHistory();
     const getIsMounted = useIsMounted();
@@ -29,7 +29,7 @@ export default function LandingPage() {
                 }
 
                 try {
-                    const data = await authenticatedRequest(() => api.getAttorneys());
+                    const data = await api.getAttorneys();
                     if (getIsMounted()) {
                         setAttorneyData(data || []);
                         if (data && data.length === 0) {
@@ -52,7 +52,7 @@ export default function LandingPage() {
             setErrorMessage("");
         }
 
-    }, [isAuthenticated, getIsMounted, authenticatedRequest]);
+    }, [isAuthenticated, getIsMounted]);
 
     const handleAttorneyChange = useCallback((event) => {
         setAttorneyKey(event.target.value);
@@ -85,7 +85,7 @@ export default function LandingPage() {
             "user_id": selectedAttorney.user_id
         };
         try {
-            const res = await authenticatedRequest(() => api.updateProfile(profileData));
+            const res = await api.updateProfile(profileData);
             console.log("Profile update successful:", res);
             // Currently, we're skipping the /action route because only one action is implemented
             // history.push("/action");

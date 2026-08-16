@@ -8,7 +8,6 @@ import Charges from "./components/Charges";
 import Fines from "./components/Fines";
 import Progress from "./components/Progress";
 import FallbackMessage from "../FallbackMessage";
-import { useAuth } from "../../context/auth";
 import { useUser } from '../../context/user';
 import { initialPetitionState, usePetitions } from "../../context/petitions";
 import { usePetitioner, initialPetitionerState } from "../../context/petitioner";
@@ -29,7 +28,6 @@ export default function GeneratePage(props) {
         - petitionFields: single petition fields object, as described in the api glossary
     */
     const history = useHistory();
-    const { authenticatedRequest } = useAuth();
     const { user } = useUser();
     const { petitioner, setPetitioner } = usePetitioner();
     const { petitions, setPetitions, petitionNumber, setPetitionNumber } = usePetitions();
@@ -96,7 +94,7 @@ export default function GeneratePage(props) {
         console.info(petitionFields);
         setBusy(true);
         try {
-            let blob = await authenticatedRequest(() => api.generatePetitionBlob(petitionFields));
+            let blob = await api.generatePetitionBlob(petitionFields);
             let downloadUrl = window.URL.createObjectURL(blob);
             if (getIsMounted()) {
                 setDownloadUrls({

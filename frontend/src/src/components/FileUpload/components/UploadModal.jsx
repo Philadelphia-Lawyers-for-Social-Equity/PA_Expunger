@@ -4,14 +4,12 @@ import { Button, Col, Modal } from 'react-bootstrap';
 import api from "../../../services/api";
 import { initialPetitionerState, usePetitioner } from "../../../context/petitioner";
 import { initialPetitionState, usePetitions } from "../../../context/petitions";
-import { useAuth } from "../../../context/auth";
 import { useIsMounted } from "../../../hooks/useIsMounted";
 
 export default function UploadModal(props) {
     const { show, setPageError, handleClose } = props;
     const { petitioner, setPetitioner } = usePetitioner();
     const { setPetitions, setPetitionNumber } = usePetitions();
-    const { authenticatedRequest } = useAuth();
 
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [modalError, setModalError] = useState("");
@@ -58,7 +56,7 @@ export default function UploadModal(props) {
         }
 
         try {
-            const data = await authenticatedRequest(() => api.parseDocket(formData));
+            const data = await api.parseDocket(formData);
             console.debug("Received parsed data:", data);
             setPetitions(data.petitions || initialPetitionState);
             // If the new petitioner is the same as the previous one, copy as much data as we can from the previous one
