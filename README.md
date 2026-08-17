@@ -142,14 +142,14 @@ any new court document enters the repository.
 
 The backend includes a `pytest` suite. Run it inside the running `backend` container so the environment is correct.
 
-1.  Make sure your development environment is running with `docker compose up -d`.
-2.  Execute a shell inside the `backend` container:
+1. Make sure your development environment is running with `docker compose up -d`.
+2. Execute a shell inside the `backend` container:
 
     ```bash
     docker compose exec backend bash
     ```
 
-3.  Once inside the container's shell, run the tests:
+3. Once inside the container's shell, run the tests:
 
     ```bash
     # Run all tests

@@ -182,11 +182,11 @@ From the root of the project, run the following command. This starts a temporary
 ```bash
 # On macOS, Linux, or Windows with Git Bash:
 cd frontend/src # location of package.json
-docker run -it --rm -v "${PWD}:/app" -w /app node:20-alpine sh -c "corepack enable && sh"
+docker run -it --rm -v "${PWD}:/app" -w /app node:22-alpine sh -c "corepack enable && sh"
 
 # On Windows with Command Prompt (CMD):
 cd frontend/src
-docker run -it --rm -v "%CD%:/app" -w /app node:20-alpine sh -c "corepack enable && sh"
+docker run -it --rm -v "%CD%:/app" -w /app node:22-alpine sh -c "corepack enable && sh"
 ```
 
 **Understanding the Command:**
@@ -196,7 +196,7 @@ docker run -it --rm -v "%CD%:/app" -w /app node:20-alpine sh -c "corepack enable
 * `--rm`: Automatically removes the container when you exit, keeping your system clean.
 * `-v "${PWD}:/app"`: Mounts your current project directory (represented by `${PWD}`) into the `/app` directory inside the container.
 * `-w /app`: Sets the working directory inside the container to `/app`.
-* `node:20-alpine`: Specifies the image to use, which is the same as our frontend's base image.
+* `node:22-alpine`: Specifies the image to use, which is the same as our frontend's base image.
 * `sh -c "corepack enable && sh"`: A command that first enables `corepack` (Yarn's modern manager) and then starts an interactive shell (`sh`) for you to use.
 
 **2. Modify Dependencies**

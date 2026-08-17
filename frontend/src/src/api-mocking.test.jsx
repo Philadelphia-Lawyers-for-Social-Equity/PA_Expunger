@@ -37,9 +37,9 @@ function UserGreeting() {
 describe("API mocking", () => {
     it("renders data returned by the mocked API", async () => {
         /*
-         * Configure the shared mock for this specific test.
+         * Configure the automatically generated mock for this specific test.
          *
-         * The shared mock only provides vi.fn() implementations; tests
+         * Vitest provides mocked implementations for the API methods; tests
          * decide what each API call should return.
          */
         api.getUserProfile.mockResolvedValue({
