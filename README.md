@@ -142,14 +142,14 @@ any new court document enters the repository.
 
 The backend includes a `pytest` suite. Run it inside the running `backend` container so the environment is correct.
 
-1.  Make sure your development environment is running with `docker compose up -d`.
-2.  Execute a shell inside the `backend` container:
+1. Make sure your development environment is running with `docker compose up -d`.
+2. Execute a shell inside the `backend` container:
 
     ```bash
     docker compose exec backend bash
     ```
 
-3.  Once inside the container's shell, run the tests:
+3. Once inside the container's shell, run the tests:
 
     ```bash
     # Run all tests
@@ -163,6 +163,28 @@ Or run the suite in one command, without opening a shell:
 
 ```bash
 docker compose exec backend pytest
+```
+
+The frontend includes a `Vitest` suite. Run it inside the running `frontend` container so the environment is correct.
+
+1. Make sure your development environment is running with `docker compose up -d`.
+2. Execute a shell inside the `frontend` container:
+
+    ```bash
+    docker compose exec frontend sh
+    ```
+
+3. Once inside the container's shell, run the tests:
+
+    ```bash
+    # Run all tests
+    yarn test
+    ```
+
+Or run the suite in one command, without opening a shell:
+
+```bash
+docker compose exec -T frontend yarn test
 ```
 
 ---
