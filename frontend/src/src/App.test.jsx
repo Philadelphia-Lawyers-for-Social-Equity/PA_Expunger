@@ -1,9 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-it('renders without crashing', () => {
-  const div = document.createElement('div');
-  ReactDOM.render(<App />, div);
-  ReactDOM.unmountComponentAtNode(div);
+import App from "./App";
+
+describe("App", () => {
+    it("renders without crashing", () => {
+        expect(() => render(<App />)).not.toThrow();
+    });
 });
