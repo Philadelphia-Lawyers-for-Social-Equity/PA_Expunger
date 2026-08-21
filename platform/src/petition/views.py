@@ -45,10 +45,13 @@ class PetitionAPIView(APIView):
             dispositions = set([charge.disposition for charge in context["charges"] if charge.disposition is not None])
             context["dispositions"] = ', '.join(dispositions)
         except KeyError as err:
+            # TODO(#19): replace with
+            #     raise MissingField(f"Missing required field: {err.args[0]}.",
+            #                        field=err.args[0])
             msg = f"Missing field: {err}"
             logger.warning(msg)
             return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Format address to allow for new lines to populate.
         context["organization"].formattedAddress = format_address_for_template(context["organization"].address)
         context["petitioner"].formattedAddress = format_address_for_template(context["petitioner"].address)
@@ -83,6 +86,10 @@ class GeneratorReportAPIView(APIView):
     def post(self, request: Request, *args, **kwargs):
         logger.debug("GeneratorReportAPIView post")
 
+        # TODO(#19): these four lookups raise KeyError on a malformed payload.
+        # config.exception_handler now turns that into a clean JSON 500 instead
+        # of a Django HTML page, but it should be a 400 -- wrap in try/except and
+        # raise MissingField, as PetitionAPIView does.
         context = {
             "name": request.data["name"],
             "dob": request.data["dob"],
@@ -147,6 +154,17 @@ class DocketParserAPIView(APIView):
             try:
                 parsed_files.append(docket_parser.parse_pdf(file))
             except Exception as exception:
+                # TODO(#19): PRIVACY -- `short_msg` interpolates the exception,
+                # and a parsimonious ParseError stringifies to a snippet of the
+                # document being parsed. For a real client that is their name,
+                # date of birth, and charges, sent to the browser. Replace with
+                # per-type handling that interpolates only `file.name`:
+                #     except PdfReadError:
+                #         logger.exception("Could not read %s", file.name)
+                #         raise UnreadablePdf(f"“{file.name}” could not be opened as a PDF.")
+                #     except ParseError:
+                #         logger.exception("Grammar failed on %s", file.name)
+                #         raise ParseFailed(f"We couldn't read “{file.name}”.")
                 tb = traceback.format_exc()
                 short_msg = f"Parse error {exception}"
                 logger.error(tb)
