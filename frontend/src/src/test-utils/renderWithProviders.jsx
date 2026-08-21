@@ -1,6 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useHistory } from "react-router-dom";
 import { vi } from "vitest";
 
 import api from "../services/api";
@@ -47,23 +47,23 @@ export function renderWithProviders(
 
   if (!vi.isMockFunction(api.getUserProfile)) {
     throw new Error(
-      "renderWithProviders requires the api module to be mocked. " +
-        'Add vi.mock("<relative path>/services/api") to this test file.',
+      "renderWithProviders requires api.getUserProfile to be a mock function. " +
+        'Mock the api module in this test file, e.g. vi.mock("<relative path>/services/api").',
     );
   }
 
   api.getUserProfile.mockResolvedValue(user);
 
-  let currentLocation;
+  let history;
 
-  function LocationProbe() {
-    currentLocation = useLocation();
+  function HistoryProbe() {
+    history = useHistory();
     return null;
   }
 
   const result = render(
     <MemoryRouter initialEntries={[route]}>
-      <LocationProbe />
+      <HistoryProbe />
       <AuthProvider>
         <PetitionerProvider>
           <PetitionsProvider>
@@ -78,8 +78,6 @@ export function renderWithProviders(
 
   return {
     ...result,
-    get location() {
-      return currentLocation;
-    },
+    history,
   };
 }
