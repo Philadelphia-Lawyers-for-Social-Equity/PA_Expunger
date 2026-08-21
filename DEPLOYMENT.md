@@ -64,6 +64,7 @@ This is the workflow for maintainers to deploy a new version to a live environme
             tag: "1.0.1" # Change to the new version
         ```
     * Make sure the deployment sets `BACKEND_API_URL` to the public origin users reach the app on. Django trusts it for CSRF, so if it does not match the browser's origin, admin and session logins are rejected with a CSRF 403.
+    * Make sure the deployment sets `DJANGO_ALLOWED_HOSTS` to a comma-separated list of the hostnames the app is reachable at. The image refuses to start without it (`config.settings.prod` raises at boot), rather than serving with an empty `ALLOWED_HOSTS`.
     * Add or update any necessary `SealedSecret` files (see below).
     * Commit these configuration changes and open a Pull Request.
     * Once the PR is reviewed and merged, the GitOps controller will automatically deploy the new version to the cluster.
@@ -121,7 +122,7 @@ The Helm chart that renders the Kubernetes manifests is not in this repository y
 
 Running a local "smoke test" with `compose.prod-test.yaml` is a fast and simple way to test and debug the production Docker image locally. Its main purpose is to verify that the image itself is runnable and configured correctly (e.g., Gunicorn starts, static files are collected, the entrypoint script works) *without* the added complexity of a full Kubernetes deployment.
 
-`compose.prod-test.yaml` declares its own Compose project name (`pa_expunger_prodtest`), distinct from the dev stack's, so you can run the smoke test alongside `docker compose up` without either one clobbering the other's containers.
+`compose.prod-test.yaml` declares its own Compose project name (`pa_expunger_prodtest`) and a distinct host port (`8080`, vs. the dev stack's `8000`), so you can run the smoke test alongside `docker compose up` without either one clobbering the other's containers.
 
 Testing on a local Kubernetes cluster is the ultimate check, but this smoke test provides a much quicker feedback loop for issues that are *internal* to the container.
 
@@ -138,7 +139,7 @@ Testing on a local Kubernetes cluster is the ultimate check, but this smoke test
     # Or run the full command:
     docker compose -f compose.prod-test.yaml up --build
     ```
-3. **Connect & Test:** In a separate terminal, connect to the backend container and run the tests. Go to [http://localhost:8000](http://localhost:8000) to view the site in your browser.
+3. **Connect & Test:** In a separate terminal, connect to the backend container and run the tests. Go to [http://localhost:8080](http://localhost:8080) to view the site in your browser.
    ```bash
    # (linux/mac)
    ./scripts/prod-test.sh exec -it backend bash

@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.generic import TemplateView
@@ -50,4 +52,9 @@ if settings.ENVIRONMENT_NAME == 'development':
     urlpatterns.extend(dev_urlpatterns)
 
 if settings.ENVIRONMENT_NAME == 'production':
-    urlpatterns.append(re_path(r'^(?!health/|api/|admin/).*$', TemplateView.as_view(template_name='index.html'), name='frontend'))
+    # Exclude STATIC_URL (not just health/api/admin) so a request WhiteNoise
+    # doesn't recognize 404s instead of falling through to the SPA shell.
+    static_url_path = re.escape(settings.STATIC_URL.lstrip('/'))
+    urlpatterns.append(re_path(
+        rf'^(?!health/|api/|admin/|{static_url_path}).*$',
+        TemplateView.as_view(template_name='index.html'), name='frontend'))

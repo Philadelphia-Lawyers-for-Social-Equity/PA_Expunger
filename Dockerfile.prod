@@ -78,9 +78,10 @@ ENV STATIC_URL=${STATIC_URL}
 # Copy the virtual environment from the backend-builder stage
 COPY --from=backend-builder /opt/venv /opt/venv
 
-# Create application directory
+# Create application directory. /app/media backs Django's default file
+# storage, used only by the health check's write/read/delete probe.
 WORKDIR /app
-RUN mkdir -p /app/src /app/staticfiles_build && chown -R appuser:appgroup /app
+RUN mkdir -p /app/src /app/staticfiles_build /app/media && chown -R appuser:appgroup /app
 
 # Copy the built static frontend assets from the frontend-builder stage
 COPY --from=frontend-builder --chown=appuser:appgroup /app/dist /app/staticfiles_build
@@ -91,8 +92,12 @@ COPY --chown=appuser:appgroup ./platform/src /app/src
 WORKDIR /app/src
 
 # Run collectstatic. Django will find the app's static files and the
-# React files copied to /app/staticfiles_build
-RUN DJANGO_SECRET_KEY='insecure-key-for-collectstatic-only' python manage.py collectstatic --noinput
+# React files copied to /app/staticfiles_build. DJANGO_ALLOWED_HOSTS is
+# build-time-only filler: config.settings.prod requires it to be set, but
+# collectstatic never checks its value.
+RUN DJANGO_SECRET_KEY='insecure-key-for-collectstatic-only' \
+    DJANGO_ALLOWED_HOSTS='collectstatic-build-only' \
+    python manage.py collectstatic --noinput
 
 # Make the entrypoint script executable
 RUN chmod +x /app/src/prod_entrypoint.sh

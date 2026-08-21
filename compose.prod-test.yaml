@@ -16,6 +16,15 @@ x-backend-env: &backend-env
   BACKEND_API_URL: ${TEST_BACKEND_API_URL}
   DJANGO_ALLOWED_HOSTS: ${TEST_DJANGO_ALLOWED_HOSTS}
 
+# Shared by the backend and the migrations service, which build the same image
+# from the same Dockerfile with the same args.
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile.prod
+  args:
+    APP_VERSION: ${TEST_APP_VERSION:-dev}
+    STATIC_URL: ${TEST_STATIC_URL:-/static/}
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -25,8 +34,9 @@ services:
       POSTGRES_DB: ${TEST_DB_NAME}
     volumes:
       - postgres_test_prod_data:/var/lib/postgresql/data
+    # -h forces a TCP check; see compose.yaml for why a socket check isn't enough.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -34,12 +44,7 @@ services:
   # Mirrors the Helm migration Job: the same image run to completion before the
   # app starts, rather than folded into the backend's startup command.
   migrations:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-      args:
-        APP_VERSION: ${TEST_APP_VERSION:-dev}
-        STATIC_URL: ${TEST_STATIC_URL:-/static/}
+    build: *backend-build
     image: pa_expunger-backend:local-test
     environment: *backend-env
     command: ["python", "manage.py", "migrate", "--noinput"]
@@ -48,16 +53,13 @@ services:
         condition: service_healthy
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-      args:
-        APP_VERSION: ${TEST_APP_VERSION:-dev}
-        STATIC_URL: ${TEST_STATIC_URL:-/static/}
+    build: *backend-build
     image: pa_expunger-backend:local-test
     environment: *backend-env
+    # Mapped to a different host port than compose.yaml's dev stack (8000) so
+    # the two can run side by side without a port collision.
     ports:
-      - "8000:8000"
+      - "8080:8000"
     depends_on:
       migrations:
         condition: service_completed_successfully
