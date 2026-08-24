@@ -1,0 +1,15 @@
+PA Expunger has been deployed.
+
+Application URL: {{ include "pa-expunger.backendApiUrl" . }}/
+
+This chart ships no routing resources. Make sure something in the environment -- the
+Gateway and HTTPRoute in the GitOps repo, or local-test/gateway.yaml locally --
+actually sends {{ .Values.publicHostname }} to
+{{ .Release.Name }}-backend-svc:{{ .Values.service.port }}.
+
+If nothing routes to it yet, reach the app directly with:
+  kubectl port-forward svc/{{ .Release.Name }}-backend-svc 8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+then browse to http://localhost:8080/
+
+Check rollout status with:
+  kubectl rollout status deployment/{{ .Release.Name }}-backend -n {{ .Release.Namespace }}

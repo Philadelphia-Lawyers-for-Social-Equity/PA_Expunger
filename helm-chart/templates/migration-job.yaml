@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Name is suffixed with the image tag so each version gets its own Job. A Job's
+  # spec.template is immutable, so a fixed name would apply cleanly on first install and
+  # then fail on every subsequent image bump -- silently skipping migrations, since the
+  # GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
+  # creates a new Job and the old one is pruned when its manifest leaves the projection.
+  #
+  # This is deliberately NOT a Helm hook. It used to carry post-install/post-upgrade
+  # annotations, which had two problems: `helm template` renders hooks as ordinary
+  # resources with the annotations inert, so the GitOps path never honoured them anyway,
+  # and Helm blocks an install until its hooks complete -- which deadlocks here, because
+  # the database is supplied by the environment after the release is installed. As an
+  # ordinary resource it applies immediately in both paths and retries via backoffLimit
+  # until the database answers.
+  #
+  # No ttlSecondsAfterFinished: completed Jobs accumulate one per tag, which is the lesser
+  # evil. A TTL would let the GitOps path delete a Job whose manifest is still rendered,
+  # re-running migrations on the next apply.
+  name: "{{ .Release.Name }}-migrations-{{ .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" }}"
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrations
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "pa-expunger.backendSecretName" . | quote }}
+          env:
+            - name: DB_HOST
+              value: {{ include "pa-expunger.dbHost" . }}
+            # Migrations never serve a request, but config.settings.prod raises at import
+            # if this is unset, so the Job cannot even reach the database without it.
+            - name: DJANGO_ALLOWED_HOSTS
+              value: {{ include "pa-expunger.allowedHosts" . | quote }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_USER
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_DB
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_PASSWORD
+                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+          # command: overrides the image's ENTRYPOINT in a Pod spec (unlike Compose, where
+          # it maps to CMD and the entrypoint still runs) -- this bypasses
+          # prod_entrypoint.sh entirely. ensure_superuser must run after migrate, so both
+          # are chained with && under a shell rather than expressed as a Kubernetes list:
+          # `;` would let a failed migrate still run ensure_superuser, and `sh -c`
+          # propagates the last command's exit status so Job failure detection still works.
+          command: ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_superuser"]
+      restartPolicy: OnFailure
+  backoffLimit: 10

@@ -1,0 +1,87 @@
+# Default values for pa-expunger.
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+backend:
+  existingSecret: pa-expunger-backend-secret
+  replicaCount: 1
+  image:
+    repository: ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  probes:
+    liveness:
+      path: "/health/liveness/"
+      initialDelaySeconds: 25
+      periodSeconds: 10
+    readiness:
+      path: "/health/readiness/"
+      initialDelaySeconds: 15
+      periodSeconds: 30
+    startup:
+      path: "/health/readiness/"
+      failureThreshold: 15
+      periodSeconds: 5
+  config:
+    DJANGO_LOG_LEVEL: "INFO"
+  allowedHosts:
+    extra:
+      - "localhost"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+
+postgres:
+  # Only the Secret holding DB_USER / DB_PASSWORD / DB_NAME. This chart no longer runs a
+  # database, so there is no image, port or persistence to configure here.
+  existingSecret: pa-expunger-postgres-secret
+
+# The database this app connects to. The chart deliberately ships no database, for the same
+# reason it ships no routing: both are environment concerns. The sandbox points this at the
+# shared CloudNativePG cluster (shared-cluster-rw.cloudnative-pg.svc.cluster.local); local
+# testing points it at local-test/postgres.yaml. The render fails if it is unset.
+externalDatabase:
+  host: ""
+
+secrets:
+  # SECURITY WARNING: Only set 'create: true' for local development.
+  # This will fail deployment if any configured public hostname is not localhost.
+  create: false
+
+  # Configuration for the dummy secrets created ONLY when 'create' is true.
+  backendSecretName: "pa-expunger-backend-local-secret"
+  postgresSecretName: "pa-expunger-postgres-local-secret"
+
+  dummyData:
+    djangoSecretKey: "default_secret_key"
+    superuserUsername: "plse"
+    superuserPassword: "defaultTestPassword"
+    postgresUser: "plse"
+    postgresPassword: "defaultTestPassword"
+    postgresDb: "expunger_db"
+
+# The public hostname browsers reach the app on, e.g. "app.example.com". Required.
+# Feeds both DJANGO_ALLOWED_HOSTS and BACKEND_API_URL; the render fails without it
+# (or apiUrlOverride) rather than shipping an app that 400s on every request.
+#
+# This chart deliberately ships no routing resources of any kind -- no Gateway, no
+# HTTPRoute. It exposes a Service and nothing more, because routing is environment
+# specific: the sandbox cluster defines its Gateway and HTTPRoute in the GitOps repo
+# at _gateways/pa-expunger.yaml, and its projection explicitly drops any routing
+# manifests an app repo tries to supply. See local-test/ for the equivalent used when
+# testing locally.
+publicHostname: ""
+
+# The public origin browsers reach the app on, e.g. "https://app.example.com". Feeds
+# BACKEND_API_URL, which prod.py uses for CSRF_TRUSTED_ORIGINS. Only needed when that
+# origin is not simply https://<publicHostname> -- say a CDN in front, or a non-standard
+# port. Precedence: apiUrlOverride, then publicHostname.
+apiUrlOverride: ""
