@@ -30,7 +30,9 @@ urlpatterns = [
                 "health_check.Cache",
                 "health_check.Database",
                 "health_check.Storage",
-                "health_check.contrib.psutil.Disk",
+                # Disk returns a 500 as a "Warning" whenever the host is low on disk
+                # space, which is unrelated to whether the app can serve traffic.
+                # "health_check.contrib.psutil.Disk",
                 "health_check.contrib.psutil.Memory"
             ]
         )
