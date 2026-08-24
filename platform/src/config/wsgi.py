@@ -13,7 +13,5 @@ from django.core.wsgi import get_wsgi_application
 
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_PATH)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.base')
-
 
 application = get_wsgi_application()

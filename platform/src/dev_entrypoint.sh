@@ -3,6 +3,9 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# NOTE: We don't run makemigrations automatically. That should be a
+# manual, developer-driven action.
+
 # Apply database migrations
 echo "Backend Dev Entrypoint: Applying database migrations..."
 python manage.py migrate --noinput
