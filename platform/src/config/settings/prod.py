@@ -6,9 +6,8 @@ if os.getenv("DJANGO_DEBUG", "False").lower() == "true":
 
 ENVIRONMENT_NAME = "production"
 
-# base.py silently falls back to ALLOWED_HOSTS = [] when this is unset, which
-# fails closed on every request rather than failing to start. Enforce it here
-# so a missing value crashes at boot instead of at request time.
+# Without this env var, ALLOWED_HOSTS defaults to []
+# That's useless for production, so we should just refuse to start.
 if not os.environ.get("DJANGO_ALLOWED_HOSTS"):
     raise ValueError("DJANGO_ALLOWED_HOSTS environment variable must be set in production!")
 
@@ -33,11 +32,6 @@ SECURE_SSL_REDIRECT = False
 STATIC_ROOT = BASE_DIR / "staticfiles_collected"
 
 STATICFILES_DIRS = [BASE_DIR.parent / "staticfiles_build"]
-
-# The app has no real media uploads; this only backs the health check's
-# default-storage write/read/delete probe. Without it, FileSystemStorage
-# falls back to the process cwd (the application source directory).
-MEDIA_ROOT = BASE_DIR.parent / "media"
 
 # STORAGES replaces Django's defaults wholesale, so "default" must stay listed here.
 STORAGES = {

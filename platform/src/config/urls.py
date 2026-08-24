@@ -52,8 +52,7 @@ if settings.ENVIRONMENT_NAME == 'development':
     urlpatterns.extend(dev_urlpatterns)
 
 if settings.ENVIRONMENT_NAME == 'production':
-    # Exclude STATIC_URL (not just health/api/admin) so a request WhiteNoise
-    # doesn't recognize 404s instead of falling through to the SPA shell.
+    # Excluding STATIC_URL so a request WhiteNoise doesn't recognize 404s instead of falling through to the SPA shell.
     static_url_path = re.escape(settings.STATIC_URL.lstrip('/'))
     urlpatterns.append(re_path(
         rf'^(?!health/|api/|admin/|{static_url_path}).*$',

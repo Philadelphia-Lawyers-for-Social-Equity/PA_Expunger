@@ -52,7 +52,7 @@ FROM python:3.12-slim AS final
 
 # Create a non-root user and group for security
 RUN addgroup --system --gid 1001 appgroup && \
-    adduser --system --uid 1001 --ingroup appgroup appuser
+    adduser --system --uid 1001 --ingroup appgroup appuser --home /home/appuser --shell /bin/sh
 
 # Set environment variables for the runtime environment
 ENV VENV_PATH=/opt/venv
@@ -92,9 +92,9 @@ COPY --chown=appuser:appgroup ./platform/src /app/src
 WORKDIR /app/src
 
 # Run collectstatic. Django will find the app's static files and the
-# React files copied to /app/staticfiles_build. DJANGO_ALLOWED_HOSTS is
-# build-time-only filler: config.settings.prod requires it to be set, but
-# collectstatic never checks its value.
+# React files copied to /app/staticfiles_build.
+# DJANGO_ALLOWED_HOSTS and DJANGO_SECRET_KEY are both required for the app
+# to start, they aren't actually used.
 RUN DJANGO_SECRET_KEY='insecure-key-for-collectstatic-only' \
     DJANGO_ALLOWED_HOSTS='collectstatic-build-only' \
     python manage.py collectstatic --noinput
