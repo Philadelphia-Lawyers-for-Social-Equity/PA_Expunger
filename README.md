@@ -80,38 +80,17 @@ docker compose up --build
   indicate that the docker daemon is not running`, Docker Desktop is installed but not actually
   running yet. Start it, then confirm the CLI is available with `docker --help` before retrying.
 
-### 5. First-Time Application Setup (Manual Steps)
+### 5. Access the Application
 
-**Note:** The following steps are required for now to get the application fully functional. This process will be automated in a future update.
-
-1.  **Log in to the Admin Portal:**
-
-    Log in to the Admin site at http://localhost:8000/admin/ using the default credentials, `plse` / `defaultTestPassword`.
-
-2.  **Update the Superuser Profile:**
-
-    * Under **Authentication and Authorization**, click on **Users**.
-    * Click on the `plse` username to edit it.
-    * Fill in the **First name** and **Last name** fields (any names will do).
-    * Click **SAVE** at the bottom of the page.
-
-3.  **Create an Attorney Record:**
-
-    * On the left under the **Expunger** section, find **Attorneys** and click the **+ Add** button to the right of it.
-    * From the **User** dropdown menu, select the `plse` user you just edited. (It can also be any other user you've created.)
-    * Enter any number in the **Bar number** field (e.g., `123456`).
-    * Click **SAVE**.
-
-### 6. Access the Application
-
-Now that the initial setup is complete, you can access the application:
+The dev entrypoint seeds a ready-to-use `plse` superuser, Attorney, and profile
+automatically.
 
 * **User Portal (Frontend):** http://localhost:3000
 * **Admin Portal (Backend):** http://localhost:8000/admin/
 
-Log in to the User Portal with the same `plse` / `defaultTestPassword` credentials.
+Log in to either with `plse` / `defaultTestPassword`.
 
-### 7. Generate a Petition from Sample Documents
+### 6. Generate a Petition from Sample Documents
 
 The repository ships anonymized court documents used as parser test fixtures, and
 they double as sample input for the app.
