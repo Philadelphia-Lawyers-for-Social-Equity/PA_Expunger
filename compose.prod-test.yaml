@@ -47,7 +47,11 @@ services:
     build: *backend-build
     image: pa_expunger-backend:local-test
     environment: *backend-env
-    command: ["python", "manage.py", "migrate", "--noinput"]
+    # prod_entrypoint.sh execs this as "$@", so the shell form is required here for &&
+    # to be interpreted rather than passed through as a literal argument. Mirrors the
+    # Helm migration Job's command: migrate, then ensure_superuser so the account
+    # exists (or its password is reset) against the fresh DB.
+    command: ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_superuser"]
     depends_on:
       postgres:
         condition: service_healthy
