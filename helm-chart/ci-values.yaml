@@ -1,0 +1,17 @@
+# Minimal values that satisfy the chart's required-value guards, for the CI lint/render
+# check in .github/workflows/helm-lint.yml. These values are never deployed against a
+# real cluster, so they don't need to track any real environment -- they only need to
+# keep satisfying the chart's fail() guards and to exercise secrets.create: true, which
+# renders helm-chart/templates/insecure-local-secrets.yaml.
+#
+# This is deliberately separate from local-values.yaml, which is the real local
+# Kubernetes e2e testing config (see DEPLOYMENT.md) and changes for local-testing
+# reasons unrelated to what CI needs to validate.
+
+publicHostname: localhost
+
+externalDatabase:
+  host: ci-placeholder
+
+secrets:
+  create: true

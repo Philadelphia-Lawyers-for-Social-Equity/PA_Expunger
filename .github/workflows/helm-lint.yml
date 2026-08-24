@@ -1,0 +1,33 @@
+name: Lint and render the Helm chart
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+    paths:
+      - "helm-chart/**"
+      - ".github/workflows/helm-lint.yml"
+
+jobs:
+  helm-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint the chart
+        run: helm lint helm-chart -f helm-chart/ci-values.yaml
+
+      # publicHostname and externalDatabase.host have no default and fail() the
+      # render if unset, so both must be supplied for `helm template` to succeed.
+      # ci-values.yaml is a minimal, CI-only file (not local-values.yaml, which is
+      # the real local Kubernetes e2e config and changes for unrelated reasons) that
+      # also sets secrets.create: true so insecure-local-secrets.yaml renders too.
+      # This is the only CI check that would catch a quoting/list-shape mistake in
+      # migration-job.yaml's command, such as the shell form ensure_superuser needs.
+      - name: Render the chart
+        run: helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml
