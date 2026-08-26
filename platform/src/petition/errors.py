@@ -64,11 +64,24 @@ class ParseFailed(PetitionError):
 
 
 class MissingField(PetitionError):
-    # The response carries `detail` and nothing else, so name the field in the
-    # message itself -- MissingField("Please enter an SSN.") rather than relying
-    # on a separate key. A field name is safe to interpolate; see above.
+    # Something the request should have carried and didn't. The response carries
+    # `detail` and nothing else, so name the field in the message itself --
+    # MissingField("Please enter an SSN.") rather than relying on a separate
+    # key. A field name is safe to interpolate; see above.
+    #
+    # Not for a field that is present but unusable -- that is MalformedRequest.
+    # The two read the same to a careless caller and differently to the user:
+    # one means "you left something out", the other "what you sent is broken".
     default_code = "missing_field"
     default_detail = "A required field is missing."
+
+
+class MalformedRequest(PetitionError):
+    # Present but unusable: JSON that won't decode, a value in a shape we can't
+    # read. Distinct from ParseFailed, which is about the *contents* of an
+    # uploaded document rather than the request wrapping it.
+    default_code = "malformed_request"
+    default_detail = "The request couldn't be read."
 
 
 # TODO(#19): tell the three parse failures apart. `DocketParserAPIView` catches

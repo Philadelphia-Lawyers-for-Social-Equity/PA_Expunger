@@ -8,14 +8,13 @@ from typing import List, Tuple
 import jinja2
 from django.http import HttpResponse
 from docxtpl import DocxTemplate, RichText
-from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import docket_parser
 from . import models
-from .errors import ParseFailed
+from .errors import MalformedRequest, MissingField, ParseFailed
 from expunger.models import Organization, Attorney
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,12 +44,11 @@ class PetitionAPIView(APIView):
             dispositions = set([charge.disposition for charge in context["charges"] if charge.disposition is not None])
             context["dispositions"] = ', '.join(dispositions)
         except KeyError as err:
-            # TODO(#19): replace with
-            #     raise MissingField(f"Missing required field: {err.args[0]}.",
-            #                        field=err.args[0])
-            msg = f"Missing field: {err}"
-            logger.warning(msg)
-            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+            # `err.args[0]` is the missing key, not the exception text -- a name
+            # from our own payload contract, so it is safe to show. str(err)
+            # would wrap it in quotes.
+            logger.warning("Missing field %s in petition payload", err.args[0])
+            raise MissingField(f"Missing required field: {err.args[0]}.")
 
         # Format address to allow for new lines to populate.
         context["organization"].formattedAddress = format_address_for_template(context["organization"].address)
@@ -86,16 +84,19 @@ class GeneratorReportAPIView(APIView):
     def post(self, request: Request, *args, **kwargs):
         logger.debug("GeneratorReportAPIView post")
 
-        # TODO(#19): these four lookups raise KeyError on a malformed payload.
-        # config.exception_handler now turns that into a clean JSON 500 instead
-        # of a Django HTML page, but it should be a 400 -- wrap in try/except and
-        # raise MissingField, as PetitionAPIView does.
-        context = {
-            "name": request.data["name"],
-            "dob": request.data["dob"],
-            "actions": request.data["actions"],
-            "petition_summaries": request.data["petitionSummaries"]
-        }
+        try:
+            context = {
+                "name": request.data["name"],
+                "dob": request.data["dob"],
+                "actions": request.data["actions"],
+                "petition_summaries": request.data["petitionSummaries"]
+            }
+        except KeyError as err:
+            # Report the key the client sent, not our template's name for it:
+            # "petitionSummaries" is what a caller can look for in their own
+            # payload, whereas the context key is "petition_summaries".
+            logger.warning("Missing field %s in generator report payload", err.args[0])
+            raise MissingField(f"Missing required field: {err.args[0]}.")
 
         logger.debug(f"Summary POSTed with context: {context}")
 
@@ -122,9 +123,10 @@ class DocketParserAPIView(APIView):
 
         df = request.FILES.getlist("docket_file")
         if not df:
-            msg = f"No docket_file, got {request.FILES.keys()}"
-            logger.warning(msg)
-            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+            # The key names go to the log, not the response -- dict_keys([...])
+            # in a browser is a Python repr, and the user can't act on it.
+            logger.warning("No docket_file in upload; got %s", list(request.FILES.keys()))
+            raise MissingField("No files were uploaded.")
 
         petitioner_json = request.POST.get("petitioner")
         petitioner = {}
@@ -134,10 +136,15 @@ class DocketParserAPIView(APIView):
                 if isinstance(petitionerFromRequest, dict):
                     # Drop keys with falsy values
                     petitioner = {key: value for key, value in petitionerFromRequest.items() if value}
-            except json.JSONDecodeError as e:
-                logger.warning("Error decoding petitioner_json")
-                logger.warning("petitioner_json:", petitioner_json)
-                raise e
+            except json.JSONDecodeError:
+                # Don't log the blob itself -- it is the petitioner's name, DOB
+                # and address. Position and length are enough to debug from.
+                logger.warning(
+                    "Could not decode petitioner JSON (%d bytes)", len(petitioner_json)
+                )
+                raise MalformedRequest(
+                    "The petitioner information sent with the upload wasn't valid."
+                )
 
         # store parsed files without OTNs here and sort them into grouped_dockets last
         parsed_no_otn = []
