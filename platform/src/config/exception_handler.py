@@ -26,10 +26,16 @@ Two things to watch
    fires. The `logger.exception(...)` call below is load-bearing -- drop it and
    crashes become silent.
 
-2. Serializer validation has a different shape. DRF's `ValidationError` carries a
-   dict (`{"bar": ["This field is required."]}`), and the normalizer below would
-   stringify it into something ugly. This app validates input by hand rather than
-   through serializers, so it is not live today -- see the TODO.
+2. `detail` is not always a string. Recognized exceptions pass through in
+   whatever shape DRF built, and `ValidationError` carries a dict keyed by field
+   name (`{"bar": ["This field is required."]}`) or a bare list, which DRF
+   returns as the response body with no `detail` key at all. Nothing in this app
+   raises one yet -- input is validated by hand -- but the first serializer added
+   changes what the frontend receives.
+
+The response contract, for the frontend's sake: `detail`, a string, on
+everything this app raises and on every DRF built-in. See the caveat above for
+the one shape that will not have it.
 """
 
 import logging
@@ -44,25 +50,28 @@ logger = logging.getLogger("django")
 def exception_handler(exc, context):
     response = drf_exception_handler(exc, context)
 
+    # DRF is being deliberate here: its contract is that it owns APIException and nothing else.
+    # The EXCEPTION_HANDLER setting exists as the documented slot for a project to extend drf_exception_handler
+
+    # `None` is DRF declining the exception, not failing on it: the default
+    # handler only builds a Response for APIException (plus Http404 and Django's
+    # PermissionDenied, which it converts first). Anything else -- an
+    # AttributeError several frames down, a pypdf or parsimonious failure --
+    # falls through, and `handle_exception()` calls `raise_uncaught_exception()`.
+    # Django then renders HTML: a traceback page under DEBUG, a generic 500
+    # otherwise. Neither has a `detail` for the frontend to read, and the DEBUG
+    # one dumps every frame's locals, which here hold the parsed docket.
+    # Catching the None is what makes an unanticipated crash answerable.
     if response is None:
-        # DRF didn't recognize this -- an unanticipated crash.
         # Full traceback to the log; nothing specific to the user.
         logger.exception("Unhandled exception in %s", context["view"].__class__.__name__)
         return Response(
-            {"detail": "Something went wrong on our end. Please try again.",
-             "code": "internal_error"},
+            {"detail": "Something went wrong on our end. Please try again."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # TODO(#19): special-case rest_framework.exceptions.ValidationError before
-    # this point -- pass its response.data through untouched under a "fields" key
-    # instead of stringifying the dict. Not reachable until a serializer is used
-    # for input validation.
-    code = exc.get_codes() if hasattr(exc, "get_codes") else None
-    response.data = {
-        "detail": str(response.data.get("detail", response.data)),
-        "code": code if isinstance(code, str) else "error",
-    }
-    if getattr(exc, "field", None):
-        response.data["field"] = exc.field
+    # Recognized exceptions pass through as DRF built them: {"detail": "..."}.
+    # Returning the response is what stops handle_exception() from treating this
+    # as another decline and re-raising.
     return response
+

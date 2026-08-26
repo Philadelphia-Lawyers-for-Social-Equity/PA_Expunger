@@ -24,15 +24,15 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 
 
+# `default_code` stayed on each class. It isn't serialized -- the handler returns
+# `detail` and nothing else -- but DRF attaches it to the `ErrorDetail` and it is
+# what `get_codes()` would read, so it costs nothing and keeps the door open if
+# the frontend ever needs to branch on the kind of error rather than the prose.
 class PetitionError(APIException):
     """Base for errors we intend an end user to read."""
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "Something went wrong processing your request."
     default_code = "petition_error"
-
-    def __init__(self, detail=None, code=None, field=None):
-        super().__init__(detail, code)
-        self.field = field
 
 
 class UnreadablePdf(PetitionError):
@@ -52,6 +52,9 @@ class ParseFailed(PetitionError):
 
 
 class MissingField(PetitionError):
+    # The response carries `detail` and nothing else, so name the field in the
+    # message itself -- MissingField("Please enter an SSN.") rather than relying
+    # on a separate key. A field name is safe to interpolate; see above.
     default_code = "missing_field"
     default_detail = "A required field is missing."
 
