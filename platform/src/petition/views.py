@@ -3,7 +3,6 @@ import logging
 import json
 import os
 import re
-import traceback
 from typing import List, Tuple
 
 import jinja2
@@ -16,6 +15,7 @@ from rest_framework.views import APIView
 
 import docket_parser
 from . import models
+from .errors import ParseFailed
 from expunger.models import Organization, Attorney
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -153,22 +153,33 @@ class DocketParserAPIView(APIView):
         for file in df:
             try:
                 parsed_files.append(docket_parser.parse_pdf(file))
-            except Exception as exception:
-                # TODO(#19): PRIVACY -- `short_msg` interpolates the exception,
-                # and a parsimonious ParseError stringifies to a snippet of the
-                # document being parsed. For a real client that is their name,
-                # date of birth, and charges, sent to the browser. Replace with
-                # per-type handling that interpolates only `file.name`:
-                #     except PdfReadError:
-                #         logger.exception("Could not read %s", file.name)
-                #         raise UnreadablePdf(f"“{file.name}” could not be opened as a PDF.")
-                #     except ParseError:
-                #         logger.exception("Grammar failed on %s", file.name)
-                #         raise ParseFailed(f"We couldn't read “{file.name}”.")
-                tb = traceback.format_exc()
-                short_msg = f"Parse error {exception}"
-                logger.error(tb)
-                return Response({"detail": short_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception:
+                # The exception never reaches the browser. A parsimonious
+                # ParseError stringifies to a snippet of the document being
+                # parsed -- for a real client, their name, date of birth and
+                # charges. Full traceback to the log; a message we wrote to the
+                # user. `file.name` is safe to interpolate: they chose it.
+                #
+                # One message for every cause, deliberately. There are three
+                # distinguishable failures here -- unopenable PDF, readable PDF
+                # that isn't a court document, and a real docket whose format
+                # the grammar can't handle -- and only the last is our bug
+                # rather than a bad upload. Telling them apart means either
+                # importing pypdf and parsimonious into this view or having
+                # docket_parser raise its own types; see the TODO in errors.py.
+                # Until then the wording stays vague about *why*, because a
+                # single catch cannot honestly claim to know.
+                #
+                # Raising aborts the whole upload, so one bad file loses the
+                # good ones. That matches today's behavior and is not a
+                # decision -- returning the petitions we could build plus a
+                # warning naming the file is the friendlier option, and it is
+                # waiting on warnings[] (issue #19, group 3).
+                logger.exception("Parse failed for %s", file.name)
+                raise ParseFailed(
+                    f"We couldn't read “{file.name}”. "
+                    "Make sure it's a PA docket sheet or court summary PDF."
+                )
 
         grouped_dockets = {}
 
