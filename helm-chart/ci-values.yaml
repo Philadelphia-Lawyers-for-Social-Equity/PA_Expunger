@@ -1,6 +1,6 @@
 # Minimal values that satisfy the chart's required-value guards, for the CI lint/render
 # check in .github/workflows/helm-lint.yml. These values are never deployed against a
-# real cluster, so they don't need to track any real environment -- they only need to
+# real cluster, so they don't need to track any real environment. They only need to
 # keep satisfying the chart's fail() guards and to exercise secrets.create: true, which
 # renders helm-chart/templates/insecure-local-secrets.yaml.
 #

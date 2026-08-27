@@ -6,7 +6,7 @@
 # _infra/envoy-gateway/http-redirect.yaml. That repo is the source of truth; this file
 # only has to be close enough to exercise the same code paths locally.
 #
-# Nothing here is specific to a particular local Kubernetes distribution -- it is plain
+# Nothing here is specific to a particular local Kubernetes distribution. It is plain
 # Gateway API and works on any cluster running Envoy Gateway. The Gateway gets a
 # LoadBalancer Service, which Docker Desktop satisfies on localhost out of the box. A
 # cluster that cannot satisfy one leaves it <pending>, and needs an EnvoyProxy override
