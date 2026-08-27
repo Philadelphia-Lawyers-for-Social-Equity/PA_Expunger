@@ -3,12 +3,12 @@ kind: Job
 metadata:
   # Name is suffixed with the image tag so each version gets its own Job. A Job's
   # spec.template is immutable, so a fixed name would apply cleanly on first install and
-  # then fail on every subsequent image bump -- silently skipping migrations, since the
+  # then fail on every subsequent image bump, silently skipping migrations since the
   # GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
   # creates a new Job and the old one is pruned when its manifest leaves the projection.
   #
   # No ttlSecondsAfterFinished. Each image tag keeps its own completed Job around
-  # indefinitely -- accepted clutter. A TTL would delete the Job object while the GitOps
+  # indefinitely; this is accepted clutter. A TTL would delete the Job object while the GitOps
   # path keeps applying the same rendered manifest for that tag. The next apply would then
   # just recreate the Job and rerun migrations that already succeeded.
   name: "{{ .Release.Name }}-migrations-{{ .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" }}"
@@ -48,7 +48,7 @@ spec:
                   key: POSTGRES_PASSWORD
                   name: {{ include "pa-expunger.postgresSecretName" . | quote }}
           # command: overrides the image's ENTRYPOINT in a Pod spec (unlike Compose, where
-          # it maps to CMD and the entrypoint still runs) -- this bypasses
+          # it maps to CMD and the entrypoint still runs). This bypasses
           # prod_entrypoint.sh entirely. ensure_superuser must run after migrate, so both
           # are chained with && under a shell rather than expressed as a Kubernetes list:
           # `;` would let a failed migrate still run ensure_superuser, and `sh -c`

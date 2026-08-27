@@ -30,8 +30,6 @@ The key differences are:
 * **Optimized and Secure:** The final image is smaller and more secure because it does not include development dependencies, hot-reloading machinery, or other debugging tools.
 * **Immutable:** The image is designed to be immutable. All configuration is supplied at runtime via environment variables, as is standard practice for production deployments.
 
-The "Local Production Image Testing" steps outlined below are specifically for running and validating this production-grade image on your local machine before deploying it.
-
 ### Deployment Overview
 
 The project uses a GitOps workflow for deployments. The high-level process is:
@@ -63,7 +61,7 @@ This is the workflow for maintainers to deploy a new version to a live environme
           image:
             tag: "1.0.1" # Change to the new version
         ```
-    * Make sure `release-values.yaml` sets `publicHostname` to the hostname browsers use. It feeds both `DJANGO_ALLOWED_HOSTS` and `BACKEND_API_URL`; without it Django rejects every external request with a 400 and admin/session logins get a CSRF 403. The chart now `fail()`s the render rather than deploying with no public origin configured, so a missing value shows up as a build error instead of a broken site. Only set `apiUrlOverride` as well if the public origin is not simply `https://<publicHostname>` — for example a CDN in front, or a non-standard port.
+    * Make sure `release-values.yaml` sets `publicHostname` to the hostname browsers use. It feeds both `DJANGO_ALLOWED_HOSTS` and `BACKEND_API_URL`; without it Django rejects every external request with a 400 and admin/session logins get a CSRF 403. The chart `fail()`s the render if `publicHostname` is missing, so an unset value shows up as a build error rather than a broken deployment. Only set `apiUrlOverride` as well if the public origin is not simply `https://<publicHostname>`: for example, a CDN in front, or a non-standard port.
     * The image also refuses to start without `DJANGO_ALLOWED_HOSTS` set (`config.settings.prod` raises at boot), so a missing public origin fails loudly at both render time and boot.
     * Note the chart ships no routing resources at all. The sandbox cluster serves this app through a Gateway API `Gateway`/`HTTPRoute` pair (Envoy Gateway) defined in the GitOps repo at `_gateways/pa-expunger.yaml`. The cluster ignores any routing manifests an app repo supplies, so adding a `Gateway` or `HTTPRoute` template here would be ignored.
     * The chart runs no database either, for the same reason. Set `externalDatabase.host` to the shared CloudNativePG cluster, `shared-cluster-rw.cloudnative-pg.svc.cluster.local`; the render fails if it is unset. The `Database` CR, the `managed.roles` entry on `Cluster/shared-cluster`, and the `pa-expunger-db-credentials` sealed secret all live in the GitOps repo.
@@ -73,7 +71,7 @@ This is the workflow for maintainers to deploy a new version to a live environme
 
 ### Managing Production Secrets
 
-All production secrets are managed using **Sealed Secrets**. The encrypted `SealedSecret` files are safe to commit to the public GitOps repository.
+All production secrets are managed using **Sealed Secrets**, and the encrypted `SealedSecret` files are safe to commit to the public GitOps repository. Rotating any secret below follows the same pattern: reseal the file, open a PR against the GitOps repo, and the next merged deploy applies it. No cluster access is needed. That matters, since access to this repository often stops at opening PRs there.
 
 ### Updating a Secret
 
@@ -93,14 +91,10 @@ All production secrets are managed using **Sealed Secrets**. The encrypted `Seal
     ```
     **This secret is the source of truth for the admin login, not just its initial value.**
     Every run of the migration Job invokes `manage.py ensure_superuser`, which reads
-    `SUPERUSER_USERNAME`/`SUPERUSER_PASSWORD` and unconditionally resets the account to match —
-    creating it on a fresh database, or overwriting the password on an existing one. Rotating
-    the admin password is therefore the same act as rotating any other secret here: reseal this
-    file with a new `SUPERUSER_PASSWORD`, open the PR, and the next merged deploy applies it. No
-    cluster access is needed, which matters because access to this repository often stops at
-    opening pull requests against the GitOps repo.
+    `SUPERUSER_USERNAME`/`SUPERUSER_PASSWORD` and unconditionally resets the account to match:
+    creating it on a fresh database, or overwriting the password on an existing one.
     One consequence of always-reset semantics: if you rotate `SUPERUSER_USERNAME` instead of the
-    password, the *old* username stays a live superuser account with its old password — nothing
+    password, the *old* username stays a live superuser account with its old password. Nothing
     deletes it. Rotate the password, not the username.
     This secret is delivered whole (`envFrom`) to the migration Job, which needs all three
     keys, but not to the app's own Deployment, which reads only `DJANGO_SECRET_KEY`. The admin
@@ -117,18 +111,18 @@ All production secrets are managed using **Sealed Secrets**. The encrypted `Seal
       POSTGRES_PASSWORD: "<the role's password>"
       POSTGRES_DB: "<database name>"
     ```
-    **These are not the database's credentials — they are a copy of them.** The app connects
+    **These are not the database's credentials. They are a copy of them.** The app connects
     to the shared CloudNativePG cluster, whose `pa-expunger` role is defined by a
     `managed.roles` entry on `Cluster/shared-cluster` and gets its password from a *separate*
     sealed secret, `pa-expunger-db-credentials` in the `cloudnative-pg` namespace. Kubernetes
     has no cross-namespace secret sharing, so the same password is sealed twice, once per
     namespace, and **rotating it means resealing both**. Changing only this one leaves the app
-    authenticating with a stale password against a role that still has the old one. Losing this
-    password is survivable without cluster access: seal a freshly generated one into both
-    secrets in the same pull request, and CloudNativePG applies it to the role on reconcile.
+    authenticating with a stale password against a role that still has the old one. This also
+    covers a lost password: sealing a freshly generated one into both secrets is enough, since
+    CloudNativePG applies it to the role on reconcile.
     `POSTGRES_USER` must likewise match the role's `name` in that `managed.roles` entry, and
     `POSTGRES_DB` the `Database` CR's `spec.name`. Read both out of the GitOps repo rather than
-    copying them from `helm-chart/values.yaml` — the `plse`/`expunger_db` pair there is a
+    copying them from `helm-chart/values.yaml`: the `plse`/`expunger_db` pair there is a
     local-development fixture for `secrets.create: true`, not the deployed environment's names.
 3.  **Seal the Secrets:** Run `kubeseal` on each local file to encrypt it. This will print the encrypted `SealedSecret` manifest to your terminal or a file.
     ```bash
@@ -159,8 +153,6 @@ All production secrets are managed using **Sealed Secrets**. The encrypted `Seal
 ## Local Testing Guide
 
 Before starting the official release process, you can validate the production image locally.
-
-The Helm chart that renders the Kubernetes manifests is not in this repository yet — it is under review separately. Once it lands, this guide will also cover a full end-to-end test against a local cluster.
 
 ### Smoke Testing with Docker Compose
 
@@ -203,7 +195,7 @@ Testing on a local Kubernetes cluster is the ultimate check, but this smoke test
 
 This process validates the entire Helm chart by deploying the production-built image to a local Kubernetes cluster. This is the highest-fidelity test that can be run locally.
 
-**This guide uses Docker Desktop's built-in Kubernetes cluster with kubeadm provisioning**, which needs the fewest steps (at least on Windows): it satisfies `LoadBalancer` Services on `localhost` and shares the host's Docker image cache, so there's no tunnel to run and no image to load in.
+**This guide uses Docker Desktop's built-in Kubernetes cluster with kubeadm provisioning**, which needs the fewest steps (at least on Windows): it satisfies `LoadBalancer` Services on `localhost` and shares the host's Docker image cache. That means we don't have to run a tunnel, and we don't have to load the docker image in.
 
 Other local clusters should also work; the setup process will be different from what's written here. E.g. `kind` has no load balancer, so the Gateway's address stays `<pending>` and reaching it takes extra port setup when the cluster is created.
 
@@ -224,7 +216,7 @@ The local end-to-end test uses Envoy Gateway with the Gateway API, matching the 
     helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.7.3 -n envoy-gateway-system --create-namespace --wait
     ```
 
-No certificate step is needed. The HTTPS listener's cert is generated by the chart at render time when `secrets.create: true`, published as `<release>-tls` — the Secret `k8s-local-test/gateway.yaml` refers to. It lives in `helm-chart/templates/insecure-local-secrets.yaml` behind the same fail-safe as the other dummy credentials, so the render aborts unless `publicHostname` is exactly `localhost`. No private key is committed to this repo or written to your working tree. In the sandbox this Secret comes from cert-manager instead.
+No certificate step is needed. The HTTPS listener's cert is generated by the chart at render time when `secrets.create: true`, published as `<release>-tls`, the Secret name `k8s-local-test/gateway.yaml` refers to. It lives in `helm-chart/templates/insecure-local-secrets.yaml` behind the same fail-safe as the other dummy credentials, so the render aborts unless `publicHostname` is exactly `localhost`. No private key is committed to this repo or written to your working tree. In the sandbox this Secret comes from cert-manager instead.
 
 
 #### Local Testing Workflow
@@ -248,7 +240,7 @@ No certificate step is needed. The HTTPS listener's cert is generated by the cha
         pullPolicy: Never
     ```
 
-    `pullPolicy: Never` means the image is only ever read from the cluster's own cache, never pulled from a registry. A kubeadm-provisioned Docker Desktop cluster runs its kubelet against the host Docker daemon, so the image built in step 1 is already there. A cluster with its own image store — including Docker Desktop provisioned via kind — needs it loaded in first, or the pod fails with `ErrImageNeverPull`.
+    `pullPolicy: Never` means the image is only ever read from the cluster's own cache, never pulled from a registry. A kubeadm-provisioned Docker Desktop cluster runs its kubelet against the host Docker daemon, so the image built in step 1 is already there. A cluster with its own image store, including Docker Desktop provisioned via kind, needs it loaded in first, or the pod fails with `ErrImageNeverPull`.
 
 3. **Deploy with Helm:**
     Navigate to your `helm-chart/` directory. Use `helm upgrade --install` with your `local-values.yaml` file to deploy the application to your local cluster.
@@ -258,10 +250,10 @@ No certificate step is needed. The HTTPS listener's cert is generated by the cha
     ```
     `local-values.yaml` sets `secrets.create: true`, which creates dummy `DJANGO_SECRET_KEY`/superuser/Postgres credentials via `helm-chart/templates/insecure-local-secrets.yaml`. That template refuses to run (`fail()`s the render) unless `publicHostname` is exactly `localhost`, so this file cannot be aimed at a real deployment.
 
-    The backend and the migrations Job will not settle yet — there is no database or routing until step 4. That's expected; the Job carries `backoffLimit: 10` precisely to cover waiting on Postgres.
+    The database isn't up yet (that's the next step), so the backend container will crash and the migrations Job won't complete. That's expected; the Job's `backoffLimit: 10` gives it enough retries to succeed once Postgres is available.
 
 4. **Apply the local environment manifests:**
-    These supply the two things the chart deliberately leaves out — a database and routing — and must come *after* step 3, because the Postgres container reads the credentials Secret that the chart creates.
+    These supply the two things the chart deliberately leaves out: a database and routing. They must come *after* step 3, because the Postgres container reads the credentials Secret that the chart creates.
     ```bash
     kubectl apply -f k8s-local-test/
     ```
@@ -271,14 +263,12 @@ No certificate step is needed. The HTTPS listener's cert is generated by the cha
     ```
     If it stays `Programmed=False` with `AddressNotAssigned`, nothing assigned the Envoy data plane an address. `kubectl get svc -n envoy-gateway-system` should show that Service with `EXTERNAL-IP: localhost` rather than `<pending>`.
 
-    No `kubectl port-forward` is needed for the rest of testing.
-
 5. **Verify before moving on:**
     ```bash
     kubectl get pods
     kubectl get jobs
     ```
-    Confirm the backend and `pa-expunger-local-postgres` pods reach `Running`/`Ready`, and that the migrations Job shows `COMPLETIONS 1/1`. The Job's name carries the image tag — with `local-values.yaml` that makes it `pa-expunger-local-migrations-local-test` — so take the exact name from `kubectl get jobs` rather than assuming it. If it hasn't completed, check its logs:
+    Confirm the backend and `pa-expunger-local-postgres` pods reach `Running`/`Ready`, and that the migrations Job shows `COMPLETIONS 1/1`. The Job's name includes the image tag (here, `pa-expunger-local-migrations-local-test`). Check `kubectl get jobs` for the exact name. If it hasn't completed, check its logs:
     ```bash
     kubectl logs job/pa-expunger-local-migrations-local-test
     ```
@@ -303,6 +293,6 @@ No certificate step is needed. The HTTPS listener's cert is generated by the cha
     `helm uninstall` removes the migrations Job along with everything else, and the local
     Postgres keeps no volume, so nothing of the app is left behind. One thing does survive:
 
-      * The **Gateway API CRDs** installed alongside Envoy Gateway are not removed —
+      * The **Gateway API CRDs** installed alongside Envoy Gateway are not removed.
         Helm never deletes CRDs. Leaving them is harmless and saves time on the next run;
         `kubectl get crd | grep gateway` shows them if you want them gone.

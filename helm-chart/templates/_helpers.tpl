@@ -5,7 +5,7 @@
 {{- $hosts = append $hosts (printf "%s-backend-svc" .Release.Name) -}}
 {{- $hosts = append $hosts (printf "%s-backend-svc.%s.svc.cluster.local" .Release.Name .Release.Namespace) -}}
 {{- /* Add the public hostname. Routing lives outside this chart, so this is the only
-       source of the externally-facing name -- omitting it means Django rejects every
+       source of the externally-facing name. Omitting it means Django rejects every
        request from the outside world with a 400. */ -}}
 {{- if .Values.publicHostname -}}
 {{- $hosts = append $hosts .Values.publicHostname -}}
@@ -20,7 +20,7 @@ Precedence: apiUrlOverride, then publicHostname.
 */}}
 {{- define "pa-expunger.backendApiUrl" -}}
 {{- if .Values.apiUrlOverride -}}
-{{- /* An explicit origin wins -- use it when the public origin is not simply
+{{- /* An explicit origin wins: use it when the public origin is not simply
        https://<publicHostname>, e.g. a CDN in front or a non-standard port. */ -}}
 {{- .Values.apiUrlOverride -}}
 {{- else if .Values.publicHostname -}}
@@ -50,7 +50,7 @@ As in the above function, returns the appropriate postgres secret name based on 
 {{- end -}}
 
 {{/*
-The database host. This chart runs no database of its own -- the environment supplies one,
+The database host. This chart runs no database of its own. The environment supplies one,
 the same way it supplies routing. In the sandbox that is the shared CloudNativePG cluster;
 locally it is local-test/postgres.yaml.
 
@@ -61,6 +61,6 @@ connection error inside a running pod instead of a build failure.
 {{- if .Values.externalDatabase.host -}}
 {{- .Values.externalDatabase.host -}}
 {{- else -}}
-{{- fail "FATAL: no database host configured. Set externalDatabase.host -- e.g. shared-cluster-rw.cloudnative-pg.svc.cluster.local in the sandbox, or pa-expunger-local-postgres when testing against local-test/postgres.yaml." -}}
+{{- fail "FATAL: no database host configured. Set externalDatabase.host, e.g. shared-cluster-rw.cloudnative-pg.svc.cluster.local in the sandbox, or pa-expunger-local-postgres when testing against local-test/postgres.yaml." -}}
 {{- end -}}
 {{- end -}}
