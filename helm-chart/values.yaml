@@ -61,7 +61,7 @@ secrets:
   postgresSecretName: "pa-expunger-postgres-local-secret"
 
   dummyData:
-    djangoSecretKey: "default_secret_key"
+    djangoSecretKey: "default_secret_key_that_is_long_enough_to_not_get_a_warning"
     superuserUsername: "plse"
     superuserPassword: "defaultTestPassword"
     postgresUser: "plse"
