@@ -7,17 +7,10 @@ metadata:
   # GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
   # creates a new Job and the old one is pruned when its manifest leaves the projection.
   #
-  # This is deliberately NOT a Helm hook. It used to carry post-install/post-upgrade
-  # annotations, which had two problems: `helm template` renders hooks as ordinary
-  # resources with the annotations inert, so the GitOps path never honoured them anyway,
-  # and Helm blocks an install until its hooks complete -- which deadlocks here, because
-  # the database is supplied by the environment after the release is installed. As an
-  # ordinary resource it applies immediately in both paths and retries via backoffLimit
-  # until the database answers.
-  #
-  # No ttlSecondsAfterFinished: completed Jobs accumulate one per tag, which is the lesser
-  # evil. A TTL would let the GitOps path delete a Job whose manifest is still rendered,
-  # re-running migrations on the next apply.
+  # No ttlSecondsAfterFinished. Each image tag keeps its own completed Job around
+  # indefinitely -- accepted clutter. A TTL would delete the Job object while the GitOps
+  # path keeps applying the same rendered manifest for that tag. The next apply would then
+  # just recreate the Job and rerun migrations that already succeeded.
   name: "{{ .Release.Name }}-migrations-{{ .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" }}"
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
