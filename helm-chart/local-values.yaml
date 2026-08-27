@@ -1,4 +1,4 @@
-# Values for local testing. Pair with the manifests in local-test/, which supply the two
+# Values for local testing. Pair with the manifests in k8s-e2e-test/, which supply the two
 # things this chart deliberately leaves to the environment: routing (Envoy Gateway plus a
 # Gateway/HTTPRoute for localhost, mirroring _gateways/pa-expunger.yaml) and a database
 # (a throwaway Postgres standing in for the sandbox's shared CloudNativePG cluster).
@@ -7,7 +7,7 @@
 # fails the render otherwise, so this file cannot be aimed at a real deployment.
 publicHostname: localhost
 
-# Matches the Service in local-test/postgres.yaml. The sandbox sets this to
+# Matches the Service in k8s-e2e-test/postgres.yaml. The sandbox sets this to
 # shared-cluster-rw.cloudnative-pg.svc.cluster.local instead.
 externalDatabase:
   host: pa-expunger-local-postgres
@@ -15,11 +15,11 @@ externalDatabase:
 backend:
   image:
     repository: pa_expunger-backend
-    tag: "local-test"
+    tag: "e2e-test"
     pullPolicy: Never
 
   config:
-    DJANGO_LOG_LEVEL: "DEBUG"
+    DJANGO_LOG_LEVEL: "INFO"
 
 secrets:
   create: true

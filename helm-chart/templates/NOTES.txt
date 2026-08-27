@@ -3,7 +3,7 @@ PA Expunger has been deployed.
 Application URL: {{ include "pa-expunger.backendApiUrl" . }}/
 
 This chart ships no routing resources. Make sure something in the environment (the
-Gateway and HTTPRoute in the GitOps repo, or local-test/gateway.yaml locally)
+Gateway and HTTPRoute in the GitOps repo, or k8s-e2e-test/gateway.yaml locally)
 actually sends {{ .Values.publicHostname }} to
 {{ .Release.Name }}-backend-svc:{{ .Values.service.port }}.
 
