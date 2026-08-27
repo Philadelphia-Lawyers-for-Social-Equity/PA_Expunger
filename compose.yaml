@@ -29,7 +29,7 @@ services:
     image: pa_expunger-backend:dev
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.dev
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-default_secret_key_that_is_long_enough_to_not_get_a_warning}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-key_that_is_long_enough_to_not_get_a_warning}
       DB_NAME: ${DB_NAME:-expunger_db}
       DB_USER: ${DB_USER:-plse}
       DB_PASSWORD: ${DB_PASSWORD:-defaultTestPassword}

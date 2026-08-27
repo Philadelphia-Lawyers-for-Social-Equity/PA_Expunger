@@ -52,7 +52,7 @@ As in the above function, returns the appropriate postgres secret name based on 
 {{/*
 The database host. This chart runs no database of its own. The environment supplies one,
 the same way it supplies routing. In the sandbox that is the shared CloudNativePG cluster;
-locally it is local-test/postgres.yaml.
+locally it is k8s-e2e-test/postgres.yaml.
 
 Fails the render rather than defaulting, because an unset DB_HOST surfaces as a confusing
 connection error inside a running pod instead of a build failure.
@@ -61,6 +61,6 @@ connection error inside a running pod instead of a build failure.
 {{- if .Values.externalDatabase.host -}}
 {{- .Values.externalDatabase.host -}}
 {{- else -}}
-{{- fail "FATAL: no database host configured. Set externalDatabase.host, e.g. shared-cluster-rw.cloudnative-pg.svc.cluster.local in the sandbox, or pa-expunger-local-postgres when testing against local-test/postgres.yaml." -}}
+{{- fail "FATAL: no database host configured. Set externalDatabase.host, e.g. shared-cluster-rw.cloudnative-pg.svc.cluster.local in the sandbox, or pa-expunger-local-postgres when testing against k8s-e2e-test/postgres.yaml." -}}
 {{- end -}}
 {{- end -}}
