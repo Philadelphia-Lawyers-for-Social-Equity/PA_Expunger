@@ -55,12 +55,9 @@ This is the workflow for maintainers to deploy a new version to a live environme
     * Go to your repository's "Releases" page on GitHub and **publish a new release** based on this tag.
     * A Release will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
 
-2.  **In the GitOps Repo (`cfp-sandbox-cluster`):**
-    * Open a Pull Request that moves the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released. That is normally the whole change, because the chart carries its own `appVersion` and that is the image tag the Deployment uses.
-    * Add or update any `SealedSecret` files the release needs.
-    * Merging that PR is not the last step. A second, automatically opened deploy PR has to be merged before anything reaches the cluster.
+2.  **In the GitOps Repo (`cfp-sandbox-cluster`):** Open a Pull Request moving the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released, then merge the deploy PR the GitHub action opens.
 
-[`GITOPS.md`](./GITOPS.md) covers all of this in detail: which files this app owns in that repository, how routing and chart values are changed, and how the three sealed secrets are created and rotated.
+[`GITOPS.md`](./GITOPS.md) covers that repository in full: which files this app owns, how routing and chart values are changed, and how the three sealed secrets are created and rotated.
 
 ---
 
