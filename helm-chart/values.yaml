@@ -11,7 +11,10 @@ backend:
   image:
     repository: ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend
     pullPolicy: IfNotPresent
-    tag: "latest"
+    # Empty means the chart's own appVersion, which is the tag the release workflow
+    # publishes. Set this only to run an image that deliberately is not the chart's
+    # version: a rollback, or a hotfix image built ahead of a chart release.
+    tag: ""
   probes:
     liveness:
       path: "/health/liveness/"
