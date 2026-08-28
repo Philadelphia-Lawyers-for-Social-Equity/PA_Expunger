@@ -10,8 +10,6 @@ For local development with hot-reloading, please see the [`README.md`](./README.
     * [Production Docker Image](#production-docker-image)
     * [Deployment Overview](#deployment-overview)
   * [Release & Deployment Process](#release--deployment-process)
-    * [Managing Production Secrets](#managing-production-secrets)
-    * [Updating a Secret](#updating-a-secret)
   * [Local Testing Guide](#local-testing-guide)
     * [Smoke Testing with Docker Compose](#smoke-testing-with-docker-compose)
     * [Full End-to-End Test with Kubernetes & Helm](#full-end-to-end-test-with-kubernetes--helm)
@@ -38,7 +36,7 @@ The key differences are:
 
 The project uses a GitOps workflow for deployments. The high-level process is:
 1.  **CI (Continuous Integration):** When a new release is created on GitHub in this repository, a GitHub Actions workflow builds a production-ready Docker image and pushes it to the GitHub Container Registry (GHCR).
-2.  **CD (Continuous Deployment):** A separate GitOps repository [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) contains the environment-specific values and secrets. To deploy a new version, a maintainer creates a Pull Request in that repository to update the image tag (and potentially other settings). Merging this PR triggers the deployment to the Kubernetes cluster.
+2.  **CD (Continuous Deployment):** A separate GitOps repository [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) contains the environment-specific values and secrets. To deploy a new version, a maintainer creates a Pull Request in that repository. See [`GITOPS.md`](./GITOPS.md) for everything done in that repository, including secret rotation.
 
 ---
 
@@ -48,109 +46,21 @@ This is the workflow for maintainers to deploy a new version to a live environme
 
 1.  **In the Application Repo (`PA_Expunger`):**
     * Ensure all code is merged into your main branch.
+    * Bump both `version` and `appVersion` in `helm-chart/Chart.yaml`. `appVersion` should be equal to the version you are about to release. That value is the image tag the deployed Deployment uses by default, so a release that skips it deploys the previous image. `version` needs to be bumped whenever anything changes in the chart; it will probably be different from `appVersion`.
     * Create and push a semantic version Git tag (e.g., `v1.0.1`).
         ```bash
         git tag v1.0.1
         git push origin v1.0.1
         ```
     * Go to your repository's "Releases" page on GitHub and **publish a new release** based on this tag.
-    * This action will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
+    * A Release will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
 
 2.  **In the GitOps Repo (`cfp-sandbox-cluster`):**
-    * Clone the GitOps repository locally and create a new branch.
-    * In the `pa-expunger/` directory, update the `release-values.yaml` file to point to the new image tag.
-        ```yaml
-        # pa-expunger/release-values.yaml
-        backend:
-          image:
-            tag: "1.0.1" # Change to the new version
-        ```
-    * Make sure `release-values.yaml` sets `publicHostname` to the hostname browsers use. It feeds both `DJANGO_ALLOWED_HOSTS` and `BACKEND_API_URL`; without it Django rejects every external request with a 400 and admin/session logins get a CSRF 403. The chart `fail()`s the render if `publicHostname` is missing, so an unset value shows up as a build error rather than a broken deployment. Only set `apiUrlOverride` as well if the public origin is not simply `https://<publicHostname>`: for example, a CDN in front, or a non-standard port.
-    * The image also refuses to start without `DJANGO_ALLOWED_HOSTS` set (`config.settings.prod` raises at boot), so a missing public origin fails loudly at both render time and boot.
-    * Note the chart ships no routing resources at all. The sandbox cluster serves this app through a Gateway API `Gateway`/`HTTPRoute` pair (Envoy Gateway) defined in the GitOps repo at `_gateways/pa-expunger.yaml`. The cluster ignores any routing manifests an app repo supplies, so adding a `Gateway` or `HTTPRoute` template here would be ignored.
-    * The chart runs no database either, for the same reason. Set `externalDatabase.host` to the shared CloudNativePG cluster, `shared-cluster-rw.cloudnative-pg.svc.cluster.local`; the render fails if it is unset. The `Database` CR, the `managed.roles` entry on `Cluster/shared-cluster`, and the `pa-expunger-db-credentials` sealed secret all live in the GitOps repo.
-    * Add or update any necessary `SealedSecret` files (see below).
-    * Commit these configuration changes and open a Pull Request.
-    * Once the PR is reviewed and merged, the GitOps controller will automatically deploy the new version to the cluster.
+    * Open a Pull Request that moves the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released. That is normally the whole change, because the chart carries its own `appVersion` and that is the image tag the Deployment uses.
+    * Add or update any `SealedSecret` files the release needs.
+    * Merging that PR is not the last step. A second, automatically opened deploy PR has to be merged before anything reaches the cluster.
 
-### Managing Production Secrets
-
-All production secrets are managed using **Sealed Secrets**, and the encrypted `SealedSecret` files are safe to commit to the public GitOps repository. Rotating any secret below follows the same pattern: reseal the file, open a PR against the GitOps repo, and the next merged deploy applies it. No cluster access is needed. That matters, since access to this repository often stops at opening PRs there.
-
-### Updating a Secret
-
-1.  **Prerequisites:** You must have the `kubeseal` CLI installed and access to the public key of the `cfp-sandbox-cluster`.
-2.  **Create Local Secret Files:** The deployment expects **two** secrets: one holding the Django application secrets and one holding the Postgres credentials. Create a temporary, local YAML file for each as a standard Kubernetes `Secret`. **DO NOT COMMIT THESE FILES.** `kubeseal` encrypts one way and a `SealedSecret` cannot be decrypted locally, so until these values are recorded somewhere durable these files are the only plaintext copy. Keep secrets outside both repository working directories: this repository's `.gitignore` covers `local-secret-source*.yaml`, but the GitOps repo that the sealed secrets are committed to does not.
-    ```yaml
-    # Example: local-secret-source-backend.yaml
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: pa-expunger-backend-secret # Must match the backend secret name the deployment expects
-      namespace: pa-expunger # this must match the namespace the app will be deployed in
-    stringData:
-      DJANGO_SECRET_KEY: "a-new-very-strong-and-random-key"
-      SUPERUSER_USERNAME: "plse"
-      SUPERUSER_PASSWORD: "a-new-very-strong-and-random-password"
-    ```
-    **This secret is the source of truth for the admin login, not just its initial value.**
-    Every run of the migration Job invokes `manage.py ensure_superuser`, which reads
-    `SUPERUSER_USERNAME`/`SUPERUSER_PASSWORD` and unconditionally resets the account to match:
-    creating it on a fresh database, or overwriting the password on an existing one.
-    One consequence of always-reset semantics: if you rotate `SUPERUSER_USERNAME` instead of the
-    password, the *old* username stays a live superuser account with its old password. Nothing
-    deletes it. Rotate the password, not the username.
-    This secret is delivered whole (`envFrom`) to the migration Job, which needs all three
-    keys, but not to the app's own Deployment, which reads only `DJANGO_SECRET_KEY`. The admin
-    credentials never reach a running app pod's environment.
-    ```yaml
-    # Example: local-secret-source-postgres.yaml
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: pa-expunger-postgres-secret # Must match the Postgres secret name the deployment expects
-      namespace: pa-expunger
-    stringData:
-      POSTGRES_USER: "<role name>"
-      POSTGRES_PASSWORD: "<the role's password>"
-      POSTGRES_DB: "<database name>"
-    ```
-    **These are not the database's credentials. They are a copy of them.** The app connects
-    to the shared CloudNativePG cluster, whose `pa-expunger` role is defined by a
-    `managed.roles` entry on `Cluster/shared-cluster` and gets its password from a *separate*
-    sealed secret, `pa-expunger-db-credentials` in the `cloudnative-pg` namespace. Kubernetes
-    has no cross-namespace secret sharing, so the same password is sealed twice, once per
-    namespace, and **rotating it means resealing both**. Changing only this one leaves the app
-    authenticating with a stale password against a role that still has the old one. This also
-    covers a lost password: sealing a freshly generated one into both secrets is enough, since
-    CloudNativePG applies it to the role on reconcile.
-    `POSTGRES_USER` must likewise match the role's `name` in that `managed.roles` entry, and
-    `POSTGRES_DB` the `Database` CR's `spec.name`. Read both out of the GitOps repo rather than
-    copying them from `helm-chart/values.yaml`: the `plse`/`expunger_db` pair there is a
-    local-development fixture for `secrets.create: true`, not the deployed environment's names.
-3.  **Seal the Secrets:** Run `kubeseal` on each local file to encrypt it. This will print the encrypted `SealedSecret` manifest to your terminal or a file.
-    ```bash
-    > export SEALED_SECRETS_CERT=https://sealed-secrets.sandbox.k8s.phl.io/v1/cert.pem
-    
-    > kubeseal -f local-secret-source-backend.yaml -o yaml -w sealed-secret-backend.yaml
-    > kubeseal -f local-secret-source-postgres.yaml -o yaml -w sealed-secret-postgres.yaml
-
-    > rm local-secret-source-backend.yaml local-secret-source-postgres.yaml  # only once the values are stored elsewhere
-    ```
-    When the values are already recorded somewhere durable, piping the source secret straight
-    into `kubeseal` produces identical output without a plaintext file reaching disk at all:
-    ```bash
-    > kubectl create secret generic pa-expunger-postgres-secret \
-        --namespace pa-expunger \
-        --from-literal=POSTGRES_USER=... \
-        --from-literal=POSTGRES_PASSWORD=... \
-        --from-literal=POSTGRES_DB=... \
-        --dry-run=client -o yaml \
-      | kubeseal -o yaml -w sealed-secret-postgres.yaml
-    ```
-    The tradeoff is that the values land in shell history and in the process's argument list,
-    where `ps` can read them on a shared machine.
-4.  **Commit the Sealed Files:** Add the new or updated `sealed-secret-*.yaml` file(s) to your pull request in the GitOps repository.
+[`GITOPS.md`](./GITOPS.md) covers all of this in detail: which files this app owns in that repository, how routing and chart values are changed, and how the three sealed secrets are created and rotated.
 
 ---
 

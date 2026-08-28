@@ -181,10 +181,10 @@ docker compose exec -T frontend yarn test
 
 ## Deployment (For Maintainers)
 
-Production deployments are handled via a GitOps workflow. See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for the full release process, secret management, and local production-image testing.
+Production deployments are handled via a GitOps workflow. See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for the release process and local production-image testing, and [`GITOPS.md`](./GITOPS.md) for everything done in the cluster GitOps repository, including secret management.
 
 1.  **CI (in this repo):** When a new release is created on GitHub, a GitHub Actions workflow automatically builds the production Docker image from `Dockerfile.prod` and pushes it to the [GitHub Container Registry (GHCR)](https://ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend) with a version tag.
-2.  **CD (in `cfp-sandbox-cluster` repo):** To deploy a new version, a maintainer must open a Pull Request in the [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) repository. This PR should update the `backend.image.tag` in the `pa-expunger/release-values.yaml` file to point to the new image version from GHCR.
+2.  **CD (in `cfp-sandbox-cluster` repo):** To deploy a new version, a maintainer must open a Pull Request in the [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) repository moving the pinned `ref` in `.holo/sources/pa-expunger.toml` to the released tag. The chart renders the image tag from its own `appVersion`, so that is normally the whole change.
 3.  **Secrets:** All production secrets are managed with Kubernetes Sealed Secrets and are stored encrypted in `cfp-sandbox-cluster`.
 
 ## Copyright Information
