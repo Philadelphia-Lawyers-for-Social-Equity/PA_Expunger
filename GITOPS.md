@@ -10,7 +10,7 @@ For building the production image, cutting a release, and testing either one loc
 * [PA Expunger: Deploying to the Sandbox Cluster](#pa-expunger-deploying-to-the-sandbox-cluster)
   * [What this app owns in the GitOps repo](#what-this-app-owns-in-the-gitops-repo)
   * [Deploying a new version](#deploying-a-new-version)
-  * [Deploying a chart change](#deploying-a-chart-change)
+  * [Deploying a chart-only change](#deploying-a-chart-only-change)
   * [Changing chart values](#changing-chart-values)
   * [Changing routing](#changing-routing)
   * [Secrets](#secrets)
@@ -26,7 +26,7 @@ For building the production image, cutting a release, and testing either one loc
 | Path | What it is |
 | --- | --- |
 | `.holo/sources/pa-expunger.toml` | Pins the commit of this repo the chart is built from |
-| `pa-expunger/release-values.yaml` | The chart values for the sandbox: public hostname, database host, optional image tag override |
+| `pa-expunger/release-values.yaml` | The chart values for the sandbox: public hostname, database host, optional image tag override[^image-tag] |
 | `pa-expunger.secrets/backend.yaml` | Sealed `pa-expunger-backend-secret` |
 | `pa-expunger.secrets/postgres.yaml` | Sealed `pa-expunger-postgres-secret` |
 | `_gateways/pa-expunger.yaml` | The app's HTTPS hostname, certificate, and routing rules |
@@ -54,9 +54,9 @@ That is the whole normal release. Cutting a release in this repo bumps `appVersi
 
 Before opening the PR, confirm the image was actually published for that version. `release-publish.yml` builds it when you publish the GitHub release; a tag with no image behind it deploys perfectly cleanly and then sits in `ImagePullBackOff`.
 
-**`backend.image.tag` is an override, not the release knob.** It exists for the one case the `ref` pin cannot express: running one release's image under a different release's chart, when a single commit carries an app fix you want and a chart change you do not. Reach for it only when cutting a corrected release is not available to you, because that is the cleaner fix and costs the same single pull request here. A rollback does not need it: moving `ref` back to the earlier tag reverts `appVersion` along with everything else, and the image follows. While an override is in effect the app reports two different versions in its runtime config, `APP_VERSION` baked into the image it is actually running and `HELM_APP_VERSION` declared by the chart, and that disagreement is how you can tell. Remove the override once the chart catches up.
+A rollback is the same change in reverse. Moving `ref` back to the earlier tag reverts `appVersion` along with everything else, and the running image follows.
 
-## Deploying a chart change
+## Deploying a chart-only change
 
 A change to the chart alone, with no application change, needs no release and no new image. `appVersion` does not move, so the image the Deployment renders is one that is already in the registry. The deploy is a single move of `ref` to a commit containing the new templates, followed by the same two merges as any other change.
 
@@ -70,7 +70,7 @@ ref = "4f2b8c1d90a3e75619cf0d84b2ae63715c8d09fa"
 
 `ref` accepts a bare commit SHA as well as the `refs/tags/...` form a release uses and a `refs/heads/...` branch, and other apps in the cluster use all three. Prefer the SHA. A branch ref is resolved when the manifests are built rather than when your pull request is reviewed, and that build runs on any push to the GitOps repo, so it would ship whatever else had landed on `develop` in the meantime.
 
-Bump `version` in `helm-chart/Chart.yaml` in the commit that changes the templates. Skipping it costs you the only signal you have: the app reports the same `HELM_CHART_VERSION` before and after, leaving no way to tell from outside the cluster whether the change applied. The number never reports a change that did not happen, since it only moves when a pod restarts under the new chart, so an unchanged value means either the deploy has not landed or the bump was forgotten.
+Bump `version` in `helm-chart/Chart.yaml` in the commit that changes the templates. This is what lets `HELM_CHART_VERSION` confirm from outside the cluster that a deploy actually landed. The value only updates when a pod restarts under the new chart.
 
 ## Changing chart values
 
@@ -85,10 +85,10 @@ Changing the hostname is a two-file change: `publicHostname` here, and the hostn
 
 The chart ships no routing resources at all. Everything about how requests reach the app is in `_gateways/pa-expunger.yaml`, written by hand as a Gateway API `Gateway` and `HTTPRoute` pair. Edit it directly.
 
-* The **`Gateway`** holds the hostname and the TLS certificate. The certificate is issued automatically from the `cert-manager.io/cluster-issuer` annotation, so changing the hostname means waiting for a new certificate to be issued before the site works again.
+* The **`Gateway`** holds the hostname and the TLS certificate. The certificate is issued automatically from the `cert-manager.io/cluster-issuer` annotation.
 * The **`HTTPRoute`** decides which requests reach which Service. Today it has a single rule with no `matches`, which sends everything on the hostname to `pa-expunger-backend-svc`. Path-based routing, such as splitting health check URLs out of the catch-all, is done by adding `matches` to `rules` here.
 
-Do not add an HTTP to HTTPS redirect. The cluster already redirects port 80 to 443 for every hostname, and a second one here would conflict with it.
+The cluster already redirects port 80 to 443 for every hostname, so adding another HTTP-to-HTTPS redirect here would conflict with it.
 
 ## Secrets
 
@@ -96,9 +96,9 @@ Secrets are committed to the GitOps repo as `SealedSecret` files. These are encr
 
 ### Record the plaintext before you seal it
 
-`kubeseal` encrypts one way. A `SealedSecret` cannot be decrypted locally, and without cluster access you cannot read the live `Secret` back either. **A value you do not write down is not recoverable, only replaceable:** you generate a new one, reseal it, and ship another PR.
+`kubeseal` encrypts one way. A `SealedSecret` cannot be decrypted locally, and without cluster access you cannot read the live `Secret` back either. **A value you do not save is not recoverable, only replaceable:** you generate a new one, reseal it, and ship another PR.
 
-So at the moment you seal anything, put the plaintext somewhere durable and shared, a team password manager rather than a file on your laptop. This matters most for `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD`, which are the only values a human ever needs to type.
+So at the moment you seal anything, put the plaintext somewhere durable, like a password manager. This is most relevant for `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD`.
 
 Keep the temporary plaintext files out of both working directories while you work. This repo's `.gitignore` covers `local-secret-source*.yaml`; the GitOps repo, where the sealed output goes, does not.
 
@@ -110,7 +110,7 @@ Keep the temporary plaintext files out of both working directories while you wor
 | `pa-expunger.secrets/postgres.yaml` | `pa-expunger-postgres-secret` | `pa-expunger` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` |
 | `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml` | `pa-expunger-db-credentials` | `cloudnative-pg` | `username`, `password` |
 
-**The database password is sealed twice, once per namespace.** The bottom two rows carry the same password: one is what the database uses to define the role, the other is what the app uses to log in. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both files in the same PR when rotating. Resealing only one leaves the app authenticating with a stale password against a role that still has the old one.
+**The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one is what the database uses to define the role, the other is what the app uses to log in. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both files in the same PR when rotating. Resealing only one leaves the app authenticating with a stale password against a role that still has the old one.
 
 That also covers a password nobody wrote down: seal a freshly generated one into both files, and the database applies it to the role on its next reconcile.
 
@@ -205,3 +205,5 @@ Once the deploy PR has merged:
 3. Log in at `/admin/`. This is worth doing rather than skipping: it is the only check that exercises `CSRF_TRUSTED_ORIGINS`, which is derived from `publicHostname`. A 403 here means the public origin is misconfigured.
 
 If you changed a secret, the change takes effect when the migration Job runs, which happens as part of the deploy. If you rotated the database password, the database applies it to the role on its own reconcile schedule, which can lag the deploy.
+
+[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release is cleaner and costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up.
