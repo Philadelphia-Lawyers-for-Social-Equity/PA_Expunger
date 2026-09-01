@@ -49,8 +49,7 @@ Deploying is one field: `ref` in `.holo/sources/pa-expunger.toml`.
     | A rollback | The earlier release tag |
 
 2. Confirm an image exists for that version. `release-publish.yml` builds it when you publish the GitHub release. A tag with no image behind it deploys cleanly and then sits in `ImagePullBackOff`.
-3. Open the PR.
-4. When it merges, merge the deploy PR the GitHub action opens.
+3. Open the PR. Both it and the deploy PR the GitHub action then opens are merged by the GitOps repo's maintainers.
 
 Notes:
 

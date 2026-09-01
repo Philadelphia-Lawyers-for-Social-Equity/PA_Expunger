@@ -55,7 +55,7 @@ This is the workflow for maintainers to deploy a new version to a live environme
     * Go to your repository's "Releases" page on GitHub and **publish a new release** based on this tag.
     * A Release will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
 
-2.  **In the GitOps Repo (`cfp-sandbox-cluster`):** Open a Pull Request moving the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released, then merge the deploy PR the GitHub action opens.
+2.  **In the GitOps Repo (`cfp-sandbox-cluster`):** Open a Pull Request moving the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released. That repository's maintainers merge it, and merge the deploy PR the GitHub action then opens.
 
 [`GITOPS.md`](./GITOPS.md) covers that repository in full: which files this app owns, how routing and chart values are changed, and how the three sealed secrets are created and rotated.
 
