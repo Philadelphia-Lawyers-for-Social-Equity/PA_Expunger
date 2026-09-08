@@ -39,6 +39,34 @@ containing:
 
 # API
 
+## Errors
+
+Every failing request returns JSON with a `detail` key holding a message
+intended to be shown to the user as-is:
+
+```json
+{"detail": "We couldn't read “summary.pdf”. Make sure it's a PA docket sheet or court summary PDF."}
+```
+
+This holds for errors raised by the application and for those raised by Django
+REST Framework itself (401 on a missing or expired token, 405, 429). Clients
+should read `detail` and render it; there is no error code to branch on.
+
+| Status | Meaning |
+| --- | --- |
+| 400 | Something is missing or malformed in the request. `detail` names it. |
+| 401 | No access token, or it has expired. Refresh and retry. |
+| 422 | The request was well formed, but a document could not be parsed. |
+| 500 | Unanticipated failure. `detail` is generic; the cause is in the server log. |
+
+Two caveats for client authors:
+
+- The `generate/` and `generator-report/` endpoints return a `.docx` body on
+  success, so a client requesting them as binary must decode the response body
+  before reading `detail` on failure.
+- A DRF `ValidationError` — which nothing currently raises, but a future
+  serializer would — returns a field-keyed object rather than a `detail` string.
+
 ## Authentication
 
 The API handles authentication via JSON Web Tokens, as provided by [django rest
@@ -161,10 +189,34 @@ parsing. This is where the real work gets done.
       - grade: string
       - description: string
       - disposition: string
+  - Errors
+    - 400 if any of the fields above is absent; `detail` names the missing one
 
-- **api/v0.2.0/petition/parse_docket/**
+- **api/v0.2.0/petition/parse-docket/**
     - Requires access token header
-    - POST of docket file produces JSON of Petition Fields
+    - POST of one or more docket files produces JSON of Petition Fields
+    - Expects multipart form data
+      - docket_file: one or more PDFs. Repeat the key for multiple files.
+      - petitioner: optional JSON object of already-known petitioner fields,
+        merged into the parsed result
+    - Files are grouped into petitions by OTN, so N files may produce fewer
+      than N petitions
+    - Errors
+      - 400 if no `docket_file` was sent, or if `petitioner` is present but is
+        not valid JSON
+      - 422 if a file could not be parsed. `detail` names the file. The whole
+        request fails; no petitions are returned for the files that did parse.
+
+- **api/v0.2.0/petition/generator-report/**
+    - Requires access token header
+    - POST produces a microsoft .docx summary of a generation session
+    - Expects JSON of
+      - name: string, full name of the petitioner
+      - dob: iso formatted date
+      - actions: list of strings
+      - petitionSummaries: list
+    - Errors
+      - 400 if any of the four fields is absent; `detail` names the missing one
 
 - **api/v0.2.1/pa_court_archive/search**
     - Requires access token header
