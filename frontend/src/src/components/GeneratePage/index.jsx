@@ -116,8 +116,12 @@ export default function GeneratePage(props) {
                     [petitionNumber]: false
                 });
                 let displayError = "There was an error generating the petition.";
-                if (error.response?.detail) {
-                    displayError = error.response?.detail;
+                // The response body is at `error.response.data`, not
+                // `error.response`. Reading the latter always yielded
+                // undefined, so this fell back to the generic message every
+                // time and no backend message ever reached the screen.
+                if (error.response?.data?.detail) {
+                    displayError = error.response.data.detail;
                 }
                 setError(displayError);
 

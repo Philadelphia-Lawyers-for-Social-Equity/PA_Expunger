@@ -30,6 +30,36 @@ apiClient.interceptors.request.use(
     }
 );
 
+// Decodes error bodies that came back as binary.
+//
+// `responseType: "arraybuffer"` is set on the two .docx endpoints so a success
+// can be turned into a Blob, but axios applies it to the error response too.
+// The backend's `{"detail": "..."}` therefore arrives as an ArrayBuffer, and no
+// caller can read `.detail` off it -- which is why every message those two
+// endpoints produce has been invisible.
+//
+// Doing it here rather than in the two methods means `error.response.data` has
+// the same shape on every endpoint, so a caller never has to know which kind of
+// response it asked for.
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const data = error.response?.data;
+        if (data instanceof ArrayBuffer) {
+            const text = new TextDecoder().decode(data);
+            try {
+                error.response.data = JSON.parse(text);
+            } catch {
+                // Not JSON -- an HTML error page, say. Keep it as text rather
+                // than dropping it; callers that check for a string body can
+                // still act on it.
+                error.response.data = text;
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 const api = {
     login: async (username, password) => {
         const res = await apiClient.post(`${BASE_URL}/api/v0.2.0/auth/token/`, {username, password});
