@@ -4,6 +4,10 @@ djangorestframework-simplejwt == 5.5.1
 django-filter == 26.1
 django-cors-headers == 4.9.0
 psycopg2-binary == 2.9.12
+whitenoise == 6.12.0
+gunicorn == 26.0.0
+django-health-check == 4.4.4
+psutil == 7.2.2 # required by one of the health checks
 pymysql == 1.2.0
 jinja2 == 3.1.6
 docxtpl == 0.20.2

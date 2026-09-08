@@ -1,6 +1,9 @@
 from .base import *
 
 DEBUG = True
-ROOT_URLCONF = "config.urls_dev"
-if "mod_wsgi.server" in INSTALLED_APPS:
-    INSTALLED_APPS.remove("mod_wsgi.server")
+ENVIRONMENT_NAME = "development"
+
+# Vite dev server (:3000) and Django (:8000) are different origins in dev.
+CORS_ALLOW_ALL_ORIGINS = True
+
+ALLOWED_HOSTS = ["*"]

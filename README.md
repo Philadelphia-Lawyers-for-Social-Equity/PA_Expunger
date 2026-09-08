@@ -55,7 +55,7 @@ Our project uses git hooks to help track changes in `.docx` files. Run the appro
 ### 3. (Optional) Configure Your Local Environment
 
 The development environment works out of the box using the defaults defined in
-`docker-compose.yml`. These defaults are suitable for most local development.
+`compose.yaml`. These defaults are suitable for most local development.
 
 To customize settings such as different database credentials or a different Django
 secret key, copy the example file and edit it:
@@ -196,6 +196,17 @@ docker compose exec -T frontend yarn test
 * **Database:** PostgreSQL 17
 * **Dependency Management:** Yarn 4 (Berry)
 * **Development:** Docker
+* **Deployment:** Docker, Helm, Kubernetes (via GitOps)
+
+---
+
+## Deployment (For Maintainers)
+
+Production deployments are handled via a GitOps workflow. See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for the full release process, secret management, and local production-image testing.
+
+1.  **CI (in this repo):** When a new release is created on GitHub, a GitHub Actions workflow automatically builds the production Docker image from `Dockerfile.prod` and pushes it to the [GitHub Container Registry (GHCR)](https://ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend) with a version tag.
+2.  **CD (in `cfp-sandbox-cluster` repo):** To deploy a new version, a maintainer must open a Pull Request in the [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) repository. This PR should update the `backend.image.tag` in the `pa-expunger/release-values.yaml` file to point to the new image version from GHCR.
+3.  **Secrets:** All production secrets are managed with Kubernetes Sealed Secrets and are stored encrypted in `cfp-sandbox-cluster`.
 
 ## Copyright Information
 

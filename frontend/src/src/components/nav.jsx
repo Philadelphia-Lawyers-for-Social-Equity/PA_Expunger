@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth';
 import { usePetitioner, initialPetitionerState } from '../context/petitioner';
 import { usePetitions, initialPetitionState } from '../context/petitions';
 import { useNavBlock } from "../context/navBlockContext.jsx";
+import { appConfigReady, getAppConfig } from '../services/appConfig';
+import { useIsMounted } from '../hooks/useIsMounted';
 
 const Navigation = () => {
   const { logout, isAuthenticated } = useAuth();
   const { setPetitioner } = usePetitioner();
   const { setPetitions } = usePetitions();
   const { blockNavRef, setBlockNav } = useNavBlock();
+  const [appVersion, setAppVersion] = useState("");
+  const getIsMounted = useIsMounted();
+
+  useEffect(() => {
+    (async () => {
+      await appConfigReady;
+      if (getIsMounted()) {
+        setAppVersion(getAppConfig().APP_VERSION || "");
+      }
+    })();
+  }, [getIsMounted]);
 
   const logOutAndReset = () => {
     if (blockNavRef.current) {
@@ -46,6 +59,7 @@ const Navigation = () => {
             alt="PLSE logo"
           />
         </Navbar.Brand>
+        {appVersion && <Navbar.Text className="text-body-tertiary">v{appVersion}</Navbar.Text>}
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
