@@ -29,7 +29,7 @@ services:
     image: pa_expunger-backend:dev
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.dev
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-default_secret_key}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-key_that_is_long_enough_to_not_get_a_warning}
       DB_NAME: ${DB_NAME:-expunger_db}
       DB_USER: ${DB_USER:-plse}
       DB_PASSWORD: ${DB_PASSWORD:-defaultTestPassword}
@@ -44,6 +44,17 @@ services:
       - ./platform/src:/app/src
       - ./platform/docket_parser:/app/docket_parser
     restart: on-failure
+    # No curl in python:3.12-slim; urllib is stdlib. Without this, `docker compose
+    # up -d --wait` (and plain `up -d`) reports "running" as soon as the process
+    # starts, which can be before dev_entrypoint.sh finishes migrate/ensure_superuser/
+    # seed_dev_data -- a race pytest can lose if it starts exec'ing immediately after.
+    # readiness over liveness: it also checks Database, which is a stronger signal
+    # that the app can actually serve traffic.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/readiness/')"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
 
   frontend:
     build:

@@ -10,10 +10,12 @@ For local development with hot-reloading, please see the [`README.md`](./README.
     * [Production Docker Image](#production-docker-image)
     * [Deployment Overview](#deployment-overview)
   * [Release & Deployment Process](#release--deployment-process)
-    * [Managing Production Secrets](#managing-production-secrets)
-    * [Updating a Secret](#updating-a-secret)
   * [Local Testing Guide](#local-testing-guide)
     * [Smoke Testing with Docker Compose](#smoke-testing-with-docker-compose)
+    * [Full End-to-End Test with Kubernetes & Helm](#full-end-to-end-test-with-kubernetes--helm)
+      * [Install Helm](#install-helm)
+      * [Preparing Your Local Cluster](#preparing-your-local-cluster)
+      * [Local Testing Workflow](#local-testing-workflow)
 <!-- TOC -->
 
 ## Core Concepts
@@ -30,13 +32,11 @@ The key differences are:
 * **Optimized and Secure:** The final image is smaller and more secure because it does not include development dependencies, hot-reloading machinery, or other debugging tools.
 * **Immutable:** The image is designed to be immutable. All configuration is supplied at runtime via environment variables, as is standard practice for production deployments.
 
-The "Local Production Image Testing" steps outlined below are specifically for running and validating this production-grade image on your local machine before deploying it.
-
 ### Deployment Overview
 
 The project uses a GitOps workflow for deployments. The high-level process is:
 1.  **CI (Continuous Integration):** When a new release is created on GitHub in this repository, a GitHub Actions workflow builds a production-ready Docker image and pushes it to the GitHub Container Registry (GHCR).
-2.  **CD (Continuous Deployment):** A separate GitOps repository [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) contains the environment-specific values and secrets. To deploy a new version, a maintainer creates a Pull Request in that repository to update the image tag (and potentially other settings). Merging this PR triggers the deployment to the Kubernetes cluster.
+2.  **CD (Continuous Deployment):** A separate GitOps repository [`CodeForPhilly/cfp-sandbox-cluster`](https://github.com/CodeForPhilly/cfp-sandbox-cluster) contains the environment-specific values and secrets. To deploy a new version, a maintainer creates a Pull Request in that repository. See [`GITOPS.md`](./GITOPS.md) for everything done in that repository, including secret rotation.
 
 ---
 
@@ -46,77 +46,24 @@ This is the workflow for maintainers to deploy a new version to a live environme
 
 1.  **In the Application Repo (`PA_Expunger`):**
     * Ensure all code is merged into your main branch.
+    * Bump both `version` and `appVersion` in `helm-chart/Chart.yaml`. `appVersion` should be equal to the version you are about to release. That value is the image tag the deployed Deployment uses by default, so a release that skips it deploys the previous image. `version` needs to be bumped whenever anything changes in the chart; it will probably be different from `appVersion`.
     * Create and push a semantic version Git tag (e.g., `v1.0.1`).
         ```bash
         git tag v1.0.1
         git push origin v1.0.1
         ```
     * Go to your repository's "Releases" page on GitHub and **publish a new release** based on this tag.
-    * This action will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
+    * A Release will trigger the `release-publish.yml` GitHub Actions workflow, which builds and pushes the production Docker image to GHCR. Wait for it to complete successfully.
 
-2.  **In the GitOps Repo (`cfp-sandbox-cluster`):**
-    * Clone the GitOps repository locally and create a new branch.
-    * In the `pa-expunger/` directory, update the `release-values.yaml` file to point to the new image tag.
-        ```yaml
-        # pa-expunger/release-values.yaml
-        backend:
-          image:
-            tag: "1.0.1" # Change to the new version
-        ```
-    * Make sure the deployment sets `BACKEND_API_URL` to the public origin users reach the app on. Django trusts it for CSRF, so if it does not match the browser's origin, admin and session logins are rejected with a CSRF 403.
-    * Make sure the deployment sets `DJANGO_ALLOWED_HOSTS` to a comma-separated list of the hostnames the app is reachable at. The image refuses to start without it (`config.settings.prod` raises at boot), rather than serving with an empty `ALLOWED_HOSTS`.
-    * Add or update any necessary `SealedSecret` files (see below).
-    * Commit these configuration changes and open a Pull Request.
-    * Once the PR is reviewed and merged, the GitOps controller will automatically deploy the new version to the cluster.
+2.  **In the GitOps Repo (`cfp-sandbox-cluster`):** Open a Pull Request moving the pinned `ref` in `.holo/sources/pa-expunger.toml` to the tag you just released. That repository's maintainers merge it, and merge the deploy PR the GitHub action then opens.
 
-### Managing Production Secrets
-
-All production secrets are managed using **Sealed Secrets**. The encrypted `SealedSecret` files are safe to commit to the public GitOps repository.
-
-### Updating a Secret
-
-1.  **Prerequisites:** You must have the `kubeseal` CLI installed and access to the public key of the `cfp-sandbox-cluster`.
-2.  **Create Local Secret Files:** The deployment expects **two** secrets: one holding the Django application secrets and one holding the Postgres credentials. Create a temporary, local YAML file for each as a standard Kubernetes `Secret`. **DO NOT COMMIT THESE FILES.**
-    ```yaml
-    # Example: local-secret-source-backend.yaml
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: pa-expunger-backend-secret # Must match the backend secret name the deployment expects
-      namespace: pa-expunger # this must match the namespace the app will be deployed in
-    stringData:
-      DJANGO_SECRET_KEY: "a-new-very-strong-and-random-key"
-      SUPERUSER_USERNAME: "plse"
-      SUPERUSER_PASSWORD: "a-new-very-strong-and-random-password"
-    ```
-    ```yaml
-    # Example: local-secret-source-postgres.yaml
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: pa-expunger-postgres-secret # Must match the Postgres secret name the deployment expects
-      namespace: pa-expunger
-    stringData:
-      POSTGRES_USER: "plse"
-      POSTGRES_PASSWORD: "a-new-very-strong-and-random-password"
-      POSTGRES_DB: "expunger_db"
-    ```
-3.  **Seal the Secrets:** Run `kubeseal` on each local file to encrypt it. This will print the encrypted `SealedSecret` manifest to your terminal or a file.
-    ```bash
-    > export SEALED_SECRETS_CERT=https://sealed-secrets.sandbox.k8s.phl.io/v1/cert.pem
-    
-    > kubeseal -f local-secret-source-backend.yaml -o yaml -w sealed-secret-backend.yaml
-    > kubeseal -f local-secret-source-postgres.yaml -o yaml -w sealed-secret-postgres.yaml
-    ```
-4.  **Commit the Sealed Files:** Add the new or updated `sealed-secret-*.yaml` file(s) to your pull request in the GitOps repository.
+[`GITOPS.md`](./GITOPS.md) covers that repository in full: which files this app owns, how routing and chart values are changed, and how the three sealed secrets are created and rotated.
 
 ---
 
 ## Local Testing Guide
 
 Before starting the official release process, you can validate the production image locally.
-
-The Helm chart that renders the Kubernetes manifests is not in this repository yet — it is under review separately. Once it lands, this guide will also cover a full end-to-end test against a local cluster.
 
 ### Smoke Testing with Docker Compose
 
@@ -154,3 +101,106 @@ Testing on a local Kubernetes cluster is the ultimate check, but this smoke test
     # (windows)
     ./scripts/prod-test.ps1 down -v
     ```
+   
+### Full End-to-End Test with Kubernetes & Helm
+
+This process validates the entire Helm chart by deploying the production-built image to a local Kubernetes cluster. This is the highest-fidelity test that can be run locally.
+
+**This guide uses Docker Desktop's built-in Kubernetes cluster with kubeadm provisioning**, which needs the fewest steps (at least on Windows): it satisfies `LoadBalancer` Services on `localhost` and shares the host's Docker image cache. That means we don't have to run a tunnel, and we don't have to load the docker image in.
+
+Other local clusters should also work; the setup process will be different from what's written here. E.g. `kind` has no load balancer, so the Gateway's address stays `<pending>` and reaching it takes extra port setup when the cluster is created.
+
+#### Install Helm
+To work with the helm chart, you'll need to install Helm, the command line tool. See the official guide here: https://helm.sh/docs/intro/install/. **We recommend using a package manager.**
+
+
+#### Preparing Your Local Cluster
+
+The local end-to-end test uses Envoy Gateway with the Gateway API, matching the sandbox cluster.
+
+1. **Start the cluster.** Enable Kubernetes in Docker Desktop under Settings → Kubernetes, and select the default **kubeadm** provisioning method. Wait for it to report running. Run `kubectl config use-context docker-desktop` to point kubectl at it. Make sure host ports 80 and 443 are free.
+
+2. Make sure your chart repositories are updated (`helm repo update`).
+
+3. **Install Envoy Gateway.** This also installs the Gateway API CRDs. Replace the version with what the target cluster runs, if different:
+    ```bash
+    helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.7.3 -n envoy-gateway-system --create-namespace --wait
+    ```
+
+#### Local Testing Workflow
+
+1. **Build a Local Image:**
+    From the project root, build the production image using a tag that is specific to this test, `:e2e-test`. The Compose smoke test builds to `:local-test`, so the two stacks never overwrite each other's image.
+
+    ```bash
+    docker build -t pa_expunger-backend:e2e-test --build-arg APP_VERSION=e2e-test -f Dockerfile.prod .
+    ```
+2. **Configure Local Values:**
+    We use a special file, `helm-chart/local-values.yaml`, to override the default chart settings for local testing. Ensure this file points to the local image you just built.
+
+    Example `helm-chart/local-values.yaml` snippet:
+
+    ```yaml
+    backend:
+      image:
+        repository: pa_expunger-backend
+        tag: "e2e-test"
+        pullPolicy: Never
+    ```
+
+    `pullPolicy: Never` means the image is only ever read from the cluster's own cache, never pulled from a registry. A kubeadm-provisioned Docker Desktop cluster runs its kubelet against the host Docker daemon, so the image built in step 1 is already there. A cluster with its own image store, including Docker Desktop provisioned via kind, needs it loaded in first, or the pod fails with `ErrImageNeverPull`.
+
+3. **Deploy with Helm:**
+    Navigate to your `helm-chart/` directory. Use `helm upgrade --install` with your `local-values.yaml` file to deploy the application to your local cluster.
+    ```bash
+    cd helm-chart
+    # From within the helm-chart/ directory
+    helm upgrade --install pa-expunger-local . -f local-values.yaml
+    ```
+    `local-values.yaml` sets `secrets.create: true`, which creates dummy `DJANGO_SECRET_KEY`/superuser/Postgres credentials via `helm-chart/templates/insecure-local-secrets.yaml`. That template refuses to run (`fail()`s the render) unless `publicHostname` is exactly `localhost`, so this file cannot be aimed at a real deployment.
+
+    The database isn't up yet (that's the next step), so the backend container will crash and the migrations Job won't complete. That's expected; the Job's `backoffLimit: 10` gives it enough retries to succeed once Postgres is available.
+
+4. **Apply the local environment manifests:**
+    These supply the two things the chart deliberately leaves out: a database and routing. They must come *after* step 3, because the Postgres container reads the credentials Secret that the chart creates.
+    ```bash
+    cd ..
+    kubectl apply -f k8s-e2e-test/
+    ```
+    Then wait for the Gateway to come up:
+    ```bash
+    kubectl wait --for=condition=Programmed gateway/pa-expunger-local --timeout=180s
+    ```
+    If it stays `Programmed=False` with `AddressNotAssigned`, nothing assigned the Envoy data plane an address. `kubectl get svc -n envoy-gateway-system` should show that Service with `EXTERNAL-IP: localhost` rather than `<pending>`.
+
+5. **Verify before moving on:**
+    ```bash
+    kubectl get pods
+    kubectl get jobs
+    ```
+    Confirm the backend and `pa-expunger-local-postgres` pods reach `Running`/`Ready`, and that the migrations Job shows `COMPLETIONS 1/1`. If and only if the Job hasn't completed, you can check its logs with `kubectl logs job/pa-expunger-local-migrations-e2e-test`.
+
+6. **Test the Application:**
+      * Navigate to **`https://localhost`** in your browser.
+      * You will see a browser security warning for the self-signed certificate. This is expected. To continue on Firefox, click "Advanced" and "Proceed to localhost (risky)". Other browsers will be slightly different.
+      * `http://localhost` should 301 to HTTPS, matching the cluster-wide redirect in the sandbox.
+      * The version string in the top left should have "e2e-test", confirming that the image we built earlier is the one in use.
+      * Log in at `https://localhost/admin/` with the dummy superuser (`plse` / `defaultTestPassword` from `secrets.dummyData`). This is worth doing explicitly: a successful login is the only check that exercises `CSRF_TRUSTED_ORIGINS`, which is derived from `publicHostname`. A 403 here means the public origin is misconfigured.
+      * Run a shell in the backend, and then run `pytest`. You can start a shell with:
+   ```bash
+   kubectl exec -it deploy/pa-expunger-local-backend -- /bin/bash
+   ```
+
+7. **Tear down** when you're done. Remove what this guide created:
+    ```bash
+    helm uninstall pa-expunger-local
+    kubectl delete -f k8s-e2e-test/
+    helm uninstall eg -n envoy-gateway-system && kubectl delete ns envoy-gateway-system
+    ```
+
+    `helm uninstall` removes the migrations Job along with everything else, and the local
+    Postgres keeps no volume, so nothing of the app is left behind. One thing does survive:
+
+      * The **Gateway API CRDs** installed alongside Envoy Gateway are not removed.
+        Helm never deletes CRDs. Leaving them is harmless and saves time on the next run;
+        `kubectl get crd | grep gateway` shows them if you want them gone.

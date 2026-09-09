@@ -5,6 +5,34 @@ on:
     types: [published]
 
 jobs:
+  verify-chart-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/philadelphia-lawyers-for-social-equity/pa-expunger-backend
+          # The 'semver' type correctly parses a semantic versioning tag like 'v1.2.3' into '1.2.3'.
+          tags: |
+            type=semver,pattern={{version}}
+
+      # The chart renders the backend image tag from appVersion, so a release whose
+      # Chart.yaml was not bumped deploys the previous image, cleanly and silently.
+      # The step makes that visible.
+      - name: Verify chart appVersion matches the release
+        run: |
+          chart_app_version="$(grep '^appVersion:' helm-chart/Chart.yaml | cut -d: -f2 | tr -d ' "')"
+          release_version="${{ steps.meta.outputs.version }}"
+          if [ "$chart_app_version" != "$release_version" ]; then
+            echo "::error file=helm-chart/Chart.yaml::appVersion is '$chart_app_version' but this release is '$release_version'. Image '$release_version' is still published, but pinning the GitOps ref to this tag would deploy $chart_app_version. Either cut a follow-up release with appVersion bumped, or set backend.image.tag to '$release_version' in release-values.yaml."
+            exit 1
+          fi
+          echo "appVersion '$chart_app_version' matches release '$release_version'."
+
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:

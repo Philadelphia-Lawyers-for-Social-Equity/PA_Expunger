@@ -1,22 +1,5 @@
-import os
-
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-
-
-class TestSuperUserExists(TestCase):
-    """
-    App data migrations must build the SUPERUSER
-    """
-    def test_expunger_user_is_ready(self):
-        name = os.environ["SUPERUSER_USERNAME"]
-
-        User = get_user_model()
-        root = User.objects.get(username=name)
-
-        self.assertTrue(root.is_staff)
-        self.assertTrue(root.is_superuser)
 
 
 class TestGroupsExist(TestCase):
