@@ -54,7 +54,7 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/readiness/')"]
       interval: 2s
       timeout: 5s
-      retries: 30
+      retries: 60
 
   frontend:
     build:
