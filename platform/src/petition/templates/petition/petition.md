@@ -64,7 +64,7 @@ Pursuant to Pa.R.Crim.P. 790, the following information is provided:
 
 1.  **Petitioner Name:** {{ petitioner.name }}
 
-2.  **Alias(es):** {{ petitioner.aliases\|comma_join }}
+2.  **Alias(es):** {{ petitioner.aliases\|join('; ') }}
 
 3.  **Petitioner's Address:**
 
@@ -207,7 +207,7 @@ Pa.R.Crim.P. 790 be granted for the reasons set forth below.
 | > **Full Name:** {{ petitioner.name | > **DOB:** {{ petitioner.dob\|date }}                         | > **Social Security Number:** {{ petitioner.ssn }}              |
 | > }}                                |                                                               |                                                                 |
 +-------------------------------------+---------------------------------------------------------------+-----------------------------------------------------------------+
-| > **Address:**                      | > **Alias(es):** {{ petitioner.aliases\|comma_join }}                                                                           |
+| > **Address:**                      | > **Alias(es):** {{ petitioner.aliases\|join('; ') }}                                                                           |
 | >                                   |                                                                                                                                 |
 | > {{r petitioner.formattedAddress}} |                                                                                                                                 |
 +-------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
