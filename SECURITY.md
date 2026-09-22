@@ -20,3 +20,14 @@ Do not include real client records, Social Security numbers, passwords, tokens,
 or other credentials in your report. If sensitive material is needed to
 investigate, describe what it contains so we can coordinate how to share it
 privately.
+
+## What to expect
+
+We aim to acknowledge your report within **7 calendar days** and provide a
+status update within **30 calendar days** of receiving it. These are best-effort
+targets for a volunteer team, not guaranteed response times.
+
+We will assess the report and discuss next steps with you privately. The time
+needed for a fix depends on the severity, complexity, and volunteer capacity;
+we will share an estimated timeline when we can. Please coordinate any public
+disclosure with us so we have an opportunity to investigate and address the issue.
