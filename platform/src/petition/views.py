@@ -45,8 +45,7 @@ class PetitionAPIView(APIView):
             context["dispositions"] = ', '.join(dispositions)
         except KeyError as err:
             # `err.args[0]` is the missing key, not the exception text -- a name
-            # from our own payload contract, so it is safe to show. str(err)
-            # would wrap it in quotes.
+            # from our own payload contract, so it is safe to show
             logger.warning("Missing field %s in petition payload", err.args[0])
             raise MissingField(f"Missing required field: {err.args[0]}.")
 
@@ -92,9 +91,7 @@ class GeneratorReportAPIView(APIView):
                 "petition_summaries": request.data["petitionSummaries"]
             }
         except KeyError as err:
-            # Report the key the client sent, not our template's name for it:
-            # "petitionSummaries" is what a caller can look for in their own
-            # payload, whereas the context key is "petition_summaries".
+            # Report the key the client sent, not our template's name for it
             logger.warning("Missing field %s in generator report payload", err.args[0])
             raise MissingField(f"Missing required field: {err.args[0]}.")
 
@@ -123,8 +120,6 @@ class DocketParserAPIView(APIView):
 
         df = request.FILES.getlist("docket_file")
         if not df:
-            # The key names go to the log, not the response -- dict_keys([...])
-            # in a browser is a Python repr, and the user can't act on it.
             logger.warning("No docket_file in upload; got %s", list(request.FILES.keys()))
             raise MissingField("No files were uploaded.")
 
@@ -161,28 +156,9 @@ class DocketParserAPIView(APIView):
             try:
                 parsed_files.append(docket_parser.parse_pdf(file))
             except Exception:
-                # The exception never reaches the browser. A parsimonious
-                # ParseError stringifies to a snippet of the document being
-                # parsed -- for a real client, their name, date of birth and
-                # charges. Full traceback to the log; a message we wrote to the
-                # user. `file.name` is safe to interpolate: they chose it.
-                #
-                # One message for every cause, deliberately. There are three
-                # distinguishable failures here -- unopenable PDF, readable PDF
-                # that isn't a court document, and a real docket whose format
-                # the grammar can't handle -- and only the last is our bug
-                # rather than a bad upload. Telling them apart means either
-                # importing pypdf and parsimonious into this view or having
-                # docket_parser raise its own types; see the TODO in errors.py.
-                # Until then the wording stays vague about *why*, because a
-                # single catch cannot honestly claim to know.
-                #
-                # Raising aborts the whole upload, so one bad file loses the
-                # good ones. That matches today's behavior and is not a
-                # decision -- returning the petitions we could build plus a
-                # warning naming the file is the friendlier option, and it is
-                # waiting on warnings[] (issue #19, group 3).
+                # file.name` is safe to interpolate. The full exception has potential PII
                 logger.exception("Parse failed for %s", file.name)
+                # Raising aborts the whole upload, so one bad file loses the good ones
                 raise ParseFailed(
                     f"We couldn't read “{file.name}”. "
                     "Make sure it's a PA docket sheet or court summary PDF."

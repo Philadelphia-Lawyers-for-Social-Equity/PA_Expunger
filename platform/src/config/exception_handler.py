@@ -1,41 +1,11 @@
 """Project-wide DRF exception handler.
+This replaces DRF's default EXCEPTION_HANDLER — which already runs on every exception
+in every view — so it raises the error-handling floor project-wide (including expunger) 
+without touching those views, and its one addition is turning DRF's None 
+(unhandled exception → Django's HTML 500) into a logged, JSON {"detail": "..."} 500. 
 
-The seam this hooks
--------------------
-
-DRF already wraps every view method in a try/except. `APIView.dispatch()` catches
-anything your handler raises and calls `handle_exception(exc)`, which looks up
-`REST_FRAMEWORK['EXCEPTION_HANDLER']` and calls it. The default one,
-`rest_framework.views.exception_handler`, does two things:
-
-- If the exception is an `APIException` (or `Http404` / `PermissionDenied`), it
-  builds a `Response` with that exception's `status_code` and `detail`.
-- For anything else, it returns `None` -- and DRF re-raises, so Django turns it
-  into a bare 500 (an HTML debug page under DEBUG=True, which is exactly what
-  GeneratorReportAPIView produces today).
-
-So this is not a new interception layer. It replaces a function that already runs
-on every exception in every DRF view in the project, which is why installing it
-also raises the floor for the expunger endpoints without touching them.
-
-Two things to watch
--------------------
-
-1. We now own the traceback. Once this returns a Response for unhandled
-   exceptions, Django's 500 path never runs, so its `django.request` logger never
-   fires. The `logger.exception(...)` call below is load-bearing -- drop it and
-   crashes become silent.
-
-2. `detail` is not always a string. Recognized exceptions pass through in
-   whatever shape DRF built, and `ValidationError` carries a dict keyed by field
-   name (`{"bar": ["This field is required."]}`) or a bare list, which DRF
-   returns as the response body with no `detail` key at all. Nothing in this app
-   raises one yet -- input is validated by hand -- but the first serializer added
-   changes what the frontend receives.
-
-The response contract, for the frontend's sake: `detail`, a string, on
-everything this app raises and on every DRF built-in. See the caveat above for
-the one shape that will not have it.
+Two caveats: it's now the only thing logging unhandled tracebacks, and a future ValidationError 
+would return a body with no detail key at all, breaking the frontend's detail-is-always-a-string contract.
 """
 
 import logging
