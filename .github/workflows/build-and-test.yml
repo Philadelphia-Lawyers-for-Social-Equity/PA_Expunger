@@ -17,7 +17,13 @@ jobs:
         run: docker compose build
 
       - name: Start containers
-        run: docker compose up -d
+        # --wait blocks until the backend's healthcheck passes, so migrate/
+        # ensure_superuser/seed_dev_data have finished before pytest runs against it.
+        run: docker compose up -d --wait
+
+      - name: Show container logs on startup failure
+        if: failure()
+        run: docker compose logs
 
       - name: Run backend tests
         run: docker compose exec -T backend pytest

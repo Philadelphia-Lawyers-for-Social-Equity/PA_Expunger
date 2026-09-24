@@ -29,8 +29,13 @@ urlpatterns = [
             checks=[
                 "health_check.Cache",
                 "health_check.Database",
-                "health_check.Storage",
-                "health_check.contrib.psutil.Disk",
+                # The app has no real file uploads/storage, so this only probes
+                # whether the deployment's default storage location is writable
+                # -- a false negative for a working app, not a real health signal.
+                # "health_check.Storage",
+                # Disk returns a 500 as a "Warning" whenever the host is low on disk
+                # space, which is unrelated to whether the app can serve traffic.
+                # "health_check.contrib.psutil.Disk",
                 "health_check.contrib.psutil.Memory"
             ]
         )
@@ -39,8 +44,7 @@ urlpatterns = [
         "health/liveness/",
         HealthCheckView.as_view(
             checks=[
-                "health_check.Cache",
-                "health_check.Storage"
+                "health_check.Cache"
             ]
         ),
     )

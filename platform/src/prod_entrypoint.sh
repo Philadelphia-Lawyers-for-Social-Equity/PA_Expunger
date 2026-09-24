@@ -11,7 +11,8 @@ mkdir -p "$CONFIG_DIR"
 cat > $CONFIG_FILE_PATH << _end_config
 {
   "APP_VERSION": "${APP_VERSION}",
-  "HELM_APP_VERSION": "${HELM_APP_VERSION}"
+  "HELM_APP_VERSION": "${HELM_APP_VERSION}",
+  "HELM_CHART_VERSION": "${HELM_CHART_VERSION}"
 }
 _end_config
 

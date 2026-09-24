@@ -78,10 +78,9 @@ ENV STATIC_URL=${STATIC_URL}
 # Copy the virtual environment from the backend-builder stage
 COPY --from=backend-builder /opt/venv /opt/venv
 
-# Create application directory. /app/media backs Django's default file
-# storage, used only by the health check's write/read/delete probe.
+# Create application directory.
 WORKDIR /app
-RUN mkdir -p /app/src /app/staticfiles_build /app/media && chown -R appuser:appgroup /app
+RUN mkdir -p /app/src /app/staticfiles_build && chown -R appuser:appgroup /app
 
 # Copy the built static frontend assets from the frontend-builder stage
 COPY --from=frontend-builder --chown=appuser:appgroup /app/dist /app/staticfiles_build
