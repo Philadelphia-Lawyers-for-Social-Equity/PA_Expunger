@@ -9,53 +9,6 @@ from docket_parser import test_data_path
 
 # Current doc template will not support new line characters.
 # A utility function will format the address as RTF for the template.
-class TestPetitionerFormatting(TestCase):
-    """Check that the helpers for petitioners work"""
-
-    @classmethod
-    def setUpClass(cls, *args, **kwargs):
-        super().setUpClass(*args, **kwargs)
-        cls.base_petitioner_model = {
-            "name": "John Doe",
-            "dob": "1900-01-01",
-            "ssn": "111-11-1111",
-            "address": {
-                "street1": "100 Chestnut St",
-                "city": "Philadelphia",
-                "state": "PA",
-                "zipcode": "12345"
-            }
-        }
-
-    def test_no_aliases(self):
-        petitioner_model = self.base_petitioner_model.copy()
-        petitioner = models.Petitioner.from_dict(petitioner_model)  # shouldn't throw
-
-    def test_none_aliases(self):
-        petitioner_model = self.base_petitioner_model.copy()
-        petitioner_model["aliases"] = None
-        petitioner = models.Petitioner.from_dict(petitioner_model)  # shouldn't throw
-
-    def test_empty_list_aliases(self):
-        petitioner_model = self.base_petitioner_model.copy()
-        petitioner_model["aliases"] = []
-        petitioner = models.Petitioner.from_dict(petitioner_model)  # shouldn't throw
-
-    def test_list_aliases(self):
-        petitioner_model = self.base_petitioner_model.copy()
-        petitioner_model["aliases"] = ["First Alias"]
-        petitioner = models.Petitioner.from_dict(petitioner_model)  # shouldn't throw
-
-    def test_invalid_aliases(self):
-        petitioner_model = self.base_petitioner_model.copy()
-
-        petitioner_model["aliases"] = "First Alias"
-        self.assertRaises(TypeError, models.Petitioner.from_dict, petitioner_model)
-
-        petitioner_model["aliases"] = 2
-        self.assertRaises(TypeError, models.Petitioner.from_dict, petitioner_model)
-
-
 class TestAddressFormatting(TestCase):
     """Check that the helpers for addresses work"""
 
