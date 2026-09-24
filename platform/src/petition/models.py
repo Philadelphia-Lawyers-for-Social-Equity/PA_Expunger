@@ -65,12 +65,12 @@ class Petitioner:
     def from_dict(data):
         adata = data.get("aliases", [])
 
-        if type(adata) == str:
-            aliases = [x.strip() for x in ",".split(adata)]
         if adata is None:
             aliases = []
-        else:
+        elif isinstance(adata, list) and all(isinstance(el, str) for el in adata):
             aliases = adata
+        else:
+            raise TypeError("Aliases must be a list[str] or None")
 
         return Petitioner(
             data["name"], aliases,
