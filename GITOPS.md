@@ -9,11 +9,13 @@ For building the production image, cutting a release, and testing either one loc
 | To | Edit | See |
 | --- | --- | --- |
 | Deploy a release, or roll one back | `.holo/sources/pa-expunger.toml` | [Deploying](#deploying) |
-| Deploy a chart change with no app change | `.holo/sources/pa-expunger.toml` | [Deploying](#deploying) |
-| Change the public hostname | `pa-expunger/release-values.yaml` and `_gateways/pa-expunger.yaml` | [Chart values](#changing-chart-values), [Routing](#changing-routing) |
+| Deploy a chart change | A new release, then `.holo/sources/pa-expunger.toml` | [Every change is a release](#every-change-is-a-release) |
+| Change the public hostname | `pa-expunger/release-values.yaml` and `_gateways/pa-expunger.yaml`, with a new release | [Chart values](#changing-chart-values), [Routing](#changing-routing) |
 | Change how requests reach the app | `_gateways/pa-expunger.yaml` | [Routing](#changing-routing) |
-| Rotate the admin password or `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml` | [Secrets](#secrets) |
-| Rotate the database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml` | [Secrets](#secrets) |
+| Rotate the admin password or `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml`, then a new release | [Secrets](#secrets) |
+| Rotate the database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, then a new release | [Secrets](#secrets) |
+
+**Only routing changes deploy without a release.** Everything else in this table takes effect only when a new release moves the image tag. [Every change is a release](#every-change-is-a-release) explains why.
 
 ## What this app owns in the GitOps repo
 
@@ -30,6 +32,23 @@ For building the production image, cutting a release, and testing either one loc
 
 **`pa-expunger/` holds `release-values.yaml` and nothing else.** A Kubernetes resource placed there is silently discarded when the chart is rendered, without failing the build.
 
+## Every change is a release
+
+Until [#92](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues/92) and [#93](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues/93) are fixed, a change reaches the cluster only when it ships with a new image tag, which means a new GitHub release with `appVersion` bumped in `helm-chart/Chart.yaml`. A release with no application changes is fine. Its only job is to produce a new tag.
+
+The reason is the migration Job. It runs `migrate` and then `ensure_superuser`, and its name is built from the image tag. Kubernetes cannot modify a Job that already exists, so:
+
+* **A change to the Job without a new tag is rejected.** The Job's environment is rendered from `publicHostname`, `externalDatabase.host`, and the secret names, so changing any of those, or `migration-job.yaml` itself, alters a Job that already exists. The deploy workflow does not report the rejection. The old Job stays, and the change silently does not land.
+* **A resealed secret changes nothing on its own.** The Job has already completed and does not run again, so `ensure_superuser` never sees a new admin password. The app pods read `DJANGO_SECRET_KEY` and the database credentials into their environment when they start, so they keep the old values until they are replaced.
+* **A new tag fixes both.** It creates a new Job, which reruns `migrate` and `ensure_superuser` against the current secrets, and it replaces the app pods, which then read the current secrets.
+
+`_gateways/pa-expunger.yaml` is outside the chart, so routing changes are the one exception and deploy on their own.
+
+Two cautions while this holds:
+
+* **Leave `backend.image.tag` unset.** The Job name follows that override when it is set, so while it pins a tag, moving `ref` to a new release does not create a new Job. The admin password is not reset, and any change to the Job is rejected.[^image-tag]
+* **A release with new migrations can serve errors while they run.** New app pods can take traffic before the migration Job finishes, and requests that touch the new schema fail with a 500 until it does ([#93](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues/93)). Nothing in the chart prevents this yet, so deploy schema changes when a short outage is acceptable.
+
 ## Deploying
 
 Deploying is one field: `ref` in `.holo/sources/pa-expunger.toml`.
@@ -44,8 +63,7 @@ Deploying is one field: `ref` in `.holo/sources/pa-expunger.toml`.
 
     | Deploying | `ref` |
     | --- | --- |
-    | A released version | The release tag, `refs/tags/v0.3.0` |
-    | A chart-only change | The commit SHA, `4f2b8c1d90a3e75619cf0d84b2ae63715c8d09fa` |
+    | A released version, including a chart change | The release tag, `refs/tags/v0.3.0` |
     | A rollback | The earlier release tag |
 
 2. Confirm an image exists for that version. `release-publish.yml` builds it when you publish the GitHub release. A tag with no image behind it deploys cleanly and then sits in `ImagePullBackOff`.
@@ -54,7 +72,7 @@ Deploying is one field: `ref` in `.holo/sources/pa-expunger.toml`.
 Notes:
 
 * `appVersion` in `helm-chart/Chart.yaml` is the image tag the Deployment uses by default, and cutting a release bumps it. Moving the pin moves the running image with it, in either direction, so a rollback is the same change in reverse.[^versions]
-* A chart-only change needs no release and no new image, because `appVersion` does not move. Bump `version` in the commit that changes the templates. That is what lets `HELM_CHART_VERSION` confirm the deploy landed, and it updates only when a pod restarts under the new chart.
+* A chart change ships in a release like any other change ([Every change is a release](#every-change-is-a-release)). Bump `version` in the commit that changes the templates. That is what lets `HELM_CHART_VERSION` confirm the deploy landed.
 * Never pin a branch. A branch ref resolves when the manifests are built, not when your PR is reviewed, and that build runs on any push to the GitOps repo.[^ref-forms]
 
 ## Changing chart values
@@ -64,7 +82,7 @@ Notes:
 * **`publicHostname`** is the hostname browsers use, feeding both `DJANGO_ALLOWED_HOSTS` and `BACKEND_API_URL`. Without it Django rejects every external request with a 400, and admin and session logins fail with a CSRF 403. Set `apiUrlOverride` as well only when the public origin is not simply `https://<publicHostname>`, for example a CDN in front or a non-standard port.
 * **`externalDatabase.host`** points at the shared PostgreSQL cluster, `shared-cluster-rw.cloudnative-pg.svc.cluster.local`. The chart runs no database of its own.
 
-Changing the hostname means changing it here and in `_gateways/pa-expunger.yaml`, which is what actually routes the traffic.
+Changing the hostname means changing it here and in `_gateways/pa-expunger.yaml`, which is what actually routes the traffic. The `release-values.yaml` edit must go in the same PR that moves `ref` to a new release. On its own it is rejected, because the hostname is part of the migration Job's environment ([Every change is a release](#every-change-is-a-release)).
 
 ## Changing routing
 
@@ -85,6 +103,13 @@ Secrets are committed to the GitOps repo as `SealedSecret` files, encrypted to a
 | `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml` |
 | The database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, both in the same PR |
 
+Resealing is only half of a rotation. The new value takes effect when a new release deploys ([Every change is a release](#every-change-is-a-release)), so a rotation is two GitOps PRs, merged in this order:
+
+1. The resealed secret files, alone.
+2. Once the deploy PR for the first has merged, `ref` moved to a new release.
+
+Keep them separate. The cluster decrypts a `SealedSecret` into its `Secret` shortly after it is applied, not instantly, so a Job or pod started by the same deploy can read the old value.
+
 ### Record the plaintext before you seal it
 
 `kubeseal` encrypts one way. A `SealedSecret` cannot be decrypted locally, and without cluster access you cannot read the live `Secret` back either. **A value you do not save is not recoverable, only replaceable:** you generate a new one, reseal it, and ship another PR. So put the plaintext somewhere durable, like a password manager, at the moment you seal it. This matters most for `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD`.
@@ -101,7 +126,9 @@ Keep the temporary plaintext files out of both working directories. This repo's 
 
 **The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one defines the role, the other is what the app logs in with. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both in the same PR. Resealing only one leaves the app authenticating with a stale password against a role that still has the old one. A password nobody recorded is replaced the same way: seal a freshly generated one into both files, and the database applies it to the role on its next reconcile.
 
-**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. Rotating the admin password is therefore resealing `pa-expunger.secrets/backend.yaml` and merging.
+**Rotating the database password causes an outage.** The database applies the new password to the role on its own schedule, while the app pods keep the old one until the release replaces them. From the role changing until the release's pods are running, the app cannot reach its database. Merge the release PR promptly after the secrets PR. The release's migration Job may fail to log in while the role catches up; it retries, so give it time before treating that as a failure.
+
+**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. Because that Job runs once per image tag, the reset happens only when a new release deploys. Rotating the admin password is therefore resealing `pa-expunger.secrets/backend.yaml`, then deploying a new release, as above.
 
 That also means **rotating the password, not the username.** Changing `SUPERUSER_USERNAME` does not rename the account, it creates a second one and leaves the old username live with its old password. Nothing deletes it.
 
@@ -184,12 +211,12 @@ Once the deploy PR has merged:
 2. Fetch <https://pa-expunger.sandbox.k8s.phl.io/static/config.json>. The entrypoint writes it at container start, so all three values describe the pod that answered:
     * `APP_VERSION`, baked into the image. Which image is running.
     * `HELM_APP_VERSION`, the chart's `appVersion`. Which image the chart asked for. Disagreement with `APP_VERSION` means a `backend.image.tag` override is in effect.
-    * `HELM_CHART_VERSION`, the chart's own `version`. Which templates the pod was rendered from, and the only way to confirm a chart change with no app change reached the cluster.[^chart-version-scope]
+    * `HELM_CHART_VERSION`, the chart's own `version`. Which templates the pod was rendered from, and the only way to confirm a chart change reached the cluster.[^chart-version-scope]
 3. Log in at `/admin/`. This is the only check that exercises `CSRF_TRUSTED_ORIGINS`, derived from `publicHostname`. A 403 means the public origin is misconfigured.
 
-A changed secret takes effect when the migration Job runs, as part of the deploy. A rotated database password is applied to the role on the database's own reconcile schedule, which can lag the deploy.
+A changed secret takes effect when a new release deploys, not when the secret itself does ([Every change is a release](#every-change-is-a-release)). After rotating the admin password, log in at `/admin/` with the new password and confirm the old one is refused. A rotated database password is applied to the role on the database's own reconcile schedule, which can lag the deploy.
 
-[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up.
+[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up. Until then, a new release does not rerun the migration Job, so admin password rotations and hostname changes do not take effect.
 
 [^versions]: `appVersion` is the application's version and the image tag the Deployment renders. `version` is the chart's own, bumped whenever the templates change, which includes every commit that moves `appVersion`. Nothing here consumes `version`: the chart is rendered from the pinned commit rather than packaged or published, so it is a record rather than a control. It reaches the cluster as `HELM_CHART_VERSION`. [`DEPLOYMENT.md`](./DEPLOYMENT.md) covers setting both when cutting a release.
 
