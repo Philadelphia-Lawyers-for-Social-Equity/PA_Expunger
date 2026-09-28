@@ -12,8 +12,8 @@ For building the production image, cutting a release, and testing either one loc
 | Deploy a chart change with no app change | `.holo/sources/pa-expunger.toml` | [Deploying](#deploying) |
 | Change the public hostname | `pa-expunger/release-values.yaml` and `_gateways/pa-expunger.yaml` | [Chart values](#changing-chart-values), [Routing](#changing-routing) |
 | Change how requests reach the app | `_gateways/pa-expunger.yaml` | [Routing](#changing-routing) |
-| Rotate the admin password or `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml` | [Secrets](#secrets) |
-| Rotate the database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml` | [Secrets](#secrets) |
+| Rotate the admin password or `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml`, and `.holo/sources/pa-expunger.toml` to deploy a release in the same PR | [Rotation needs a release](#rotation-needs-a-release) |
+| Rotate the database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, and `.holo/sources/pa-expunger.toml` to deploy a release in the same PR | [Rotation needs a release](#rotation-needs-a-release) |
 
 ## What this app owns in the GitOps repo
 
@@ -85,6 +85,8 @@ Secrets are committed to the GitOps repo as `SealedSecret` files, encrypted to a
 | `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml` |
 | The database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, both in the same PR |
 
+**A reseal on its own changes nothing in the running app.** Each of these ships in the same PR as a release deploy, as described in [Rotation needs a release](#rotation-needs-a-release). For the database password that is not optional: resealing it on its own takes the app down.
+
 ### Record the plaintext before you seal it
 
 `kubeseal` encrypts one way. A `SealedSecret` cannot be decrypted locally, and without cluster access you cannot read the live `Secret` back either. **A value you do not save is not recoverable, only replaceable:** you generate a new one, reseal it, and ship another PR. So put the plaintext somewhere durable, like a password manager, at the moment you seal it. This matters most for `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD`.
@@ -99,13 +101,26 @@ Keep the temporary plaintext files out of both working directories. This repo's 
 | `pa-expunger.secrets/postgres.yaml` | `pa-expunger-postgres-secret` | `pa-expunger` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` |
 | `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml` | `pa-expunger-db-credentials` | `cloudnative-pg` | `username`, `password` |
 
-**The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one defines the role, the other is what the app logs in with. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both in the same PR. Resealing only one leaves the app authenticating with a stale password against a role that still has the old one. A password nobody recorded is replaced the same way: seal a freshly generated one into both files, and the database applies it to the role on its next reconcile.
+**The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one defines the role, the other is what the app logs in with. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both in the same PR. Resealing only one leaves the app and the role with different passwords. A password nobody recorded is replaced the same way: seal a freshly generated one into both files, in a PR that also deploys a release.
 
-**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. Rotating the admin password is therefore resealing `pa-expunger.secrets/backend.yaml` and merging.
+**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. The Job runs once per image tag, though, so a resealed password takes effect on the next release deploy, not when the reseal merges.
 
 That also means **rotating the password, not the username.** Changing `SUPERUSER_USERNAME` does not rename the account, it creates a second one and leaves the old username live with its old password. Nothing deletes it.
 
 The migration Job needs all three keys, so it receives this secret whole. The Deployment reads only `DJANGO_SECRET_KEY`, so the admin credentials never sit in a running app pod's environment.
+
+### Rotation needs a release
+
+Nothing in the rendered manifests depends on what a sealed secret contains. A PR that only reseals applies cleanly and leaves the running app exactly as it was, because each value is read at one specific moment and only a deploy brings that moment around again:
+
+* **The admin password** is set by `ensure_superuser`, which runs only in the migration Job. The Job is named after the backend image tag, and a completed Job whose name has not changed does not run again. The new password takes effect when a deploy changes the image tag. Until then the old password keeps working and the new one does not.
+* **`DJANGO_SECRET_KEY` and the database password** reach the backend as environment variables, which a pod reads once, when it starts. A changed `Secret` does not reach a pod that is already running. They take effect when a deploy replaces the backend pods.
+
+A release deploy does both. It moves `appVersion`, which is the image tag, so it creates a new migration Job and replaces the backend pods. Rotating a secret is therefore two changes in one PR: the reseal, and `ref` moved to a new release tag as in [Deploying](#deploying). If no release is due, cut one. A release with no app changes still ships a new image tag, which is all a rotation needs. A chart-only deploy is not enough, because it keeps the image tag and so does not rerun the migration Job.
+
+**Never reseal the database password on its own.** The database applies the new password to the role on its next reconcile, while the running backend pods keep the old one. Django opens a new connection for every request, so from then on every request that touches the database fails, readiness fails with it, and the pods drop out of the Service. Nothing recovers this automatically, and without cluster access the only way to replace the pods is another deploy. Shipped with a release, the role and the replacement pods change in the same deploy, and any disruption is limited to the rollout.
+
+If you are rotating because a value leaked, the old one stays valid until the release deploys. Cut the release now rather than waiting for the next planned one.
 
 ### Values that are not free choices
 
@@ -187,9 +202,9 @@ Once the deploy PR has merged:
     * `HELM_CHART_VERSION`, the chart's own `version`. Which templates the pod was rendered from, and the only way to confirm a chart change with no app change reached the cluster.[^chart-version-scope]
 3. Log in at `/admin/`. This is the only check that exercises `CSRF_TRUSTED_ORIGINS`, derived from `publicHostname`. A 403 means the public origin is misconfigured.
 
-A changed secret takes effect when the migration Job runs, as part of the deploy. A rotated database password is applied to the role on the database's own reconcile schedule, which can lag the deploy.
+When the deploy carries an admin password rotation, step 3 is also the check that it landed: log in with the new password. If the old one still works, the migration Job did not run, which means the deploy did not change the image tag. A rotated database password reaches the role on the database's own reconcile schedule, which can lag the deploy. Until it does, the new backend pods cannot connect and stay unready while the old ones keep serving, so a rollout that looks stuck may just be waiting on the database.
 
-[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up.
+[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up. The migration Job is named after this override when it is set, so while it pins a tag, a new release does not rerun the Job, and an admin password rotation does not take effect ([Rotation needs a release](#rotation-needs-a-release)). Clear it before any deploy that carries a rotation.
 
 [^versions]: `appVersion` is the application's version and the image tag the Deployment renders. `version` is the chart's own, bumped whenever the templates change, which includes every commit that moves `appVersion`. Nothing here consumes `version`: the chart is rendered from the pinned commit rather than packaged or published, so it is a record rather than a control. It reaches the cluster as `HELM_CHART_VERSION`. [`DEPLOYMENT.md`](./DEPLOYMENT.md) covers setting both when cutting a release.
 

@@ -12,8 +12,8 @@ class Command(BaseCommand):
     not exist, and its password, staff, and superuser flags are reset to match on
     every run. That makes the backend secret the source of truth for the admin
     login rather than a one-time seed -- rotating the admin password is done by
-    resealing SUPERUSER_PASSWORD and redeploying, not by any manual step against
-    the cluster.
+    resealing SUPERUSER_PASSWORD and deploying a new release, which reruns the
+    migration Job (see GITOPS.md), not by any manual step against the cluster.
 
     Because the account is looked up by username, rotating SUPERUSER_USERNAME
     instead of the password leaves the old username as a live superuser account

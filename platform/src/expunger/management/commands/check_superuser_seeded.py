@@ -8,9 +8,10 @@ class Command(BaseCommand):
     """
     Verify that SUPERUSER_USERNAME resolves to a working staff/superuser account.
 
-    Used by CI to confirm the migration Job's `ensure_superuser` invocation actually
-    ran against the deployed database, rather than only unit-testing the command in
-    isolation. Does not create or modify anything.
+    Used by CI to confirm that the migrations service in compose.prod-test.yaml,
+    which mirrors the Helm migration Job, actually ran `ensure_superuser` against
+    the production image's Compose database, rather than only unit-testing the
+    command in isolation. Does not create or modify anything.
     """
 
     help = "Check that SUPERUSER_USERNAME is a staff/superuser account."

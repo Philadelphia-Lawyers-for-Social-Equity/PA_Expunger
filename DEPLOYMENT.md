@@ -120,9 +120,7 @@ The local end-to-end test uses Envoy Gateway with the Gateway API, matching the 
 
 1. **Start the cluster.** Enable Kubernetes in Docker Desktop under Settings → Kubernetes, and select the default **kubeadm** provisioning method. Wait for it to report running. Run `kubectl config use-context docker-desktop` to point kubectl at it. Make sure host ports 80 and 443 are free.
 
-2. Make sure your chart repositories are updated (`helm repo update`).
-
-3. **Install Envoy Gateway.** This also installs the Gateway API CRDs. Replace the version with what the target cluster runs, if different:
+2. **Install Envoy Gateway.** This also installs the Gateway API CRDs. Replace the version with what the target cluster runs, if different:
     ```bash
     helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.7.3 -n envoy-gateway-system --create-namespace --wait
     ```
