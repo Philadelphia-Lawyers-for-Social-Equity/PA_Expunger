@@ -1,9 +1,8 @@
-import pytest
 from django.test import TestCase
 from petition import models
 
 class TestPetitionerFromDict(TestCase):
-    """Check that the helpers for petitioners work"""
+    """Check that the from_dict method for petitioners works"""
 
     @classmethod
     def setUpClass(cls, *args, **kwargs):
@@ -56,5 +55,6 @@ class TestPetitionerFromDict(TestCase):
         ]
 
         for alias in invalid_aliases:
-            petitioner_model["aliases"] = alias
-            self.assertRaises(TypeError, models.Petitioner.from_dict, petitioner_model)
+            with self.subTest(alias=alias):
+                petitioner_model["aliases"] = alias
+                self.assertRaises(TypeError, models.Petitioner.from_dict, petitioner_model)
