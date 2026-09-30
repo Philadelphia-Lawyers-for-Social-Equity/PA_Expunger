@@ -27,6 +27,12 @@ jobs:
       - name: Run the backend tests on the production image
         run: ./scripts/prod-test.sh exec -T backend pytest
 
+      # pytest only checks that ensure_superuser works as a unit; it doesn't prove
+      # the migrations service actually ran it. This checks the real (non-test)
+      # database that service produced.
+      - name: Check the migration Job actually seeded the superuser
+        run: ./scripts/prod-test.sh exec -T backend python manage.py check_superuser_seeded
+
       # --wait returns once the container is running, which can precede gunicorn
       # binding.
       - name: Check the SPA and the admin site respond

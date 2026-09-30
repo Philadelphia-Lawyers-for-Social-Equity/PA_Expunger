@@ -86,9 +86,9 @@ class TestPetitionAPI(Authenticated, TestCase):
             "attorney": {
                 "name": f"{attorney.user.first_name} {attorney.user.last_name}",
                 "bar": attorney.bar,
-                "pk": 1,
-                "url": "http://localhost:8000/api/v0.2.0/expunger/attorney/1/",
-                "user_id": 1,
+                "pk": attorney.pk,
+                "url": f"http://localhost:8000/api/v0.2.0/expunger/attorney/{attorney.pk}/",
+                "user_id": attorney.user_id,
             },
         }
 
