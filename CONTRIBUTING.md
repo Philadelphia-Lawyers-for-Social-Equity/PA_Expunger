@@ -24,6 +24,8 @@ We also use issues for tracking our own team needs (e.g. adding documentation).
 
 ### Add an issue
 
+For suspected security vulnerabilities, please follow [our security policy](SECURITY.md) instead of opening a public issue.
+
 Navigate to our [issues page on Github](https://github.com/Philadelphia-Lawyers-for-Social-Equity/PA_Expunger/issues) and hit the big green `New` button.
 
 ### Types of issues

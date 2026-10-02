@@ -66,7 +66,6 @@ class PetitionAPIView(APIView):
         document = DocxTemplate(docx)
 
         jinja_env = jinja2.Environment()
-        jinja_env.filters["comma_join"] = lambda v: ", ".join(v)
         jinja_env.filters["date"] = date_string
 
         document.render(context, jinja_env)

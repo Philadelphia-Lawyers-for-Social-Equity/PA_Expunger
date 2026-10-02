@@ -9,8 +9,8 @@ from docket_parser import test_data_path
 
 # Current doc template will not support new line characters.
 # A utility function will format the address as RTF for the template.
-class TestAddressFormatting(TestCase): 
-    """Check that the petition helpers work"""
+class TestAddressFormatting(TestCase):
+    """Check that the helpers for addresses work"""
 
     def test_format_address_for_parser(self):
         address = models.Address(
@@ -23,7 +23,7 @@ class TestAddressFormatting(TestCase):
         expectedRtf = RichText("street 1\ncity, PA 12345")
         self.assertTrue(isinstance(res, RichText))
         self.assertEqual(str(res), str(expectedRtf))
-    
+
     def test_address1_and_address2_replace_new_lines(self):
         address = models.Address(
             "street 1",
