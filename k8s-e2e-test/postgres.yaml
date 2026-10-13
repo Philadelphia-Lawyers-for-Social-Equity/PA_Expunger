@@ -1,0 +1,69 @@
+# A throwaway Postgres for local testing. NOT deployed anywhere real.
+#
+# The chart ships no database, because a database is environment specific. In cfp-sandbox-cluster,
+# that role is filled by the shared CloudNativePG.
+# This file only has to be close enough to exercise the same code path,
+# which is externalDatabase.host pointing at a database.
+
+# A Deployment with an emptyDir, not a StatefulSet with a PVC: local runs want a fresh
+# database each time, and nothing survives `helm uninstall` to clean up by hand.
+
+# Credentials come from the Secret the chart generates under secrets.create, so apply this
+# AFTER `helm install`. The migrations Job carries backoffLimit: 10 to cover Postgres
+# still starting.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pa-expunger-local-postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pa-expunger-local-postgres
+  template:
+    metadata:
+      labels:
+        app: pa-expunger-local-postgres
+    spec:
+      containers:
+        - name: postgres
+          # Matches the sandbox cluster's PG 18.
+          image: postgres:18-alpine
+          envFrom:
+            # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB, from the same Secret the
+            # backend and the migrations Job read.
+            - secretRef:
+                name: pa-expunger-postgres-local-secret
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: data
+              # PGDATA is a subdirectory below because the image refuses to initialize into a
+              # mount point that is not empty.
+              mountPath: /var/lib/postgresql
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "plse", "-d", "expunger_db"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pa-expunger-local-postgres
+  namespace: default
+spec:
+  selector:
+    app: pa-expunger-local-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
