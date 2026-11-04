@@ -48,8 +48,8 @@ init container in deployment.yaml so the gate always checks the database the app
   value: {{ include "pa-expunger.backendApiUrl" . | quote }}
 - name: HELM_APP_VERSION
   value: {{ .Chart.AppVersion | quote }}
-# Deliberately not set on the migration Job: its name is keyed on the image
-# tag and bootstrapRevision only, so a chart version bump changing neither
+# Deliberately not set on the migration Job: its name is keyed on its template
+# revision, the image tag and bootstrapRevision only, so a chart version bump changing none
 # would change an existing Job's immutable pod template and fail the apply.
 - name: HELM_CHART_VERSION
   value: {{ .Chart.Version | quote }}

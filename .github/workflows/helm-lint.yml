@@ -60,6 +60,12 @@ jobs:
             echo "::error::SUPERUSER_* can reach the Deployment's environment"; exit 1
           fi
 
+          # A failed migration Job must keep its pods (and their logs). With OnFailure the
+          # Job controller deletes the pod when the Job is marked Failed.
+          policy=$(render --show-only templates/migration-job.yaml | yq '.spec.template.spec.restartPolicy')
+          [ "$policy" = Never ] \
+            || { echo "::error::Migration Job restartPolicy is $policy, not Never"; exit 1; }
+
           # #92: the Job name is stable for unchanged values and changes with the revision.
           base=$(job_name)
           [ "$base" = "$(job_name)" ] || { echo "::error::Job name is not stable across renders"; exit 1; }

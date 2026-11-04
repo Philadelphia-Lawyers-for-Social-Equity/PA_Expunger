@@ -5,18 +5,25 @@ then fail on every subsequent image bump, silently skipping migrations since the
 GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
 creates a new Job and the old one is pruned when its manifest leaves the projection.
 
+$templateRevision ("t<n>" in the name) covers changes made by the chart itself. Any
+edit to this template that changes the rendered spec.template (restartPolicy,
+command, env, ...) must bump it in the same commit, or the apply fails on every
+existing deploy and migrations silently stop running. A bump reruns migrate and
+ensure_superuser once per deploy, for the image that is already running; both are
+idempotent. History: t2 switched restartPolicy from OnFailure to Never.
+
 backend.bootstrapRevision, when set, adds a "-r<revision>" suffix. Bumping it is how an
 operator reruns the Job (and so ensure_superuser) for the same image, e.g. after
 resealing SUPERUSER_PASSWORD. The chart cannot see into the externally sealed Secret, so
-a deliberate, non-secret value is the only rotation signal available. Unset, the name is
-exactly what it was before the value existed, so existing deploys keep their Job.
+a deliberate, non-secret value is the only rotation signal available.
 
 The name is checked rather than truncated: a Job name over 63 characters is rejected at
 apply time (the GitOps deploy swallows that error), and truncating could cut off the
 revision suffix, making a bump a silent no-op.
 */ -}}
+{{- $templateRevision := "2" -}}
 {{- $tag := .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" -}}
-{{- $jobName := printf "%s-migrations-%s" .Release.Name $tag -}}
+{{- $jobName := printf "%s-migrations-t%s-%s" .Release.Name $templateRevision $tag -}}
 {{- $revision := .Values.backend.bootstrapRevision | default "" | toString -}}
 {{- if $revision -}}
 {{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $revision) -}}
@@ -30,8 +37,8 @@ revision suffix, making a bump a silent no-op.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # Named after the image tag and backend.bootstrapRevision; see the comment at the top
-  # of this template.
+  # Named after the pod template revision, the image tag and backend.bootstrapRevision;
+  # see the comment at the top of this template.
   #
   # No ttlSecondsAfterFinished. Each image tag keeps its own completed Job around
   # indefinitely; this is accepted clutter. A TTL would delete the Job object while the GitOps
@@ -80,5 +87,21 @@ spec:
           # `;` would let a failed migrate still run ensure_superuser, and `sh -c`
           # propagates the last command's exit status so Job failure detection still works.
           command: ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_superuser"]
-      restartPolicy: OnFailure
+      # Never, not OnFailure, so that a failure stays diagnosable. With OnFailure the
+      # kubelet restarts the container inside one pod, and when backoffLimit is reached
+      # the Job controller deletes that pod, logs included, leaving only the Job's events.
+      # With Never each failed attempt is a new pod that is kept in Error, with its
+      # logs, until the Job itself is deleted (pruned when its manifest leaves the
+      # projection). Changing this changes the pod template: bump $templateRevision.
+      restartPolicy: Never
+  # Retries cover the database not accepting connections yet, e.g. Postgres still starting
+  # in k8s-e2e-test/. With Never, the Job controller spaces new pods with its own
+  # exponential backoff (10s, doubling, capped at several minutes). That is at least as
+  # long as the kubelet's crash backoff that OnFailure relied on, so 10 still covers at
+  # least the same window (roughly half an hour). The cost is at most backoffLimit + 1 =
+  # 11 terminated pods per failed Job. They hold no CPU or memory, only their logs.
+  #
+  # No podFailurePolicy (e.g. to stop evictions counting as failures): kubectl apply's
+  # default strict validation rejects a field the cluster's API does not know, and that
+  # error would be swallowed, so on an older cluster the Job would never be created.
   backoffLimit: 10
