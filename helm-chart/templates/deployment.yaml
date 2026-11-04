@@ -41,10 +41,9 @@ spec:
           # migrate --check applies nothing. It exits non-zero while any migration in this
           # image is unapplied, or while the database is unreachable. As in the migration
           # Job, command: replaces the image ENTRYPOINT; see the note there.
-          command:
-            - /bin/sh
-            - -c
-            - until python manage.py migrate --check; do echo "wait-for-migrations: unapplied migrations or database unreachable; waiting for the migration Job"; sleep 5; done
+          # Keep the script a quoted string: unquoted, the ": " inside it would make YAML
+          # read this list item as a mapping, which the API server rejects.
+          command: ["/bin/sh", "-c", "until python manage.py migrate --check; do echo 'wait-for-migrations: unapplied migrations or database unreachable, retrying in 5s'; sleep 5; done"]
           # Same environment as the app container, so the gate checks the same database
           # the app will use.
           env:

@@ -40,6 +40,14 @@ jobs:
           render() { helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml "$@"; }
           job_name() { render "$@" --show-only templates/migration-job.yaml | awk '/^  name:/ {print $2; exit}'; }
 
+          # Every command/args element must render as a string. An unquoted ": " inside a
+          # list item turns it into a YAML mapping: helm lint and helm template accept that,
+          # the API server rejects it, and the GitOps deploy swallows the error. yq is
+          # preinstalled on GitHub's Ubuntu runners.
+          types=$(render | yq ea '[.spec.template.spec | select(.) | ((.containers // []) + (.initContainers // []))[] | ((.command // []) + (.args // []))[] | type] | unique | join(",")')
+          [ "$types" = '!!str' ] \
+            || { echo "::error::A container command/args element is not a string (got: $types)"; exit 1; }
+
           # #93: backend pods wait for migrations before their app container starts.
           deployment=$(render --show-only templates/deployment.yaml)
           grep -q 'name: wait-for-migrations' <<<"$deployment" \
