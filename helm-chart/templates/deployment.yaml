@@ -17,6 +17,42 @@ spec:
         app.kubernetes.io/name: {{ .Chart.Name }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      # Holds each new pod in Init until the migration Job has applied every migration
+      # this image ships. The Job and this Deployment are applied together as plain
+      # manifests (no Helm hooks), so nothing else orders them, and /health/readiness/
+      # only checks that the database is reachable, not that the schema is current.
+      # Without this gate a pod can pass readiness against an unmigrated database and
+      # answer requests with 500s.
+      #
+      # The rollout is otherwise unchanged. On an upgrade the old pods keep serving until
+      # a new pod passes this gate and then its probes. A slow migration leaves the new
+      # pod in Init. A failed one leaves it there for good, which `kubectl describe` and
+      # the Deployment's ProgressDeadlineExceeded condition both show, while the old pods
+      # keep serving.
+      #
+      # Only migrations gate traffic, not ensure_superuser: the app serves correctly
+      # without the admin account, and gating on "an admin exists" would block every
+      # future rollout if that account were ever removed. A failed ensure_superuser
+      # shows up as a Failed Job instead.
+      initContainers:
+        - name: wait-for-migrations
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          # migrate --check applies nothing. It exits non-zero while any migration in this
+          # image is unapplied, or while the database is unreachable. As in the migration
+          # Job, command: replaces the image ENTRYPOINT; see the note there.
+          command:
+            - /bin/sh
+            - -c
+            - until python manage.py migrate --check; do echo "wait-for-migrations: unapplied migrations or database unreachable; waiting for the migration Job"; sleep 5; done
+          # Same environment as the app container, so the gate checks the same database
+          # the app will use.
+          env:
+            {{- include "pa-expunger.backendEnv" . | nindent 12 }}
+          {{- with .Values.backend.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
@@ -26,50 +62,7 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
-            - name: DB_HOST
-              value: {{ include "pa-expunger.dbHost" . }}
-            - name: DJANGO_LOG_LEVEL
-              value: {{ .Values.backend.config.DJANGO_LOG_LEVEL | quote }}
-            - name: DJANGO_ALLOWED_HOSTS
-              value: {{ include "pa-expunger.allowedHosts" . | quote }}
-            - name: BACKEND_API_URL
-              value: {{ include "pa-expunger.backendApiUrl" . | quote }}
-            - name: HELM_APP_VERSION
-              value: {{ .Chart.AppVersion | quote }}
-            # Deliberately not set on the migration Job: its name is keyed on the image
-            # tag alone, so a chart version bump with no appVersion bump would change an
-            # existing Job's immutable pod template and fail the apply.
-            - name: HELM_CHART_VERSION
-              value: {{ .Chart.Version | quote }}
-
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_USER
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_DB
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_PASSWORD
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-            - name: POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            # Only DJANGO_SECRET_KEY, not the whole backend secret: SUPERUSER_USERNAME/
-            # SUPERUSER_PASSWORD live in that secret too, for ensure_superuser in the
-            # migration Job, and the app itself has no use for them. Keeping envFrom here
-            # would put the admin password in every app pod's environment for no reason.
-            - name: DJANGO_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: DJANGO_SECRET_KEY
-                  name: {{ include "pa-expunger.backendSecretName" . | quote }}
+            {{- include "pa-expunger.backendEnv" . | nindent 12 }}
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.probes.liveness.path }}

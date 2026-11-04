@@ -1,17 +1,43 @@
+{{- /*
+Name is suffixed with the image tag so each version gets its own Job. A Job's
+spec.template is immutable, so a fixed name would apply cleanly on first install and
+then fail on every subsequent image bump, silently skipping migrations since the
+GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
+creates a new Job and the old one is pruned when its manifest leaves the projection.
+
+backend.bootstrapRevision, when set, adds a "-r<revision>" suffix. Bumping it is how an
+operator reruns the Job (and so ensure_superuser) for the same image, e.g. after
+resealing SUPERUSER_PASSWORD. The chart cannot see into the externally sealed Secret, so
+a deliberate, non-secret value is the only rotation signal available. Unset, the name is
+exactly what it was before the value existed, so existing deploys keep their Job.
+
+The name is checked rather than truncated: a Job name over 63 characters is rejected at
+apply time (the GitOps deploy swallows that error), and truncating could cut off the
+revision suffix, making a bump a silent no-op.
+*/ -}}
+{{- $tag := .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" -}}
+{{- $jobName := printf "%s-migrations-%s" .Release.Name $tag -}}
+{{- $revision := .Values.backend.bootstrapRevision | default "" | toString -}}
+{{- if $revision -}}
+{{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $revision) -}}
+{{- fail (printf "FATAL: backend.bootstrapRevision %q must be lowercase letters, digits and '-', e.g. \"2\". Quote it in YAML so it stays a string." $revision) -}}
+{{- end -}}
+{{- $jobName = printf "%s-r%s" $jobName $revision -}}
+{{- end -}}
+{{- if gt (len $jobName) 63 -}}
+{{- fail (printf "FATAL: migration Job name %q is %d characters, over Kubernetes' 63. Shorten backend.bootstrapRevision or backend.image.tag." $jobName (len $jobName)) -}}
+{{- end -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # Name is suffixed with the image tag so each version gets its own Job. A Job's
-  # spec.template is immutable, so a fixed name would apply cleanly on first install and
-  # then fail on every subsequent image bump, silently skipping migrations since the
-  # GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
-  # creates a new Job and the old one is pruned when its manifest leaves the projection.
+  # Named after the image tag and backend.bootstrapRevision; see the comment at the top
+  # of this template.
   #
   # No ttlSecondsAfterFinished. Each image tag keeps its own completed Job around
   # indefinitely; this is accepted clutter. A TTL would delete the Job object while the GitOps
   # path keeps applying the same rendered manifest for that tag. The next apply would then
   # just recreate the Job and rerun migrations that already succeeded.
-  name: "{{ .Release.Name }}-migrations-{{ .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" }}"
+  name: {{ $jobName | quote }}
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: {{ .Release.Name }}

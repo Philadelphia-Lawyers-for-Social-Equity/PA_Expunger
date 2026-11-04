@@ -12,7 +12,8 @@ For building the production image, cutting a release, and testing either one loc
 | Deploy a chart change with no app change | `.holo/sources/pa-expunger.toml` | [Deploying](#deploying) |
 | Change the public hostname | `pa-expunger/release-values.yaml` and `_gateways/pa-expunger.yaml` | [Chart values](#changing-chart-values), [Routing](#changing-routing) |
 | Change how requests reach the app | `_gateways/pa-expunger.yaml` | [Routing](#changing-routing) |
-| Rotate the admin password or `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml`, and `.holo/sources/pa-expunger.toml` to deploy a release in the same PR | [Rotation needs a release](#rotation-needs-a-release) |
+| Rotate the admin password | `pa-expunger.secrets/backend.yaml`, and `backend.bootstrapRevision` in `pa-expunger/release-values.yaml` in the same PR | [Rotating the admin password](#rotating-the-admin-password) |
+| Rotate `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml`, and `.holo/sources/pa-expunger.toml` to deploy a release in the same PR | [Rotation needs a release](#rotation-needs-a-release) |
 | Rotate the database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, and `.holo/sources/pa-expunger.toml` to deploy a release in the same PR | [Rotation needs a release](#rotation-needs-a-release) |
 
 ## What this app owns in the GitOps repo
@@ -57,6 +58,16 @@ Notes:
 * A chart-only change needs no release and no new image, because `appVersion` does not move. Bump `version` in the commit that changes the templates. That is what lets `HELM_CHART_VERSION` confirm the deploy landed, and it updates only when a pod restarts under the new chart.
 * Never pin a branch. A branch ref resolves when the manifests are built, not when your PR is reviewed, and that build runs on any push to the GitOps repo.[^ref-forms]
 
+### How a deploy rolls out
+
+A deploy applies the migration Job and the backend Deployment at the same time, as plain manifests. The only thing that orders them is a gate in the backend pods: each new pod first runs a `wait-for-migrations` init container, which runs `manage.py migrate --check` every five seconds and lets the app start only once every migration in its image has been applied. `/health/readiness/` checks only that the database is reachable, so without this gate a new pod could take traffic against a schema it does not match.
+
+* **Upgrade.** The old pods keep serving while the Job migrates. New pods wait in `Init` until it finishes, then pass their probes and replace the old ones. For that window the old code runs against the new schema, so a migration must not break the release before it.
+* **Fresh install.** Nothing serves until the Job has migrated the empty database. The site is unavailable for that time instead of answering with errors.
+* **Slow migration.** New pods wait as long as it takes. After ten minutes the Deployment reports `ProgressDeadlineExceeded`, but the rollout is not abandoned: it completes on its own when the Job finishes.
+* **Failed migration.** The Job retries, then is marked `Failed`. The new pods stay in `Init` and the old pods keep serving the previous version. Fix it by deploying a corrected release or by rolling back. A cluster maintainer sees it as a `Failed` Job and backend pods at `Init:0/1` in `kubectl -n pa-expunger get jobs,pods`, with the cause in the Job's logs. Without cluster access, the sign is that the version string from [Verifying a deploy](#verifying-a-deploy) does not change.
+* **Admin account bootstrap** (`ensure_superuser`, run by the Job after `migrate`) does not gate traffic. The app serves correctly without the admin account, and gating on it would block every later rollout if that account were ever removed. If it fails, the Job is `Failed` but the app serves. On a fresh install that means nobody can log in until the backend secret is fixed and the Job rerun ([Rotating the admin password](#rotating-the-admin-password) covers rerunning it).
+
 ## Changing chart values
 
 `pa-expunger/release-values.yaml` is a Helm values file layered over `helm-chart/values.yaml`. Two of its values have no safe default and stop the build if they are missing, so a mistake there fails a check on your PR rather than reaching the cluster.
@@ -85,7 +96,7 @@ Secrets are committed to the GitOps repo as `SealedSecret` files, encrypted to a
 | `DJANGO_SECRET_KEY` | `pa-expunger.secrets/backend.yaml` |
 | The database password | `pa-expunger.secrets/postgres.yaml` and `cloudnative-pg.secrets/pa-expunger-db-credentials.yaml`, both in the same PR |
 
-**A reseal on its own changes nothing in the running app.** Each of these ships in the same PR as a release deploy, as described in [Rotation needs a release](#rotation-needs-a-release). For the database password that is not optional: resealing it on its own takes the app down.
+**A reseal on its own changes nothing in the running app.** Each of these ships in the same PR as the change that makes it take effect: a `backend.bootstrapRevision` bump for the admin password, as described in [Rotating the admin password](#rotating-the-admin-password), and a release deploy for the other two, as described in [Rotation needs a release](#rotation-needs-a-release). For the database password that is not optional: resealing it on its own takes the app down.
 
 ### Record the plaintext before you seal it
 
@@ -103,20 +114,41 @@ Keep the temporary plaintext files out of both working directories. This repo's 
 
 **The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one defines the role, the other is what the app logs in with. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both in the same PR. Resealing only one leaves the app and the role with different passwords. A password nobody recorded is replaced the same way: seal a freshly generated one into both files, in a PR that also deploys a release.
 
-**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. The Job runs once per image tag, though, so a resealed password takes effect on the next release deploy, not when the reseal merges.
+**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. The Job runs once per image tag and `backend.bootstrapRevision` value, though, so a resealed password takes effect when one of those changes, not when the reseal merges.
 
 That also means **rotating the password, not the username.** Changing `SUPERUSER_USERNAME` does not rename the account, it creates a second one and leaves the old username live with its old password. Nothing deletes it.
 
 The migration Job needs all three keys, so it receives this secret whole. The Deployment reads only `DJANGO_SECRET_KEY`, so the admin credentials never sit in a running app pod's environment.
 
+Nothing in the rendered manifests depends on what a sealed secret contains, because the chart cannot read a sealed value. A PR that only reseals applies cleanly and leaves the running app exactly as it was. Each value is read at one specific moment, and a rotation has to bring that moment around again.
+
+### Rotating the admin password
+
+The admin password is set by `ensure_superuser`, which runs only in the migration Job. The Job is named after the backend image tag plus `backend.bootstrapRevision`, and a completed Job whose name has not changed does not run again. `backend.bootstrapRevision` is a plain, non-secret counter that exists for this: bumping it gives the Job a new name, so the deploy creates a new Job that reruns `migrate` (a no-op) and then `ensure_superuser` with the resealed password. No release and no new image are involved, and the backend pods are not restarted. Reapplying the same value creates nothing.
+
+1. Reseal `pa-expunger.secrets/backend.yaml` with the new `SUPERUSER_PASSWORD`, as in [Sealing](#sealing). The sealed file replaces the whole `Secret`, so carry over the current `SUPERUSER_USERNAME` and `DJANGO_SECRET_KEY` unchanged.
+2. In the same PR, bump `backend.bootstrapRevision` in `pa-expunger/release-values.yaml`, as a quoted string. The first time, add it:
+
+    ```yaml
+    backend:
+      bootstrapRevision: "1"
+    ```
+
+    After that, increment it: `"2"`, `"3"`, and so on. Lowercase letters, digits and `-` are allowed, and the render fails on anything else, or if the Job name would exceed 63 characters. Never put the password, or anything derived from it, in this value: it is committed in plain text.
+3. Open the PR. Once its deploy has merged, check the login as in [Verifying a deploy](#verifying-a-deploy): **the new password must log in and the old one must be rejected.** Only then has the rotation landed.
+
+If the old password still works after the deploy, the new password was not applied. There are two possible causes:
+
+* **The Job ran before the `Secret` changed.** The sealed-secrets controller decrypts the resealed file on its own schedule, and nothing guarantees that happens before the new Job's pod reads the `Secret`. If it does not, the Job succeeds with the old password. The fix is another PR that bumps `backend.bootstrapRevision` again, now that the `Secret` holds the new value.
+* **The Job failed.** For example, the resealed `Secret` is missing a key. The Job retries, then is marked `Failed`, and the account keeps its old password. A cluster maintainer can confirm it with `kubectl -n pa-expunger get jobs` and read the cause in the Job's logs. `ensure_superuser` logs the username, never the password. Fix the `Secret` and bump the revision again.
+
+Leave `backend.bootstrapRevision` in place between rotations. A release also reruns the Job, because it changes the image tag, so the value never needs resetting. If you are rotating because the password leaked, the old one stays valid until the bump deploys and is verified.
+
 ### Rotation needs a release
 
-Nothing in the rendered manifests depends on what a sealed secret contains. A PR that only reseals applies cleanly and leaves the running app exactly as it was, because each value is read at one specific moment and only a deploy brings that moment around again:
+**`DJANGO_SECRET_KEY` and the database password** reach the backend as environment variables, which a pod reads once, when it starts. A changed `Secret` does not reach a pod that is already running. They take effect when a deploy replaces the backend pods.
 
-* **The admin password** is set by `ensure_superuser`, which runs only in the migration Job. The Job is named after the backend image tag, and a completed Job whose name has not changed does not run again. The new password takes effect when a deploy changes the image tag. Until then the old password keeps working and the new one does not.
-* **`DJANGO_SECRET_KEY` and the database password** reach the backend as environment variables, which a pod reads once, when it starts. A changed `Secret` does not reach a pod that is already running. They take effect when a deploy replaces the backend pods.
-
-A release deploy does both. It moves `appVersion`, which is the image tag, so it creates a new migration Job and replaces the backend pods. Rotating a secret is therefore two changes in one PR: the reseal, and `ref` moved to a new release tag as in [Deploying](#deploying). If no release is due, cut one. A release with no app changes still ships a new image tag, which is all a rotation needs. A chart-only deploy is not enough, because it keeps the image tag and so does not rerun the migration Job.
+A release deploy does that: it moves `appVersion`, which is the image tag, so it replaces the backend pods. Rotating either secret is therefore two changes in one PR: the reseal, and `ref` moved to a new release tag as in [Deploying](#deploying). If no release is due, cut one. A release with no app changes still ships a new image tag, which is all a rotation needs. A `backend.bootstrapRevision` bump is not enough here, because it reruns only the migration Job and leaves the backend pods running.
 
 **Never reseal the database password on its own.** The database applies the new password to the role on its next reconcile, while the running backend pods keep the old one. Django opens a new connection for every request, so from then on every request that touches the database fails, readiness fails with it, and the pods drop out of the Service. Nothing recovers this automatically, and without cluster access the only way to replace the pods is another deploy. Shipped with a release, the role and the replacement pods change in the same deploy, and any disruption is limited to the rollout.
 
@@ -202,9 +234,11 @@ Once the deploy PR has merged:
     * `HELM_CHART_VERSION`, the chart's own `version`. Which templates the pod was rendered from, and the only way to confirm a chart change with no app change reached the cluster.[^chart-version-scope]
 3. Log in at `/admin/`. This is the only check that exercises `CSRF_TRUSTED_ORIGINS`, derived from `publicHostname`. A 403 means the public origin is misconfigured.
 
-When the deploy carries an admin password rotation, step 3 is also the check that it landed: log in with the new password. If the old one still works, the migration Job did not run, which means the deploy did not change the image tag. A rotated database password reaches the role on the database's own reconcile schedule, which can lag the deploy. Until it does, the new backend pods cannot connect and stay unready while the old ones keep serving, so a rollout that looks stuck may just be waiting on the database.
+If the version string has not changed some minutes after a release deploy, the new pods may still be waiting on the migration Job, or it failed. See [How a deploy rolls out](#how-a-deploy-rolls-out).
 
-[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up. The migration Job is named after this override when it is set, so while it pins a tag, a new release does not rerun the Job, and an admin password rotation does not take effect ([Rotation needs a release](#rotation-needs-a-release)). Clear it before any deploy that carries a rotation.
+When the deploy carries an admin password rotation, step 3 is also the check that it landed: the new password must log in and the old one must be rejected. If the old one still works, see [Rotating the admin password](#rotating-the-admin-password). A rotated database password reaches the role on the database's own reconcile schedule, which can lag the deploy. Until it does, the new backend pods cannot connect and stay unready while the old ones keep serving, so a rollout that looks stuck may just be waiting on the database.
+
+[^image-tag]: `backend.image.tag` pins the image independently of the chart's `appVersion`. It covers the one case the `ref` pin cannot express: an app fix you want out of a release whose chart change you do not. Cutting a corrected release costs the same single pull request, so set this only when that is not available to you. While it is set, `APP_VERSION` and `HELM_APP_VERSION` in `config.json` disagree, which is how you can tell. Remove it once the chart catches up. The migration Job is named after this override when it is set, so while it pins a tag, a new release does not rerun the Job. An admin password rotation still works, because `backend.bootstrapRevision` reruns the Job whatever the tag ([Rotating the admin password](#rotating-the-admin-password)).
 
 [^versions]: `appVersion` is the application's version and the image tag the Deployment renders. `version` is the chart's own, bumped whenever the templates change, which includes every commit that moves `appVersion`. Nothing here consumes `version`: the chart is rendered from the pinned commit rather than packaged or published, so it is a record rather than a control. It reaches the cluster as `HELM_CHART_VERSION`. [`DEPLOYMENT.md`](./DEPLOYMENT.md) covers setting both when cutting a release.
 

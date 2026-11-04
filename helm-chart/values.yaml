@@ -15,6 +15,13 @@ backend:
     # publishes. Set this only to run an image that deliberately is not the chart's
     # version: a rollback, or a hotfix image built ahead of a chart release.
     tag: ""
+  # Bump this to rerun the migration Job, and with it ensure_superuser, without changing
+  # the image, e.g. in the same PR that reseals SUPERUSER_PASSWORD (see GITOPS.md,
+  # "Rotating the admin password"). It is appended to the Job's name, so each new value
+  # creates one new Job, and reapplying an unchanged value recreates nothing. Never put a
+  # secret here. Use a quoted string of lowercase letters, digits and '-', such as "1",
+  # then "2". Empty leaves the Job named after the image tag alone.
+  bootstrapRevision: ""
   probes:
     liveness:
       path: "/health/liveness/"

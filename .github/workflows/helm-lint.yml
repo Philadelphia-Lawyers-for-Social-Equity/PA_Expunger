@@ -31,3 +31,48 @@ jobs:
       # migration-job.yaml's command, such as the shell form ensure_superuser needs.
       - name: Render the chart
         run: helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml
+
+      # Cheap render-level regression checks for the migration ordering (#93) and the
+      # bootstrap rerun (#92). They check the rendered manifests only, not a cluster.
+      - name: Check migration gate and bootstrap revision
+        run: |
+          set -euo pipefail
+          render() { helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml "$@"; }
+          job_name() { render "$@" --show-only templates/migration-job.yaml | awk '/^  name:/ {print $2; exit}'; }
+
+          # #93: backend pods wait for migrations before their app container starts.
+          deployment=$(render --show-only templates/deployment.yaml)
+          grep -q 'name: wait-for-migrations' <<<"$deployment" \
+            || { echo "::error::Deployment has no wait-for-migrations init container"; exit 1; }
+          grep -q 'manage.py migrate --check' <<<"$deployment" \
+            || { echo "::error::wait-for-migrations does not run migrate --check"; exit 1; }
+          # The admin credentials must stay out of the app pods, init container included:
+          # no SUPERUSER_* variable, and no envFrom that would pull in the whole secret.
+          if grep -Eq '(name|key): *"?SUPERUSER_|envFrom:' <<<"$deployment"; then
+            echo "::error::SUPERUSER_* can reach the Deployment's environment"; exit 1
+          fi
+
+          # #92: the Job name is stable for unchanged values and changes with the revision.
+          base=$(job_name)
+          [ "$base" = "$(job_name)" ] || { echo "::error::Job name is not stable across renders"; exit 1; }
+          case "$base" in *-r*) echo "::error::Unset bootstrapRevision added a suffix: $base"; exit 1;; esac
+          bumped=$(job_name --set-string backend.bootstrapRevision=2)
+          [ "$bumped" != "$base" ] || { echo "::error::bootstrapRevision did not change the Job name"; exit 1; }
+          [ "$bumped" = "$(job_name --set-string backend.bootstrapRevision=2)" ] \
+            || { echo "::error::Job name with bootstrapRevision is not stable"; exit 1; }
+          [ "$bumped" != "$(job_name --set-string backend.bootstrapRevision=3)" ] \
+            || { echo "::error::Different revisions gave the same Job name"; exit 1; }
+          echo "Job name: $base; with bootstrapRevision=2: $bumped"
+
+          # A rotation must not restart the app pods: only the Job may change.
+          diff <(render --show-only templates/deployment.yaml) \
+               <(render --set-string backend.bootstrapRevision=2 --show-only templates/deployment.yaml) \
+            || { echo "::error::bootstrapRevision changed the Deployment"; exit 1; }
+
+          # An invalid or over-long name must fail the render, not truncate silently.
+          if render --set-string backend.bootstrapRevision=Bad_Rev >/dev/null 2>&1; then
+            echo "::error::Invalid bootstrapRevision rendered"; exit 1
+          fi
+          if render --set-string backend.bootstrapRevision="$(printf 'r%.0s' {1..40})" >/dev/null 2>&1; then
+            echo "::error::Over-long Job name rendered"; exit 1
+          fi
