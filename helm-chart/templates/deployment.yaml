@@ -17,35 +17,15 @@ spec:
         app.kubernetes.io/name: {{ .Chart.Name }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      # Holds each new pod in Init until the migration Job has applied every migration
-      # this image ships. The Job and this Deployment are applied together as plain
-      # manifests (no Helm hooks), so nothing else orders them, and /health/readiness/
-      # only checks that the database is reachable, not that the schema is current.
-      # Without this gate a pod can pass readiness against an unmigrated database and
-      # answer requests with 500s.
-      #
-      # The rollout is otherwise unchanged. On an upgrade the old pods keep serving until
-      # a new pod passes this gate and then its probes. A slow migration leaves the new
-      # pod in Init. A failed one leaves it there for good, which `kubectl describe` and
-      # the Deployment's ProgressDeadlineExceeded condition both show, while the old pods
-      # keep serving.
-      #
-      # Only migrations gate traffic, not ensure_superuser: the app serves correctly
-      # without the admin account, and gating on "an admin exists" would block every
-      # future rollout if that account were ever removed. A failed ensure_superuser
-      # shows up as a Failed Job instead.
+      # Holds new pods in Init until the migration Job has applied this image's
+      # migrations. Nothing else orders the Job and the Deployment, and
+      # /health/readiness/ does not check the schema.
       initContainers:
         - name: wait-for-migrations
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          # migrate --check applies nothing. It exits non-zero while any migration in this
-          # image is unapplied, or while the database is unreachable. As in the migration
-          # Job, command: replaces the image ENTRYPOINT; see the note there.
-          # Keep the script a quoted string: unquoted, the ": " inside it would make YAML
-          # read this list item as a mapping, which the API server rejects.
+          # Keep quoted: unquoted, the ": " inside makes this list item a YAML mapping.
           command: ["/bin/sh", "-c", "until python manage.py migrate --check; do echo 'wait-for-migrations: unapplied migrations or database unreachable, retrying in 5s'; sleep 5; done"]
-          # Same environment as the app container, so the gate checks the same database
-          # the app will use.
           env:
             {{- include "pa-expunger.backendEnv" . | nindent 12 }}
           {{- with .Values.backend.resources }}

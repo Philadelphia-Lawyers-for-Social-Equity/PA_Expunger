@@ -176,7 +176,7 @@ The local end-to-end test uses Envoy Gateway with the Gateway API, matching the 
     kubectl get pods
     kubectl get jobs
     ```
-    Confirm the backend and `pa-expunger-local-postgres` pods reach `Running`/`Ready`, and that the migrations Job shows `COMPLETIONS 1/1`. If the Job hasn't completed, `kubectl get pods -l job-name=<job>`, with `<job>` the `pa-expunger-local-migrations-...` name from `kubectl get jobs`, lists one pod per attempt (early ones may have failed only because Postgres was still starting), and `kubectl logs <pod>` shows why that attempt failed. Failed pods are kept even after the Job is marked `Failed`.
+    Confirm the backend and `pa-expunger-local-postgres` pods reach `Running`/`Ready`, and that the migrations Job shows `COMPLETIONS 1/1`. If the Job hasn't completed, `kubectl get pods -l job-name=<job>` lists one pod per attempt, and `kubectl logs <pod>` shows why each failed.
 
 6. **Test the Application:**
       * Navigate to **`https://localhost`** in your browser.

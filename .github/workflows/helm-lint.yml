@@ -32,18 +32,14 @@ jobs:
       - name: Render the chart
         run: helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml
 
-      # Cheap render-level regression checks for the migration ordering (#93) and the
-      # bootstrap rerun (#92). They check the rendered manifests only, not a cluster.
+      # Render-level checks for the migration gate (#93) and the migration Job name (#92).
       - name: Check migration gate and bootstrap revision
         run: |
           set -euo pipefail
           render() { helm template pa-expunger helm-chart -f helm-chart/ci-values.yaml "$@"; }
           job_name() { render "$@" --show-only templates/migration-job.yaml | awk '/^  name:/ {print $2; exit}'; }
 
-          # Every command/args element must render as a string. An unquoted ": " inside a
-          # list item turns it into a YAML mapping: helm lint and helm template accept that,
-          # the API server rejects it, and the GitOps deploy swallows the error. yq is
-          # preinstalled on GitHub's Ubuntu runners.
+          # Every command/args element must be a string; the API server rejects a mapping.
           types=$(render | yq ea '[.spec.template.spec | select(.) | ((.containers // []) + (.initContainers // []))[] | ((.command // []) + (.args // []))[] | type] | unique | join(",")')
           [ "$types" = '!!str' ] \
             || { echo "::error::A container command/args element is not a string (got: $types)"; exit 1; }
@@ -54,21 +50,17 @@ jobs:
             || { echo "::error::Deployment has no wait-for-migrations init container"; exit 1; }
           grep -q 'manage.py migrate --check' <<<"$deployment" \
             || { echo "::error::wait-for-migrations does not run migrate --check"; exit 1; }
-          # The admin credentials must stay out of the app pods, init container included:
-          # no SUPERUSER_* variable, and no envFrom that would pull in the whole secret.
+          # SUPERUSER_* must stay out of the app pods.
           if grep -Eq '(name|key): *"?SUPERUSER_|envFrom:' <<<"$deployment"; then
             echo "::error::SUPERUSER_* can reach the Deployment's environment"; exit 1
           fi
 
-          # A failed migration Job must keep its pods (and their logs). With OnFailure the
-          # Job controller deletes the pod when the Job is marked Failed.
+          # Failed migration pods must be kept, with their logs.
           policy=$(render --show-only templates/migration-job.yaml | yq '.spec.template.spec.restartPolicy')
           [ "$policy" = Never ] \
             || { echo "::error::Migration Job restartPolicy is $policy, not Never"; exit 1; }
 
           # #92: the Job name is stable for unchanged values and changes with the revision.
-          # The unset-revision check also guards the template hash, which must never
-          # produce a "-r" that reads as a revision suffix.
           base=$(job_name)
           [ "$base" = "$(job_name)" ] || { echo "::error::Job name is not stable across renders"; exit 1; }
           case "$base" in *-r*) echo "::error::Unset bootstrapRevision added a suffix: $base"; exit 1;; esac
@@ -80,15 +72,11 @@ jobs:
             || { echo "::error::Different revisions gave the same Job name"; exit 1; }
           echo "Job name: $base; with bootstrapRevision=2: $bumped"
 
-          # The name carries a hash of the Job's (immutable) pod template, so a deploy value
-          # that reaches the pod template renames the Job instead of failing the apply.
+          # Values the Job reads rename it; Deployment-only values and the chart version don't.
           [ "$base" != "$(job_name --set externalDatabase.host=other-db)" ] \
             || { echo "::error::externalDatabase.host did not change the Job name"; exit 1; }
-          # A value only the Deployment reads must not rerun the Job.
           [ "$base" = "$(job_name --set backend.config.DJANGO_LOG_LEVEL=DEBUG)" ] \
             || { echo "::error::A Deployment-only value changed the Job name"; exit 1; }
-          # Nothing chart-version-dependent may reach the Job: a version bump alone must
-          # leave its manifest, name included, byte-identical.
           chart_copy=$(mktemp -d)
           cp -r helm-chart "$chart_copy/"
           yq -i '.version = "0.0.0-ci-check"' "$chart_copy/helm-chart/Chart.yaml"
@@ -96,12 +84,12 @@ jobs:
                <(helm template pa-expunger "$chart_copy/helm-chart" -f helm-chart/ci-values.yaml --show-only templates/migration-job.yaml) \
             || { echo "::error::The chart version reaches the migration Job"; exit 1; }
 
-          # A rotation must not restart the app pods: only the Job may change.
+          # A rotation must not restart the app pods.
           diff <(render --show-only templates/deployment.yaml) \
                <(render --set-string backend.bootstrapRevision=2 --show-only templates/deployment.yaml) \
             || { echo "::error::bootstrapRevision changed the Deployment"; exit 1; }
 
-          # An invalid or over-long name must fail the render, not truncate silently.
+          # An invalid or over-long name must fail the render.
           if render --set-string backend.bootstrapRevision=Bad_Rev >/dev/null 2>&1; then
             echo "::error::Invalid bootstrapRevision rendered"; exit 1
           fi
