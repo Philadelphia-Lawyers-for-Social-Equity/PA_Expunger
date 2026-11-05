@@ -20,7 +20,7 @@ backend:
   # "Rotating the admin password"). It is appended to the Job's name, so each new value
   # creates one new Job, and reapplying an unchanged value recreates nothing. Never put a
   # secret here. Use a quoted string of lowercase letters, digits and '-', such as "1",
-  # then "2". Empty leaves the Job named after the image tag alone.
+  # then "2". Empty adds no suffix.
   bootstrapRevision: ""
   probes:
     liveness:

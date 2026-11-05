@@ -77,6 +77,8 @@ A deploy applies the migration Job and the backend Deployment at the same time, 
 
 Changing the hostname means changing it here and in `_gateways/pa-expunger.yaml`, which is what actually routes the traffic.
 
+**Changing a value the migration Job reads reruns the Job once.** That covers `publicHostname`, `backend.allowedHosts.extra`, `externalDatabase.host`, and the image repository and pull policy. The Job's name includes a hash of everything it is rendered from, so a new value creates a new Job, which runs `migrate` and `ensure_superuser` again. Both are safe to repeat. It also means a Job that failed because of a wrong value, for example a mistyped `externalDatabase.host`, runs again once the value is corrected, with no other change needed.
+
 ## Changing routing
 
 The chart ships no routing resources. Everything about how requests reach the app is in `_gateways/pa-expunger.yaml`, a hand-written Gateway API `Gateway` and `HTTPRoute` pair.
@@ -114,7 +116,7 @@ Keep the temporary plaintext files out of both working directories. This repo's 
 
 **The database password is sealed twice, once per namespace.** The bottom two rows carry the same credentials: one defines the role, the other is what the app logs in with. Kubernetes has no cross-namespace secret sharing, so there is no way to store it once. Reseal both in the same PR. Resealing only one leaves the app and the role with different passwords. A password nobody recorded is replaced the same way: seal a freshly generated one into both files, in a PR that also deploys a release.
 
-**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. The Job runs once per image tag and `backend.bootstrapRevision` value, though, so a resealed password takes effect when one of those changes, not when the reseal merges.
+**The superuser credentials are the source of truth for the admin login, not just its initial value.** Every run of the migration Job invokes `manage.py ensure_superuser`, which reads `SUPERUSER_USERNAME` and `SUPERUSER_PASSWORD` and unconditionally resets the account to match: creating it on a fresh database, overwriting the password on an existing one. The Job only runs again when the image tag, `backend.bootstrapRevision`, or a [value it reads](#changing-chart-values) changes, though, so a resealed password takes effect then, not when the reseal merges.
 
 That also means **rotating the password, not the username.** Changing `SUPERUSER_USERNAME` does not rename the account, it creates a second one and leaves the old username live with its old password. Nothing deletes it.
 
@@ -124,7 +126,7 @@ Nothing in the rendered manifests depends on what a sealed secret contains, beca
 
 ### Rotating the admin password
 
-The admin password is set by `ensure_superuser`, which runs only in the migration Job. The Job is named after the backend image tag plus `backend.bootstrapRevision`, and a completed Job whose name has not changed does not run again. `backend.bootstrapRevision` is a plain, non-secret counter that exists for this: bumping it gives the Job a new name, so the deploy creates a new Job that reruns `migrate` (a no-op) and then `ensure_superuser` with the resealed password. No release and no new image are involved, and the backend pods are not restarted. Reapplying the same value creates nothing.
+The admin password is set by `ensure_superuser`, which runs only in the migration Job. The Job is named after the backend image tag, `backend.bootstrapRevision` and the other [values it reads](#changing-chart-values), but not the contents of a sealed secret, and a completed Job whose name has not changed does not run again. `backend.bootstrapRevision` is a plain, non-secret counter that exists for this: bumping it gives the Job a new name, so the deploy creates a new Job that reruns `migrate` (a no-op) and then `ensure_superuser` with the resealed password. No release and no new image are involved, and the backend pods are not restarted. Reapplying the same value creates nothing.
 
 1. Reseal `pa-expunger.secrets/backend.yaml` with the new `SUPERUSER_PASSWORD`, as in [Sealing](#sealing). The sealed file replaces the whole `Secret`, so carry over the current `SUPERUSER_USERNAME` and `DJANGO_SECRET_KEY` unchanged.
 2. In the same PR, bump `backend.bootstrapRevision` in `pa-expunger/release-values.yaml`, as a quoted string. The first time, add it:

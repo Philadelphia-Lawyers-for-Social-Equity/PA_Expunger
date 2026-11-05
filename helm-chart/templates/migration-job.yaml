@@ -1,21 +1,97 @@
 {{- /*
-Name is suffixed with the image tag so each version gets its own Job. A Job's
-spec.template is immutable, so a fixed name would apply cleanly on first install and
-then fail on every subsequent image bump, silently skipping migrations since the
-GitOps deploy workflow swallows apply errors. With the tag in the name, each bump
-creates a new Job and the old one is pruned when its manifest leaves the projection.
+The Job's pod template, i.e. its spec.template, which Kubernetes makes immutable once the
+Job exists. It is rendered once below, both into the manifest and into the hash in the
+Job's name, so the name changes exactly when the pod template does.
+
+Everything that explains it is a template comment, not a YAML comment: YAML comments
+would be part of the hashed text, so rewording one would rename the Job and rerun it.
+
+Nothing here may depend on the chart's own version (e.g. HELM_CHART_VERSION). Every chart
+version bump would then rename the Job and rerun migrations, even with no change to the
+pod template.
+*/ -}}
+{{- define "pa-expunger.migrationPodTemplate" -}}
+spec:
+  containers:
+    - name: migrations
+      image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+      envFrom:
+        - secretRef:
+            name: {{ include "pa-expunger.backendSecretName" . | quote }}
+      env:
+        - name: DB_HOST
+          value: {{ include "pa-expunger.dbHost" . }}
+        {{- /* Migrations never serve a request, but config.settings.prod raises at import
+               if this is unset, so the Job cannot even reach the database without it. */}}
+        - name: DJANGO_ALLOWED_HOSTS
+          value: {{ include "pa-expunger.allowedHosts" . | quote }}
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRES_USER
+              name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRES_DB
+              name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRES_PASSWORD
+              name: {{ include "pa-expunger.postgresSecretName" . | quote }}
+      {{- /* command: overrides the image's ENTRYPOINT in a Pod spec (unlike Compose, where
+             it maps to CMD and the entrypoint still runs). This bypasses
+             prod_entrypoint.sh entirely. ensure_superuser must run after migrate, so both
+             are chained with && under a shell rather than expressed as a Kubernetes list:
+             `;` would let a failed migrate still run ensure_superuser, and `sh -c`
+             propagates the last command's exit status so Job failure detection still
+             works. */}}
+      command: ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_superuser"]
+  {{- /* Never, not OnFailure, so that a failure stays diagnosable. With OnFailure the
+         kubelet restarts the container inside one pod, and when backoffLimit is reached
+         the Job controller deletes that pod, logs included, leaving only the Job's events.
+         With Never each failed attempt is a new pod that is kept in Error, with its logs,
+         until the Job itself is deleted (pruned when its manifest leaves the projection). */}}
+  restartPolicy: Never
+{{- end -}}
+
+{{- /*
+The name is <release>-migrations-t<hash>-<image tag>[-r<bootstrapRevision>]. A Job's
+spec.template is immutable, so a fixed name would apply cleanly on first install and then
+fail on every later change to the pod template, silently skipping migrations since the
+GitOps deploy workflow swallows apply errors. Instead, each distinct pod template gets its
+own Job, and the old one is pruned when its manifest leaves the projection.
+
+"t<hash>" is the first 8 hex digits of the sha256 of the rendered pod template above. It
+changes whenever anything that reaches the pod template changes, whether a chart edit or a
+deploy value: the image repository or pull policy, publicHostname and
+backend.allowedHosts.extra (via DJANGO_ALLOWED_HOSTS), externalDatabase.host, the secret
+names. That matters most for a Job that failed: correcting the value that broke it creates
+a new Job that runs again, where a fixed name would leave the failed one in place. The
+hash is of rendered text, so the same chart and values always give the same name, and
+reapplying them creates nothing. Hex has no "r", so it cannot be mistaken for the
+bootstrapRevision suffix. The image tag is also in the hash; it stays in the name only so
+that `kubectl get jobs` shows which image each Job ran.
+
+Each new name reruns migrate and ensure_superuser once, for the image that is running;
+both are idempotent. Values outside the pod template (Job metadata, backoffLimit) are
+mutable and not hashed.
 
 backend.bootstrapRevision, when set, adds a "-r<revision>" suffix. Bumping it is how an
-operator reruns the Job (and so ensure_superuser) for the same image, e.g. after
-resealing SUPERUSER_PASSWORD. The chart cannot see into the externally sealed Secret, so
-a deliberate, non-secret value is the only rotation signal available.
+operator reruns the Job (and so ensure_superuser) with an unchanged pod template, e.g.
+after resealing SUPERUSER_PASSWORD. The chart cannot see into the externally sealed
+Secret, so a deliberate, non-secret value is the only rotation signal available.
 
 The name is checked rather than truncated: a Job name over 63 characters is rejected at
 apply time (the GitOps deploy swallows that error), and truncating could cut off the
 revision suffix, making a bump a silent no-op.
 */ -}}
+{{- $podTemplate := include "pa-expunger.migrationPodTemplate" . -}}
+{{- $templateHash := $podTemplate | sha256sum | trunc 8 -}}
 {{- $tag := .Values.backend.image.tag | default .Chart.AppVersion | replace "." "-" | replace "+" "-" | trunc 45 | trimSuffix "-" -}}
-{{- $jobName := printf "%s-migrations-%s" .Release.Name $tag -}}
+{{- $jobName := printf "%s-migrations-t%s-%s" .Release.Name $templateHash $tag -}}
 {{- $revision := .Values.backend.bootstrapRevision | default "" | toString -}}
 {{- if $revision -}}
 {{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $revision) -}}
@@ -29,63 +105,20 @@ revision suffix, making a bump a silent no-op.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # Named after the image tag and backend.bootstrapRevision; see the comment at the top
-  # of this template.
+  # Named after a hash of the pod template, the image tag and backend.bootstrapRevision;
+  # see the comment at the top of this template.
   #
-  # No ttlSecondsAfterFinished. Each image tag keeps its own completed Job around
+  # No ttlSecondsAfterFinished. Each pod template keeps its own completed Job around
   # indefinitely; this is accepted clutter. A TTL would delete the Job object while the GitOps
-  # path keeps applying the same rendered manifest for that tag. The next apply would then
-  # just recreate the Job and rerun migrations that already succeeded.
+  # path keeps applying the same rendered manifest. The next apply would then just recreate
+  # the Job and rerun migrations that already succeeded.
   name: {{ $jobName | quote }}
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   template:
-    spec:
-      containers:
-        - name: migrations
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          envFrom:
-            - secretRef:
-                name: {{ include "pa-expunger.backendSecretName" . | quote }}
-          env:
-            - name: DB_HOST
-              value: {{ include "pa-expunger.dbHost" . }}
-            # Migrations never serve a request, but config.settings.prod raises at import
-            # if this is unset, so the Job cannot even reach the database without it.
-            - name: DJANGO_ALLOWED_HOSTS
-              value: {{ include "pa-expunger.allowedHosts" . | quote }}
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_USER
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_DB
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: POSTGRES_PASSWORD
-                  name: {{ include "pa-expunger.postgresSecretName" . | quote }}
-          # command: overrides the image's ENTRYPOINT in a Pod spec (unlike Compose, where
-          # it maps to CMD and the entrypoint still runs). This bypasses
-          # prod_entrypoint.sh entirely. ensure_superuser must run after migrate, so both
-          # are chained with && under a shell rather than expressed as a Kubernetes list:
-          # `;` would let a failed migrate still run ensure_superuser, and `sh -c`
-          # propagates the last command's exit status so Job failure detection still works.
-          command: ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_superuser"]
-      # Never, not OnFailure, so that a failure stays diagnosable. With OnFailure the
-      # kubelet restarts the container inside one pod, and when backoffLimit is reached
-      # the Job controller deletes that pod, logs included, leaving only the Job's events.
-      # With Never each failed attempt is a new pod that is kept in Error, with its
-      # logs, until the Job itself is deleted (pruned when its manifest leaves the
-      # projection).
-      restartPolicy: Never
+    {{- $podTemplate | nindent 4 }}
   # Retries cover the database not accepting connections yet, e.g. Postgres still starting
   # in k8s-e2e-test/. With Never, the Job controller spaces new pods with its own
   # exponential backoff (10s, doubling, capped at 10 minutes). That is at least as long
