@@ -67,6 +67,8 @@ jobs:
             || { echo "::error::Migration Job restartPolicy is $policy, not Never"; exit 1; }
 
           # #92: the Job name is stable for unchanged values and changes with the revision.
+          # The unset-revision check also guards the template hash, which must never
+          # produce a "-r" that reads as a revision suffix.
           base=$(job_name)
           [ "$base" = "$(job_name)" ] || { echo "::error::Job name is not stable across renders"; exit 1; }
           case "$base" in *-r*) echo "::error::Unset bootstrapRevision added a suffix: $base"; exit 1;; esac
@@ -77,6 +79,22 @@ jobs:
           [ "$bumped" != "$(job_name --set-string backend.bootstrapRevision=3)" ] \
             || { echo "::error::Different revisions gave the same Job name"; exit 1; }
           echo "Job name: $base; with bootstrapRevision=2: $bumped"
+
+          # The name carries a hash of the Job's (immutable) pod template, so a deploy value
+          # that reaches the pod template renames the Job instead of failing the apply.
+          [ "$base" != "$(job_name --set externalDatabase.host=other-db)" ] \
+            || { echo "::error::externalDatabase.host did not change the Job name"; exit 1; }
+          # A value only the Deployment reads must not rerun the Job.
+          [ "$base" = "$(job_name --set backend.config.DJANGO_LOG_LEVEL=DEBUG)" ] \
+            || { echo "::error::A Deployment-only value changed the Job name"; exit 1; }
+          # Nothing chart-version-dependent may reach the Job: a version bump alone must
+          # leave its manifest, name included, byte-identical.
+          chart_copy=$(mktemp -d)
+          cp -r helm-chart "$chart_copy/"
+          yq -i '.version = "0.0.0-ci-check"' "$chart_copy/helm-chart/Chart.yaml"
+          diff <(render --show-only templates/migration-job.yaml) \
+               <(helm template pa-expunger "$chart_copy/helm-chart" -f helm-chart/ci-values.yaml --show-only templates/migration-job.yaml) \
+            || { echo "::error::The chart version reaches the migration Job"; exit 1; }
 
           # A rotation must not restart the app pods: only the Job may change.
           diff <(render --show-only templates/deployment.yaml) \
