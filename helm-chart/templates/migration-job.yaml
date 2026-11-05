@@ -88,9 +88,10 @@ spec:
       restartPolicy: Never
   # Retries cover the database not accepting connections yet, e.g. Postgres still starting
   # in k8s-e2e-test/. With Never, the Job controller spaces new pods with its own
-  # exponential backoff (10s, doubling, capped at several minutes). That is at least as
-  # long as the kubelet's crash backoff that OnFailure relied on, so 10 still covers at
-  # least the same window (roughly half an hour). The cost is at most backoffLimit + 1 =
+  # exponential backoff (10s, doubling, capped at 10 minutes). That is at least as long
+  # as the kubelet's crash backoff that OnFailure relied on, so 10 still covers at least
+  # the same window: about 50 minutes from the first attempt until the Job is marked
+  # Failed (51 measured on a local k3s cluster). The cost is at most backoffLimit + 1 =
   # 11 terminated pods per failed Job. They hold no CPU or memory, only their logs.
   #
   # No podFailurePolicy (e.g. to stop evictions counting as failures): kubectl apply's
